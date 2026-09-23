@@ -1,0 +1,7 @@
+node_modules/
+.env
+data/reports/
+data/orders/
+data/leads/
+*.log
+.DS_Store

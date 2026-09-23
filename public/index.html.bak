@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Know Your Presence - Business Pulse Score</title>
+
+<!-- ============ GOOGLE ANALYTICS (GA4) ============ -->
+<!-- Replace G-XXXXXXXXXX below with your real Measurement ID from analytics.google.com -->
+<!-- NOTE: This will NOT track on the claude.ai preview link due to that platform's security
+     policy blocking scripts from Google's servers - it WILL work once deployed on your own
+     real domain (Render, Railway, your own hosting, etc.) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX');
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green: #0f9d58;
+  --green-dark: #0c8248;
+  --amber: #e8a33d;
+  --red: #d64545;
+  --ink: #0d1321;
+  --paper: #ffffff;
+  --bg: #f7f8fa;
+  --muted: #5b6472;
+  --border: #e6e8ec;
+  --accent-tint: #eaf6ef;
+  --font-head: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 190px; }
+html, body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { font-family: var(--font-head); margin: 0; }
+p { line-height: 1.6; }
+a { text-decoration: none; }
+[hidden] { display: none !important; }
+.section-inner { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+/* ============ NAV ============ */
+.nav { background: var(--ink); position: relative; z-index: 5; }
+.nav-inner {
+  max-width: 1080px; margin: 0 auto; padding: 14px 24px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+}
+.nav-brand { color: white; font-family: var(--font-head); font-weight: 700; font-size: 1.15rem; }
+.nav-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.control-select {
+  background: rgba(255,255,255,0.1); color: white;
+  border: 1px solid rgba(255,255,255,0.25); padding: 7px 10px;
+  border-radius: 8px; font-size: 0.82rem; cursor: pointer; font-family: var(--font-body);
+}
+.control-select option { color: var(--ink); }
+.nav-cta {
+  background: var(--green); color: white; padding: 9px 16px;
+  border-radius: 8px; font-weight: 700; font-size: 0.85rem;
+}
+.nav-cta:hover { background: var(--green-dark); }
+
+/* ============ HERO ============ */
+.hero { background: linear-gradient(180deg, #0d1321 0%, #16203a 100%); color: white; padding: 72px 0 64px; }
+.hero-inner { max-width: 780px; margin: 0 auto; padding: 0 24px; text-align: center; }
+.hero-eyebrow { color: var(--green); font-weight: 700; letter-spacing: 0.08em; font-size: 0.78rem; margin: 0 0 16px; }
+.hero-headline { font-size: clamp(1.9rem, 4vw, 2.8rem); font-weight: 700; line-height: 1.2; margin-bottom: 18px; }
+.hero-sub { font-size: 1.08rem; color: rgba(255,255,255,0.78); max-width: 620px; margin: 0 auto 30px; }
+.hero-actions { display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap; margin-bottom: 16px; }
+.btn-primary {
+  background: var(--green); color: white; padding: 15px 30px;
+  border-radius: 10px; font-weight: 700; font-size: 1rem; display: inline-block;
+}
+.btn-primary:hover { background: var(--green-dark); }
+.hero-price { font-size: 0.95rem; color: rgba(255,255,255,0.8); }
+.hero-price strong { color: white; font-size: 1.3rem; margin-left: 6px; font-family: var(--font-head); }
+.scan-counter { color: var(--green-light, #12b368); font-size: 0.88rem; font-weight: 600; margin-bottom: 8px; }
+.hero-trust {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 1.4rem; font-weight: 800; color: white; font-family: var(--font-head);
+  letter-spacing: -0.01em; margin-top: 14px; padding: 12px 24px;
+  background: var(--green); border-radius: 999px;
+  box-shadow: 0 4px 20px rgba(15,157,88,0.4);
+  flex-wrap: wrap; justify-content: center; row-gap: 0;
+}
+.big-o {
+  font-size: 2.5em;
+  line-height: 0.6;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* ============ PAS SECTIONS ============ */
+.pas-section { padding: 64px 0; }
+.pas-section h2 { font-size: clamp(1.5rem, 3vw, 2.1rem); text-align: center; margin-bottom: 14px; }
+.pas-lead { text-align: center; color: var(--muted); max-width: 640px; margin: 0 auto 40px; font-size: 1.02rem; }
+
+.problem { background: var(--paper); }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px; }
+.stat-card { text-align: center; padding: 24px; background: var(--bg); border-radius: 14px; border: 1px solid var(--border); }
+.stat-number { display: block; font-family: var(--font-head); font-size: 2.2rem; font-weight: 800; color: var(--green); margin-bottom: 8px; }
+.stat-label { color: var(--muted); font-size: 0.9rem; }
+
+.agitate { background: var(--ink); color: white; }
+.agitate h2 { color: white; }
+.agitate-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 20px; }
+.agitate-item { background: rgba(255,255,255,0.06); padding: 22px; border-radius: 14px; }
+.agitate-icon { font-size: 1.6rem; display: block; margin-bottom: 10px; }
+.agitate-item p { color: rgba(255,255,255,0.82); font-size: 0.95rem; margin: 0; }
+
+.solution { background: var(--paper); }
+.feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+.feature-card { padding: 24px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg); }
+.feature-icon { font-size: 1.7rem; display: block; margin-bottom: 12px; }
+.feature-card h3 { font-size: 1.05rem; margin-bottom: 8px; }
+.feature-card p { color: var(--muted); font-size: 0.9rem; margin: 0; }
+
+.how { background: var(--accent-tint); }
+.steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 22px; }
+.step-item { text-align: center; }
+.step-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 50%; background: var(--green);
+  color: white; font-weight: 700; font-family: var(--font-head); margin-bottom: 12px;
+}
+.step-item h4 { font-size: 1rem; margin-bottom: 6px; }
+.step-item p { color: var(--muted); font-size: 0.88rem; margin: 0; }
+
+.pricing { background: var(--paper); }
+.pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 20px; }
+.pricing-card { text-align: center; padding: 28px 20px; border: 1px solid var(--border); border-radius: 16px; }
+.pricing-card.featured { border-color: var(--green); box-shadow: 0 4px 20px rgba(15,157,88,0.12); }
+.pricing-card h4 { font-size: 0.95rem; color: var(--muted); margin-bottom: 10px; font-family: var(--font-body); font-weight: 600; }
+.pricing-amount { font-family: var(--font-head); font-size: 2rem; font-weight: 800; color: var(--ink); margin: 0 0 10px; }
+.pricing-note { font-size: 0.82rem; color: var(--muted); margin: 0; }
+
+.final-cta { background: var(--ink); color: white; padding: 70px 0; text-align: center; }
+.final-cta h2 { color: white; font-size: clamp(1.5rem, 3vw, 2rem); margin-bottom: 12px; }
+.final-cta p { color: rgba(255,255,255,0.75); margin-bottom: 26px; }
+
+.footer { background: var(--ink); color: rgba(255,255,255,0.5); padding: 22px 0; font-size: 0.82rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.08); }
+.footer-links { margin-top: 8px; }
+.footer-links a { color: rgba(255,255,255,0.65); text-decoration: none; }
+.footer-links a:hover { color: white; text-decoration: underline; }
+
+/* ============ SCAN TOOL ============ */
+.scan-section { background: var(--bg); padding: 64px 0; }
+.input-card, .results {
+  background: var(--paper); border: 1px solid var(--border); border-radius: 18px;
+  padding: 32px; box-shadow: 0 1px 3px rgba(13,19,33,0.04), 0 8px 24px rgba(13,19,33,0.04);
+  margin-bottom: 24px; max-width: 760px; margin-left: auto; margin-right: auto;
+}
+.input-card h2 { font-size: 1.4rem; text-align: left; margin-bottom: 6px; }
+.hint { color: var(--muted); font-size: 0.9rem; margin: 4px 0 0; }
+.sample-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0 20px; }
+.sample-btn {
+  background: var(--bg); border: 1px solid var(--border); color: var(--ink);
+  padding: 8px 16px; border-radius: 999px; font-size: 0.85rem; cursor: pointer; font-weight: 500;
+}
+.sample-btn:hover { border-color: var(--green); color: var(--green); }
+form { display: flex; flex-direction: column; gap: 14px; }
+label { display: flex; flex-direction: column; font-size: 0.85rem; font-weight: 600; gap: 6px; text-align: left; }
+input {
+  padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px;
+  font-size: 1rem; font-family: var(--font-body);
+}
+input:focus { outline: 2px solid var(--green); outline-offset: 1px; }
+.place-confirmed { color: var(--green); font-size: 0.82rem; font-weight: 600; margin: -8px 0 4px; }
+.scan-email-note { color: var(--muted); font-size: 0.78rem; margin: -8px 0 6px; }
+.scan-error { background: #fdeeee; color: #b23b3b; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 10px; }
+button.primary {
+  background: var(--green); color: white; border: none; padding: 13px 22px;
+  border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer;
+  margin-top: 6px; font-family: var(--font-body);
+}
+button.primary:hover { background: var(--green-dark); }
+.rescan {
+  background: transparent; color: var(--ink); border: 1px solid var(--border);
+  padding: 11px 20px; border-radius: 10px; font-size: 0.9rem; cursor: pointer;
+  margin-top: 22px; font-weight: 600;
+}
+
+.score-hero { display: flex; align-items: center; gap: 30px; flex-wrap: wrap; }
+.gauge {
+  width: 140px; height: 140px; border-radius: 50%;
+  background: conic-gradient(var(--green) 0deg, var(--border) 0deg);
+  display: flex; align-items: center; justify-content: center; position: relative;
+  flex-shrink: 0; transition: background 0.4s ease;
+}
+.gauge::before { content: ""; position: absolute; width: 108px; height: 108px; border-radius: 50%; background: var(--paper); }
+#scoreNumber { position: relative; font-family: var(--font-head); font-size: 2.2rem; font-weight: 700; }
+.score-meta h2 { margin: 0 0 6px; font-size: 1.5rem; text-align: left; }
+.grade { margin: 0; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; font-size: 0.85rem; color: var(--muted); }
+.potential { color: var(--ink); margin-top: 10px; font-size: 0.95rem; }
+.potential strong { color: var(--green); font-size: 1.1rem; }
+
+.breakdown { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-top: 32px; }
+.breakdown-item { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.breakdown-item .label { font-weight: 700; text-transform: capitalize; margin-bottom: 10px; font-size: 0.85rem; letter-spacing: 0.02em; }
+.bar-bg { background: var(--border); border-radius: 6px; height: 7px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 6px; width: 0; transition: width 0.9s ease; }
+.score-tag { text-align: right; font-size: 0.78rem; margin-top: 6px; color: var(--muted); font-weight: 600; }
+
+.action-plan { margin-top: 36px; }
+.action-plan h3 { font-size: 1.25rem; text-align: left; margin-bottom: 4px; }
+.action-plan .sub { color: var(--muted); font-size: 0.88rem; margin: 0 0 16px; }
+.plan-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.plan-col { background: var(--accent-tint); border-radius: 12px; padding: 18px; }
+.plan-col h4 { font-size: 0.88rem; font-weight: 700; color: #0c6b3d; text-align: left; margin-bottom: 12px; }
+.plan-col ul { padding-left: 18px; margin: 0; font-size: 0.86rem; line-height: 1.6; }
+.plan-col li { margin-bottom: 9px; }
+
+.cta-row {
+  margin-top: 30px; display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+  justify-content: space-between; background: var(--ink); color: white; padding: 20px 24px; border-radius: 14px;
+}
+.cta-row p { margin: 0; font-size: 0.95rem; max-width: 400px; }
+
+.checkout-overlay {
+  position: fixed; inset: 0; background: rgba(13,19,33,0.6); z-index: 100;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.checkout-modal {
+  background: white; border-radius: 16px; padding: 32px; max-width: 380px; width: 100%;
+  position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.checkout-close {
+  position: absolute; top: 14px; right: 16px; background: none; border: none;
+  font-size: 1.4rem; color: var(--muted); cursor: pointer; line-height: 1;
+}
+.checkout-modal h3 { font-family: var(--font-head); font-size: 1.3rem; margin: 0 0 6px; }
+.checkout-sub { color: var(--muted); font-size: 0.88rem; margin: 0 0 18px; }
+.checkout-label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 16px; }
+.checkout-optional { font-weight: 400; color: var(--muted); font-size: 0.78rem; }
+.checkout-label input, .checkout-label select {
+  width: 100%; margin-top: 6px; padding: 11px 12px; border: 1px solid var(--border);
+  border-radius: 8px; font-size: 0.95rem; box-sizing: border-box; font-family: var(--font-body); background: white;
+}
+.checkout-error { background: #fdeeee; color: #b23b3b; padding: 10px 12px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 14px; }
+.checkout-pay-btn { width: 100%; text-align: center; display: block; }
+.checkout-note { text-align: center; color: var(--muted); font-size: 0.76rem; margin: 12px 0 0; }
+
+.cta-btn {
+  background: var(--green); color: white; border: none; padding: 12px 20px;
+  border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 0.95rem;
+  font-family: var(--font-body); white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .score-hero { flex-direction: column; align-items: flex-start; }
+  .hero-actions { flex-direction: column; }
+}
+
+/* ============ AI SEARCH VISIBILITY ============ */
+.ai-search { background: linear-gradient(180deg, #f7f8fa 0%, #eaf6ef 100%); }
+.ai-platform-row { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 24px 0; }
+.ai-chip { background: white; border: 1px solid var(--border); padding: 10px 18px; border-radius: 999px; font-weight: 600; font-size: 0.9rem; }
+.ai-visibility-card {
+  max-width: 560px; margin: 24px auto 0; background: white; border: 1px solid var(--border);
+  border-radius: 16px; padding: 28px; text-align: center;
+}
+.ai-vis-number { display: block; font-family: var(--font-head); font-size: 1.4rem; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+.ai-vis-label { font-size: 0.85rem; color: var(--muted); }
+.ai-vis-note { margin-top: 16px; font-size: 0.88rem; color: var(--muted); }
+
+/* ============ FREE TOOLS ============ */
+.free-tools { background: var(--paper); }
+.tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+.tool-card { border: 1px solid var(--border); border-radius: 14px; padding: 22px; background: var(--bg); position: relative; }
+.tool-card.active-tool { background: var(--accent-tint); border-color: var(--green); }
+.tool-badge {
+  position: absolute; top: -10px; right: 16px; background: var(--green); color: white;
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; padding: 4px 10px; border-radius: 999px;
+}
+.tool-card h3 { font-size: 1rem; margin-bottom: 8px; font-family: var(--font-body); font-weight: 700; }
+.tool-card p { color: var(--muted); font-size: 0.88rem; margin: 0 0 14px; }
+.tool-widget { display: flex; gap: 10px; flex-wrap: wrap; }
+.tool-widget-stack { flex-direction: column; }
+.tool-widget input, .tool-widget select {
+  flex: 1; min-width: 200px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem;
+  font-family: var(--font-body); background: white;
+}
+.tool-widget-stack input, .tool-widget-stack select { min-width: 100%; }
+.tool-widget button {
+  background: var(--green); color: white; border: none; padding: 10px 18px;
+  border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.9rem;
+}
+.tool-result { margin-top: 14px; padding: 12px 14px; background: white; border-radius: 8px; font-size: 0.88rem; word-break: break-all; }
+.tool-result a { color: var(--green); font-weight: 600; }
+.tool-result-multi { text-align: left; }
+.tool-result-multi .result-block { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.tool-result-multi .result-block:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.tool-result-multi .result-label { font-weight: 700; font-size: 0.78rem; color: var(--green); text-transform: uppercase; letter-spacing: 0.03em; display: block; margin-bottom: 4px; }
+.tool-result-multi .result-text { white-space: pre-wrap; }
+.copy-btn { background: var(--ink); color: white; border: none; padding: 4px 10px; border-radius: 6px; font-size: 0.72rem; cursor: pointer; margin-left: 8px; }
+#qrCanvasWrap { display: flex; justify-content: center; margin-bottom: 10px; }
+#qrDownloadLink { display: block; text-align: center; }
+.hashtag-pill { display: inline-block; background: var(--accent-tint); color: var(--ink); padding: 4px 10px; border-radius: 999px; font-size: 0.82rem; margin: 3px; }
+.tool-cta { display: block; margin-top: 14px; font-size: 0.82rem; font-weight: 700; color: var(--green); text-decoration: none; }
+.tool-cta:hover { text-decoration: underline; }
+
+/* ============ AUDIENCE ============ */
+.audience { background: var(--accent-tint); }
+.audience-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+.audience-card { background: white; border-radius: 14px; padding: 24px; text-align: center; }
+.audience-card h3 { font-size: 1rem; margin-bottom: 10px; font-family: var(--font-body); font-weight: 700; }
+.audience-card p { color: var(--muted); font-size: 0.88rem; margin: 0; }
+
+/* ============ TESTIMONIALS ============ */
+.testimonials { background: var(--paper); }
+.illustrative-note { font-style: italic; font-size: 0.82rem; }
+.testimonial-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+.testimonial-card { background: var(--bg); border-radius: 14px; padding: 22px; border: 1px solid var(--border); }
+.testimonial-card p { font-size: 0.95rem; margin: 0 0 12px; font-style: italic; }
+.testimonial-card span { font-size: 0.82rem; color: var(--muted); font-weight: 600; }
+
+</style>
+</head>
+<body>
+
+  <!-- ============ NAV ============ -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <span class="nav-brand" data-i18n="brand">Know Your Presence</span>
+      <div class="nav-controls">
+        <a href="#scanTool" class="nav-cta" data-i18n="navCta">Free Scan</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============ HERO ============ -->
+  <header class="hero">
+    <div class="hero-inner">
+      <p class="hero-eyebrow" data-i18n="heroEyebrow">FOR BUSINESS OWNERS WHO HATE GUESSING</p>
+      <h1 class="hero-headline" data-i18n="heroHeadline">Your customers already judged your business online. You just haven't seen what they saw.</h1>
+      <p class="hero-sub" data-i18n="heroSub">One scan reveals your Google presence, social media health, website performance, and reputation — scored, benchmarked, and turned into a 90-day fix-it plan.</p>
+      <div class="hero-actions">
+        <a href="#scanTool" class="btn-primary" data-i18n="heroCta">Run My Free Scan</a>
+        <div class="hero-price">
+          <span data-i18n="heroPriceLabel">Full report + 8 free tools from</span>
+          <strong id="heroPriceTag">₹899</strong>
+        </div>
+      </div>
+      <p id="scanCounter" class="scan-counter" hidden></p>
+        <p class="hero-trust" data-i18n="heroTrust">🔒 <span class="big-o">O</span>ne diagnosis. <span class="big-o">O</span>ne plan. <span class="big-o">O</span>ne price. No subscription, ever.</p>
+    </div>
+  </header>
+
+  <!-- ============ PROBLEM (P) ============ -->
+  <section class="pas-section problem">
+    <div class="section-inner">
+      <h2 data-i18n="problemTitle">Here's the uncomfortable truth</h2>
+      <p class="pas-lead" data-i18n="problemLead">Most business owners run their business well - but have no idea how it actually looks to a stranger searching for them online right now.</p>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <span class="stat-number">93%</span>
+          <span class="stat-label" data-i18n="stat1">of customers check reviews before choosing a business</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number">3 in 4</span>
+          <span class="stat-label" data-i18n="stat2">customers won't return after one unanswered complaint</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number">0</span>
+          <span class="stat-label" data-i18n="stat3">is how many business owners check all this weekly</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ AGITATE (A) ============ -->
+  <section class="pas-section agitate">
+    <div class="section-inner">
+      <h2 data-i18n="agitateTitle">And every day you don't know, it's costing you</h2>
+      <div class="agitate-grid">
+        <div class="agitate-item">
+          <span class="agitate-icon">🔍</span>
+          <p data-i18n="agitate1">A competitor with a weaker product but a stronger Google profile is ranking above you right now.</p>
+        </div>
+        <div class="agitate-item">
+          <span class="agitate-icon">💬</span>
+          <p data-i18n="agitate2">Someone left a bad review three weeks ago. It's still unanswered. Every visitor sees it.</p>
+        </div>
+        <div class="agitate-item">
+          <span class="agitate-icon">📉</span>
+          <p data-i18n="agitate3">Your last Instagram post was over a month ago. New visitors read that as "closed" or "not serious."</p>
+        </div>
+        <div class="agitate-item">
+          <span class="agitate-icon">🐌</span>
+          <p data-i18n="agitate4">Your website takes 6 seconds to load on mobile. Most people leave after 3.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SOLUTION (S) ============ -->
+  <section class="pas-section solution">
+    <div class="section-inner">
+      <h2 data-i18n="solutionTitle">One scan. Every platform. One clear number.</h2>
+      <p class="pas-lead" data-i18n="solutionLead">Your Business Pulse Score pulls together everything that shapes how customers see you - and tells you exactly what to fix first.</p>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span class="feature-icon">🗺️</span>
+          <h3 data-i18n="feat1Title">Google Business Health</h3>
+          <p data-i18n="feat1Body">Profile completeness, rating trend, review velocity, and local search visibility.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">📱</span>
+          <h3 data-i18n="feat2Title">Social Media Pulse</h3>
+          <p data-i18n="feat2Body">Real-time activity and engagement across Instagram, Facebook, YouTube, and more.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">⚡</span>
+          <h3 data-i18n="feat3Title">Website Performance</h3>
+          <p data-i18n="feat3Body">Speed, mobile-friendliness, security, and basic SEO health.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">⭐</span>
+          <h3 data-i18n="feat4Title">Reputation Score</h3>
+          <p data-i18n="feat4Body">Aggregate sentiment across every review platform that matters in your market.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🎯</span>
+          <h3 data-i18n="feat5Title">Competitor Benchmark</h3>
+          <p data-i18n="feat5Body">See exactly where you stand against the business next door - or across the world.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🗓️</span>
+          <h3 data-i18n="feat6Title">90-Day Action Plan</h3>
+          <p data-i18n="feat6Body">Not just data - a prioritized, dated plan of exactly what to fix and when.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ AI SEARCH VISIBILITY ============ -->
+  <section class="pas-section ai-search">
+    <div class="section-inner">
+      <h2>The Search Engine Has Changed. Does Your Business Show Up?</h2>
+      <p class="pas-lead">Customers now ask ChatGPT and Gemini for recommendations, not just Google. We check whether AI search engines even know your business exists - and what they say about it.</p>
+      <div class="ai-platform-row">
+        <div class="ai-chip">🤖 ChatGPT</div>
+        <div class="ai-chip">✨ Gemini</div>
+        <div class="ai-chip">◆ Claude</div>
+        <div class="ai-chip">🔷 Copilot</div>
+        <div class="ai-chip">🔍 Perplexity</div>
+      </div>
+      <div class="ai-visibility-card">
+        <div class="ai-vis-score">
+          <span class="ai-vis-number">Not Yet Tracked</span>
+          <span class="ai-vis-label">Your AI Visibility Score</span>
+        </div>
+        <p class="ai-vis-note">Included in your full report: whether AI engines mention your business, how accurately, and how you compare to competitors they recommend instead.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HOW IT WORKS ============ -->
+  <section class="pas-section how">
+    <div class="section-inner">
+      <h2 data-i18n="howTitle">How it works</h2>
+      <div class="steps-grid">
+        <div class="step-item"><span class="step-num">1</span><h4 data-i18n="how1Title">Enter your business</h4><p data-i18n="how1Body">Name, website, and social handles - takes 20 seconds.</p></div>
+        <div class="step-item"><span class="step-num">2</span><h4 data-i18n="how2Title">We scan everything</h4><p data-i18n="how2Body">Google, social platforms, your website, and review sites - all at once.</p></div>
+        <div class="step-item"><span class="step-num">3</span><h4 data-i18n="how3Title">Get your Pulse Score</h4><p data-i18n="how3Body">One number, five categories, and a plain-language diagnosis.</p></div>
+        <div class="step-item"><span class="step-num">4</span><h4 data-i18n="how4Title">Follow the 90-day plan</h4><p data-i18n="how4Body">Prioritized, dated actions - not a wall of generic advice.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FREE TOOLS ============ -->
+  <section class="pas-section free-tools">
+    <div class="section-inner">
+      <h2>Free Tools - No Signup Needed</h2>
+      <p class="pas-lead">Small tools that save real time, free forever. Try any of them right now.</p>
+      <div class="tools-grid">
+        <div class="tool-card active-tool">
+          <span class="tool-badge">TRY IT NOW</span>
+          <h3>📱 WhatsApp Link Generator</h3>
+          <p>Create a direct chat link for your business - customers tap it and land straight in a WhatsApp conversation with you.</p>
+          <div class="tool-widget">
+            <input type="text" id="waNumberInput" placeholder="Enter number with country code, e.g. 919962337575" />
+            <button type="button" id="waGenerateBtn">Generate Link</button>
+          </div>
+          <div id="waResult" class="tool-result" hidden></div>
+          <a href="#scanTool" class="tool-cta">Get this + your full report &rarr;</a>
+        </div>
+
+        <div class="tool-card active-tool">
+          <span class="tool-badge">TRY IT NOW</span>
+          <h3>🤖 Auto-Reply Message Generator</h3>
+          <p>Ready-to-paste text for WhatsApp's Away Message, Instagram's Quick Replies, and Facebook's Instant Reply - features you already have, just need the words.</p>
+          <div class="tool-widget tool-widget-stack">
+            <select id="arBizType">
+              <option value="restaurant">Restaurant / Cafe</option>
+              <option value="retail">Retail Store</option>
+              <option value="salon">Salon / Spa</option>
+              <option value="clinic">Clinic / Healthcare</option>
+              <option value="service">Service Business</option>
+            </select>
+            <select id="arTone">
+              <option value="friendly">Friendly</option>
+              <option value="professional">Professional</option>
+              <option value="fun">Fun &amp; Casual</option>
+            </select>
+            <button type="button" id="arGenerateBtn">Generate Templates</button>
+          </div>
+          <div id="arResult" class="tool-result tool-result-multi" hidden></div>
+          <a href="#scanTool" class="tool-cta">Get this + your full report &rarr;</a>
+        </div>
+
+        <div class="tool-card active-tool">
+          <span class="tool-badge">TRY IT NOW</span>
+          <h3>📝 Google Business Post Generator</h3>
+          <p>Never stare at a blank "Add Update" box again - get 5 ready-to-post ideas for your Google Business Profile.</p>
+          <div class="tool-widget">
+            <input type="text" id="gbpBizName" placeholder="Your business name" />
+            <button type="button" id="gbpGenerateBtn">Generate Posts</button>
+          </div>
+          <div id="gbpResult" class="tool-result tool-result-multi" hidden></div>
+          <a href="#scanTool" class="tool-cta">Get this + your full report &rarr;</a>
+        </div>
+
+        <div class="tool-card active-tool">
+          <span class="tool-badge">TRY IT NOW</span>
+          <h3>📷 QR Code Generator</h3>
+          <p>Turn your Google review link or WhatsApp link into a scannable QR code for your counter, receipt, or table card.</p>
+          <div class="tool-widget">
+            <input type="text" id="qrUrlInput" placeholder="Paste your review link or WhatsApp link" />
+            <button type="button" id="qrGenerateBtn">Generate QR Code</button>
+          </div>
+          <div id="qrResult" class="tool-result" hidden>
+            <div id="qrCanvasWrap"></div>
+            <a id="qrDownloadLink" download="qr-code.png">Download PNG</a>
+          </div>
+          <a href="#scanTool" class="tool-cta">Get this + your full report &rarr;</a>
+        </div>
+
+        <div class="tool-card active-tool">
+          <span class="tool-badge">TRY IT NOW</span>
+          <h3>#️⃣ Local Hashtag Generator</h3>
+          <p>Get 15-20 relevant hashtags mixing broad reach with hyper-local tags for your city.</p>
+          <div class="tool-widget">
+            <input type="text" id="tagIndustry" placeholder="Industry, e.g. cafe, salon, gym" />
+            <input type="text" id="tagCity" placeholder="City, e.g. Mumbai" />
+            <button type="button" id="tagGenerateBtn">Generate Hashtags</button>
+          </div>
+          <div id="tagResult" class="tool-result" hidden></div>
+          <a href="#scanTool" class="tool-cta">Get this + your full report &rarr;</a>
+        </div>
+
+        <div class="tool-card">
+          <h3>⭐ Profile Strength Calculator</h3>
+          <p>See how complete your Google Business Profile is out of 100 - included free in every scan below.</p>
+          <a href="#scanTool" class="tool-cta">Get this + your full report &rarr;</a>
+        </div>
+        <div class="tool-card">
+          <h3>💬 AI Review Reply Generator</h3>
+          <p>Get a customizable, on-brand reply drafted for any customer review in seconds. Part of the full report.</p>
+          <a href="#scanTool" class="tool-cta">Get this + your full report &rarr;</a>
+        </div>
+        <div class="tool-card">
+          <h3>⚠️ Suspension Risk Check</h3>
+          <p>Google can suspend profiles without warning. Check the common red flags before it happens to you.</p>
+          <a href="#scanTool" class="tool-cta">Get this + your full report &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LIVE SCAN TOOL ============ -->
+  <section class="scan-section" id="scanTool">
+    <div class="section-inner">
+      <div class="input-card" id="inputCard">
+        <h2 data-i18n="scanTitle">Try it now - free</h2>
+        <p class="hint" data-i18n="scanHint">Pick a sample business below to see a full scan, or type any name and hit scan.</p>
+        <div class="sample-row" id="sampleRow"></div>
+        <div id="scanForm">
+          <label for="businessNameInput" data-i18n="businessNameLabel">Business Name</label>
+          <input type="text" id="businessNameInput" name="businessName" autocomplete="off" data-i18n-placeholder="businessNamePlaceholder" placeholder="e.g. Urban Bites Cafe" />
+          <p id="placeConfirmed" class="place-confirmed" hidden></p>
+          <label for="scanEmailInput" data-i18n="scanEmailLabel">Your Email</label>
+          <input type="email" id="scanEmailInput" name="scanEmail" autocomplete="email" data-i18n-placeholder="scanEmailPlaceholder" placeholder="you@example.com" />
+          <p class="scan-email-note" data-i18n="scanEmailNote">We'll send your score here so you don't lose it. No spam, ever.</p>
+          <div id="scanError" class="scan-error" hidden></div>
+          <button type="button" id="runScanBtn" class="primary" data-i18n="runScan">Run Free Scan</button>
+        </div>
+      </div>
+
+      <div class="results" id="results" hidden>
+        <div class="score-hero">
+          <div class="gauge" id="gauge"><span id="scoreNumber">--</span></div>
+          <div class="score-meta">
+            <h2 id="bizName">-</h2>
+            <p class="grade" id="gradeText">-</p>
+            <p class="potential"><span data-i18n="potentialLabel">Potential in 90 days:</span> <strong id="potentialScore">--</strong>/100</p>
+          </div>
+        </div>
+
+        <div class="breakdown" id="breakdown"></div>
+
+        <div class="action-plan" id="actionPlan">
+          <h3 data-i18n="actionPlanTitle">Your 90-Day Action Plan</h3>
+          <p class="sub" data-i18n="actionPlanSub">Prioritized fixes based on this scan - the part that comes with the full report.</p>
+          <div class="plan-columns">
+            <div class="plan-col">
+              <h4 data-i18n="quickWins">Week 1-2: Quick Wins</h4>
+              <ul id="quickWins"></ul>
+            </div>
+            <div class="plan-col">
+              <h4 data-i18n="momentum">Week 3-6: Build Momentum</h4>
+              <ul id="momentum"></ul>
+            </div>
+            <div class="plan-col">
+              <h4 data-i18n="compound">Week 7-12: Compound Growth</h4>
+              <ul id="compound"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="cta-row">
+          <p data-i18n="ctaText">Unlock the full report, competitor comparison, and progress tracker.</p>
+          <button id="ctaBtn" class="cta-btn">
+            <span data-i18n="ctaButton">Get Full Report + 8 Free Tools</span> - <span id="priceTag">₹899</span>
+          </button>
+        </div>
+
+        <button class="rescan" id="rescanBtn" data-i18n="rescan">Scan Another Business</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHECKOUT MODAL ============ -->
+  <div id="checkoutOverlay" class="checkout-overlay" hidden>
+    <div class="checkout-modal">
+      <button id="checkoutClose" class="checkout-close" aria-label="Close">&times;</button>
+      <h3>Almost there</h3>
+      <p class="checkout-sub">We'll email your full report to this address the moment payment goes through.</p>
+      <label class="checkout-label">Email address
+        <input type="email" id="checkoutEmail" placeholder="you@example.com" />
+      </label>
+      <label class="checkout-label">Business type
+        <select id="checkoutBizType">
+          <option value="restaurant">Restaurant / Cafe</option>
+          <option value="retail">Retail Store</option>
+          <option value="salon">Salon / Spa</option>
+          <option value="clinic">Clinic / Healthcare</option>
+          <option value="service">Service Business</option>
+          <option value="other">Other / Not Listed</option>
+        </select>
+      </label>
+      <label class="checkout-label" id="checkoutDescWrap" hidden>Describe your business in a few words
+        <input type="text" id="checkoutDesc" placeholder="e.g. a pottery studio offering classes and custom pieces" />
+      </label>
+      <label class="checkout-label">WhatsApp number <span class="checkout-optional">(optional - adds a QR code to your report)</span>
+        <input type="text" id="checkoutWaNumber" placeholder="e.g. 919876543210" />
+      </label>
+      <label class="checkout-label">City
+        <input type="text" id="checkoutCity" placeholder="e.g. Bengaluru" />
+      </label>
+      <label class="checkout-label">A local competitor <span class="checkout-optional">(optional - we'll benchmark you against them)</span>
+        <input type="text" id="checkoutCompetitor" placeholder="e.g. Downtown Coffee Co." />
+      </label>
+      <div id="checkoutError" class="checkout-error" hidden></div>
+      <button id="checkoutPayBtn" class="btn-primary checkout-pay-btn">Pay <span id="checkoutPriceTag">₹899</span></button>
+      <p class="checkout-note">Secure payment via Dodo Payments. One-time charge, no subscription.</p>
+    </div>
+  </div>
+
+  <!-- ============ BUILT FOR EVERY TEAM ============ -->
+  <section class="pas-section audience">
+    <div class="section-inner">
+      <h2>Built for However You Run Your Business</h2>
+      <div class="audience-grid">
+        <div class="audience-card">
+          <h3>🏪 Solo Business Owner</h3>
+          <p>One profile, one scan, one clear action plan. No dashboard to learn.</p>
+        </div>
+        <div class="audience-card">
+          <h3>🏢 Agencies</h3>
+          <p>Scan multiple client businesses, white-label the report, and send it under your own brand.</p>
+        </div>
+        <div class="audience-card">
+          <h3>🌍 Multi-Location Brands</h3>
+          <p>Compare every branch side by side and spot which locations need attention fastest.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TESTIMONIALS (illustrative examples - replace with real customers before launch) ============ -->
+  <section class="pas-section testimonials">
+    <div class="section-inner">
+      <h2>What Business Owners Notice First</h2>
+      <p class="pas-lead illustrative-note">Illustrative examples of the kind of feedback this report is designed to earn - swap in real customer quotes once you have them.</p>
+      <div class="testimonial-grid">
+        <div class="testimonial-card">
+          <p>"I had no idea three of my reviews had gone unanswered for months. Fixed it in a day."</p>
+          <span>— Café Owner, Bengaluru</span>
+        </div>
+        <div class="testimonial-card">
+          <p>"The 90-day plan was the first time anyone told me exactly what order to fix things in."</p>
+          <span>— Boutique Owner, Dubai</span>
+        </div>
+        <div class="testimonial-card">
+          <p>"Seeing our score next to our competitor's was the wake-up call we needed."</p>
+          <span>— Clinic Manager, London</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PRICING TABLE ============ -->
+  <section class="pas-section pricing">
+    <div class="section-inner">
+      <h2 data-i18n="pricingTitle">Simple, fair pricing - everywhere</h2>
+      <p class="pas-lead" data-i18n="pricingLead">One report, one price, PLUS 8 free essential business tools thrown in - while every other tool in this space charges $39-999 every single month just for the basics. Priced fairly for your region too, not a flat currency conversion.</p>
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <h4 data-i18n="tier3Title">India & South Asia</h4>
+          <p class="pricing-amount">₹899</p>
+          <p class="pricing-note" data-i18n="tier3Note">India, Pakistan, Bangladesh, Philippines, Vietnam, Indonesia</p>
+        </div>
+        <div class="pricing-card">
+          <h4 data-i18n="tier2Title">Emerging Markets</h4>
+          <p class="pricing-amount">$11</p>
+          <p class="pricing-note" data-i18n="tier2Note">Russia, Brazil, Mexico, Turkey, South Africa</p>
+        </div>
+        <div class="pricing-card featured">
+          <h4 data-i18n="tier1Title">Gulf, US & Europe</h4>
+          <p class="pricing-amount">$19</p>
+          <p class="pricing-note" data-i18n="tier1Note">UAE, Saudi, Kuwait, USA, UK, Australia, Germany, France</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FINAL CTA ============ -->
+  <section class="final-cta">
+    <div class="section-inner">
+      <h2 data-i18n="finalCtaTitle">Stop guessing what your customers see</h2>
+      <p data-i18n="finalCtaSub">Run your free scan now - see your Pulse Score in under a minute.</p>
+      <a href="#scanTool" class="btn-primary" data-i18n="heroCta">Run My Free Scan</a>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="section-inner">
+      <p>&copy; <span id="year"></span> <span data-i18n="brand">Know Your Presence</span>. <span data-i18n="tagline">Connect with us and scale your business</span>.</p>
+      <p class="footer-links">
+        <a href="https://claude.ai/artifact/KJMbQBdWDV9NQKQCnQQut1" target="_blank" rel="noopener">Privacy Policy</a>
+        <span aria-hidden="true"> · </span>
+        <a href="https://claude.ai/artifact/WimbTcNHDitsbLkSukR7io" target="_blank" rel="noopener">Terms of Service</a>
+        <span aria-hidden="true"> · </span>
+        <a href="https://claude.ai/artifact/AYf5B5rzK2f4bro8hBLLEQ" target="_blank" rel="noopener">Refund Policy</a>
+      </p>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.js"></script>
+  <!-- Google Places Autocomplete - replace YOUR_GOOGLE_MAPS_JS_KEY with a real key from
+       Google Cloud Console (Maps JavaScript API + Places API enabled), restricted by HTTP
+       referrer to your actual domain. This key is visible in page source - that's normal
+       for client-side Maps keys; the domain restriction is what keeps it secure. -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_JS_KEY&libraries=places&callback=initPlacesAutocomplete" async defer></script>
+  <script>
+// public/i18n.js
+// Simple client-side translation dictionary. Add more languages by
+// adding a new key here - every UI string pulls from this object.
+// For the full ₹899/paid report content (action plan text, etc.),
+// route that through a translation API (Google Cloud Translation or
+// DeepL) server-side, since that text is dynamic, not static UI copy.
+
+
+const TRANSLATIONS = {
+  en: {
+    brand: "Know Your Presence",
+    tagline: "Connect with us and scale your business",
+    scanTitle: "Scan a Business",
+    scanHint: "Pick a sample business below to see a full scan, or type any name and hit scan.",
+    businessNameLabel: "Business Name",
+    businessNamePlaceholder: "e.g. Greenish India NaturalCare",
+    runScan: "Run Free Scan",
+    scanEmailLabel: "Your Email",
+    scanEmailPlaceholder: "you@example.com",
+    scanEmailNote: "We'll send your score here so you don't lose it. No spam, ever.",
+    scanEmailInvalid: "Please enter a valid email address to run your free scan.",
+    scanFailed: "Sorry, the scan couldn't run right now. Please try again in a moment.",
+    scanning: "Scanning...",
+    potentialLabel: "Potential in 90 days:",
+    actionPlanTitle: "Your 90-Day Action Plan",
+    actionPlanSub: "Prioritized fixes based on this scan - the part that comes with the full report.",
+    quickWins: "Week 1-2: Quick Wins",
+    momentum: "Week 3-6: Build Momentum",
+    compound: "Week 7-12: Compound Growth",
+    ctaText: "Unlock the full report, competitor comparison, and progress tracker.",
+    ctaButton: "Get Full Report + 8 Free Tools",
+    rescan: "Scan Another Business",
+    gradeExcellent: "Excellent", gradeStrong: "Strong",
+    gradeNeeds: "Needs Attention", gradeCritical: "Critical",
+    navCta: "Free Scan",
+    heroEyebrow: "FOR BUSINESS OWNERS WHO HATE GUESSING",
+    heroHeadline: "Your customers already judged your business online. You just haven't seen what they saw.",
+    heroSub: "One scan reveals your Google presence, social media health, website performance, and reputation - scored, benchmarked, and turned into a 90-day fix-it plan.",
+    heroCta: "Run My Free Scan",
+    heroPriceLabel: "Full report + 8 free tools from",
+    heroTrust: "🔒 <span class=\"big-o\">O</span>ne diagnosis. <span class=\"big-o\">O</span>ne plan. <span class=\"big-o\">O</span>ne price. No subscription, ever.",
+    problemTitle: "Here's the uncomfortable truth",
+    problemLead: "Most business owners run their business well - but have no idea how it actually looks to a stranger searching for them online right now.",
+    stat1: "of customers check reviews before choosing a business",
+    stat2: "customers won't return after one unanswered complaint",
+    stat3: "is how many business owners check all this weekly",
+    agitateTitle: "And every day you don't know, it's costing you",
+    agitate1: "A competitor with a weaker product but a stronger Google profile is ranking above you right now.",
+    agitate2: "Someone left a bad review three weeks ago. It's still unanswered. Every visitor sees it.",
+    agitate3: "Your last Instagram post was over a month ago. New visitors read that as \"closed\" or \"not serious.\"",
+    agitate4: "Your website takes 6 seconds to load on mobile. Most people leave after 3.",
+    solutionTitle: "One scan. Every platform. One clear number.",
+    solutionLead: "Your Business Pulse Score pulls together everything that shapes how customers see you - and tells you exactly what to fix first.",
+    feat1Title: "Google Business Health", feat1Body: "Profile completeness, rating trend, review velocity, and local search visibility.",
+    feat2Title: "Social Media Pulse", feat2Body: "Real-time activity and engagement across Instagram, Facebook, YouTube, and more.",
+    feat3Title: "Website Performance", feat3Body: "Speed, mobile-friendliness, security, and basic SEO health.",
+    feat4Title: "Reputation Score", feat4Body: "Aggregate sentiment across every review platform that matters in your market.",
+    feat5Title: "Competitor Benchmark", feat5Body: "See exactly where you stand against the business next door - or across the world.",
+    feat6Title: "90-Day Action Plan", feat6Body: "Not just data - a prioritized, dated plan of exactly what to fix and when.",
+    howTitle: "How it works",
+    how1Title: "Enter your business", how1Body: "Name, website, and social handles - takes 20 seconds.",
+    how2Title: "We scan everything", how2Body: "Google, social platforms, your website, and review sites - all at once.",
+    how3Title: "Get your Pulse Score", how3Body: "One number, five categories, and a plain-language diagnosis.",
+    how4Title: "Follow the 90-day plan", how4Body: "Prioritized, dated actions - not a wall of generic advice.",
+    pricingTitle: "Simple, fair pricing - everywhere",
+    pricingLead: "One report, one price, PLUS 8 free essential business tools thrown in - while every other tool in this space charges $39-999 every single month just for the basics. Priced fairly for your region too, not a flat currency conversion.",
+    tier3Title: "India & South Asia", tier3Note: "India, Pakistan, Bangladesh, Philippines, Vietnam, Indonesia",
+    tier2Title: "Emerging Markets", tier2Note: "Russia, Brazil, Mexico, Turkey, South Africa",
+    tier1Title: "Gulf, US & Europe", tier1Note: "UAE, Saudi, Kuwait, USA, UK, Australia, Germany, France",
+    finalCtaTitle: "Stop guessing what your customers see",
+    finalCtaSub: "Run your free scan now - see your Pulse Score in under a minute.",
+  },
+};
+
+function applyLanguage(lang) {
+  const dict = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    const key = el.getAttribute("data-i18n");
+    if (dict[key]) el.innerHTML = dict[key];
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+    const key = el.getAttribute("data-i18n-placeholder");
+    if (dict[key]) el.placeholder = dict[key];
+  });
+  document.documentElement.setAttribute("lang", lang);
+  return dict;
+}
+
+window.KYP_I18N = { TRANSLATIONS, applyLanguage };
+
+</script>
+  <script>
+const runScanBtn = document.getElementById("runScanBtn");
+const inputCard = document.getElementById("inputCard");
+const results = document.getElementById("results");
+const rescanBtn = document.getElementById("rescanBtn");
+const priceTag = document.getElementById("priceTag");
+
+const SAMPLES = ["Greenish India NaturalCare", "Urban Bites Cafe", "Sharma Electronics"];
+
+// --- currency symbols for client-side display (server does the real PPP calc) ---
+const CURRENCY_SYMBOLS = {
+  INR: "₹", USD: "$", GBP: "£", AUD: "A$", AED: "AED ", SAR: "SAR ",
+  KWD: "KWD ", RUB: "₽", BRL: "R$", EUR: "€",
+};
+
+function scoreColor(score) {
+  if (score >= 70) return "var(--green)";
+  if (score >= 50) return "var(--amber)";
+  return "var(--red)";
+}
+
+// --- language setup ---
+
+// --- Real scan counter. Shows nothing until the backend says the count has
+// passed its display threshold, so the number is always genuine rather than
+// seeded with a fabricated starting figure.
+(async function loadScanCounter() {
+  const el = document.getElementById("scanCounter");
+  if (!el) return;
+  try {
+    const res = await fetch("/api/stats/scans");
+    const data = await res.json();
+    if (data.visible && data.count) {
+      el.textContent = `${data.count.toLocaleString()} businesses scanned so far`;
+      el.hidden = false;
+    }
+  } catch {
+    // Counter is decorative - stay silent and hidden if it fails
+  }
+})();
+
+window.KYP_I18N.applyLanguage("en"); // English only - site targets English-speaking markets
+
+// --- sample business buttons ---
+const sampleRow = document.getElementById("sampleRow");
+SAMPLES.forEach((name) => {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "sample-btn";
+  btn.textContent = name;
+  btn.onclick = () => {
+    document.getElementById("businessNameInput").value = name;
+    // Clear any place_id/city from a previous real Autocomplete selection -
+    // otherwise a sample business name could get sent to the backend paired
+    // with a stale, unrelated real business's place_id or city.
+    selectedPlaceId = null;
+    selectedCity = null;
+    const confirmedEl = document.getElementById("placeConfirmed");
+    if (confirmedEl) confirmedEl.hidden = true;
+    runScan();
+  };
+  sampleRow.appendChild(btn);
+});
+
+// --- pricing: flat single price fetched from the backend (services/pricing.js).
+// No country lookup - there is deliberately one price for every buyer.
+async function updatePrice() {
+  try {
+    const res = await fetch("/api/pricing");
+    const data = await res.json();
+    const display = data.display || `$${data.price}`;
+    priceTag.textContent = display;
+    const heroPriceTag = document.getElementById("heroPriceTag");
+    if (heroPriceTag) heroPriceTag.textContent = display;
+  } catch (err) {
+    console.error("Pricing fetch failed:", err);
+    priceTag.textContent = "$129"; // matches REPORT_PRICE_USD in services/pricing.js
+  }
+}
+updatePrice();
+
+
+const yearEl = document.getElementById("year");
+if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+// --- WhatsApp Link Generator (genuinely functional free tool) ---
+const waBtn = document.getElementById("waGenerateBtn");
+if (waBtn) {
+  waBtn.addEventListener("click", () => {
+    const raw = document.getElementById("waNumberInput").value.trim();
+    const digitsOnly = raw.replace(/[^0-9]/g, "");
+    const resultEl = document.getElementById("waResult");
+    resultEl.hidden = false;
+    if (digitsOnly.length < 8) {
+      resultEl.innerHTML = "Enter a full number with country code (e.g. 919962337575).";
+      return;
+    }
+    const link = `https://wa.me/${digitsOnly}`;
+    resultEl.innerHTML = `Your link: <a href="${link}" target="_blank">${link}</a>`;
+  });
+}
+
+// --- Auto-Reply Message Generator ---
+const AUTO_REPLY_TEMPLATES = {
+  friendly: {
+    whatsapp: (biz) => `Hey there! 👋 Thanks for messaging ${biz || "us"}. We're away right now but we'll reply as soon as we're back - usually within a few hours. Talk soon!`,
+    instagram: (biz) => `Hi! Thanks for reaching out to ${biz || "us"} 💛 We read every DM and will get back to you soon. In the meantime, check our latest posts for updates!`,
+    facebook: (biz) => `Thanks for messaging ${biz || "us"}! We typically reply within a day. We appreciate you reaching out and can't wait to help. 😊`,
+  },
+  professional: {
+    whatsapp: (biz) => `Thank you for contacting ${biz || "us"}. Our team is currently unavailable but will respond to your message within 24 hours during business days.`,
+    instagram: (biz) => `Thank you for your message to ${biz || "us"}. We aim to respond to all inquiries within one business day.`,
+    facebook: (biz) => `Thank you for reaching out to ${biz || "us"}. A member of our team will respond to your inquiry shortly during business hours.`,
+  },
+  fun: {
+    whatsapp: (biz) => `Yo! 🙌 ${biz || "We"}'re off the grid for a sec but your message is locked in. We'll hit you back super soon!`,
+    instagram: (biz) => `Heyyy 👋 thanks for sliding into our DMs at ${biz || "our page"}! We'll get back to you faster than you can say "double tap".`,
+    facebook: (biz) => `Hey! Thanks for the message 🎉 ${biz || "We"} will be right with you - hang tight!`,
+  },
+};
+const arBtn = document.getElementById("arGenerateBtn");
+if (arBtn) {
+  arBtn.addEventListener("click", () => {
+    const bizType = document.getElementById("arBizType").value;
+    const tone = document.getElementById("arTone").value;
+    const bizTypeLabel = document.getElementById("arBizType").selectedOptions[0].text;
+    const templates = AUTO_REPLY_TEMPLATES[tone];
+    const resultEl = document.getElementById("arResult");
+    resultEl.hidden = false;
+    resultEl.innerHTML = `
+      <div class="result-block"><span class="result-label">WhatsApp Away Message</span><span class="result-text">${templates.whatsapp(bizTypeLabel)}</span></div>
+      <div class="result-block"><span class="result-label">Instagram Quick Reply</span><span class="result-text">${templates.instagram(bizTypeLabel)}</span></div>
+      <div class="result-block"><span class="result-label">Facebook Instant Reply</span><span class="result-text">${templates.facebook(bizTypeLabel)}</span></div>
+    `;
+  });
+}
+
+// --- Google Business Post Generator ---
+function gbpPostTemplates(name) {
+  const biz = name || "your business";
+  return [
+    `📣 New week, new reasons to visit ${biz}! Come see what we've got waiting for you. 😊`,
+    `⭐ Loving the support, ${biz} family! Thank you for every visit, review, and recommendation.`,
+    `🕒 Reminder: we're open and ready for you today. Drop by ${biz} whenever suits you!`,
+    `✨ Something new is happening at ${biz} - stop in this week to check it out.`,
+    `💬 Have a question about ${biz}? Send us a message - we love hearing from you!`,
+  ];
+}
+const gbpBtn = document.getElementById("gbpGenerateBtn");
+if (gbpBtn) {
+  gbpBtn.addEventListener("click", () => {
+    const name = document.getElementById("gbpBizName").value.trim();
+    const posts = gbpPostTemplates(name);
+    const resultEl = document.getElementById("gbpResult");
+    resultEl.hidden = false;
+    resultEl.innerHTML = posts.map((p, i) => `<div class="result-block"><span class="result-label">Post idea ${i+1}</span><span class="result-text">${p}</span></div>`).join("");
+  });
+}
+
+// --- QR Code Generator ---
+const qrBtn = document.getElementById("qrGenerateBtn");
+if (qrBtn) {
+  qrBtn.addEventListener("click", () => {
+    const url = document.getElementById("qrUrlInput").value.trim();
+    const resultEl = document.getElementById("qrResult");
+    const wrap = document.getElementById("qrCanvasWrap");
+    if (!url) {
+      resultEl.hidden = false;
+      wrap.innerHTML = "Paste a link first (your WhatsApp link or Google review link).";
+      document.getElementById("qrDownloadLink").style.display = "none";
+      return;
+    }
+    wrap.innerHTML = "";
+    try {
+      const qr = qrcode(0, "M");
+      qr.addData(url);
+      qr.make();
+      wrap.innerHTML = qr.createSvgTag(6, 0);
+      resultEl.hidden = false;
+      const svgEl = wrap.querySelector("svg");
+      const svgData = new XMLSerializer().serializeToString(svgEl);
+      const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      const dlLink = document.getElementById("qrDownloadLink");
+      dlLink.href = svgUrl;
+      dlLink.download = "qr-code.svg";
+      dlLink.style.display = "block";
+      dlLink.textContent = "Download SVG";
+    } catch (e) {
+      wrap.innerHTML = "Couldn't generate a QR code for that input - try a shorter link.";
+    }
+  });
+}
+
+// --- Local Hashtag Generator ---
+const HASHTAG_BASE = ["local", "smallbusiness", "supportlocal", "shopsmall", "instagood", "photooftheday"];
+function generateHashtags(industry, city) {
+  const ind = (industry || "business").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const cty = (city || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const tags = new Set();
+  HASHTAG_BASE.forEach(t => tags.add(t));
+  tags.add(ind);
+  tags.add(ind + "life");
+  tags.add(ind + "lover");
+  tags.add(ind + "gram");
+  if (cty) {
+    tags.add(cty);
+    tags.add(cty + ind);
+    tags.add(ind + cty);
+    tags.add(cty + "business");
+    tags.add(cty + "local");
+    tags.add("visit" + cty);
+    tags.add(cty + "life");
+  }
+  tags.add(ind + "love");
+  tags.add(ind + "daily");
+  tags.add("small" + ind);
+  return Array.from(tags).filter(Boolean).slice(0, 20);
+}
+const tagBtn = document.getElementById("tagGenerateBtn");
+if (tagBtn) {
+  tagBtn.addEventListener("click", () => {
+    const industry = document.getElementById("tagIndustry").value.trim();
+    const city = document.getElementById("tagCity").value.trim();
+    const tags = generateHashtags(industry, city);
+    const resultEl = document.getElementById("tagResult");
+    resultEl.hidden = false;
+    resultEl.innerHTML = tags.map(t => `<span class="hashtag-pill">#${t}</span>`).join(" ");
+  });
+}
+
+// --- client-side mock scoring (this page is static-hosted, no backend) ---
+// --- runs a real scan against the backend (server.js -> /api/scan) ---
+let lastScanResult = null; // stashed here so the checkout form can reuse it
+let selectedPlaceId = null; // set when the user picks a real business from Autocomplete - required for real Google data
+let selectedCity = null; // extracted from the real address - used for Yelp and other city-scoped lookups
+
+// --- Google Places Autocomplete: lets the user pick their EXACT business
+// (disambiguating same-named businesses by address), instead of just typing
+// a name with no way to resolve which real listing it refers to. ---
+function initPlacesAutocomplete() {
+  const input = document.getElementById("businessNameInput");
+  const confirmedEl = document.getElementById("placeConfirmed");
+  if (!input || !window.google || !google.maps || !google.maps.places) return;
+
+  const autocomplete = new google.maps.places.Autocomplete(input, {
+    types: ["establishment"],
+    fields: ["place_id", "name", "formatted_address", "address_components"],
+  });
+
+  autocomplete.addListener("place_changed", () => {
+    const place = autocomplete.getPlace();
+    if (!place || !place.place_id) {
+      selectedPlaceId = null;
+      selectedCity = null;
+      confirmedEl.hidden = true;
+      return;
+    }
+    selectedPlaceId = place.place_id;
+    input.value = place.name || input.value;
+    confirmedEl.textContent = `✓ ${place.formatted_address || "Business confirmed"}`;
+    confirmedEl.hidden = false;
+
+    // Extract city from the real address components (the "locality" field) -
+    // this is what lets us match the business on Yelp/other city-scoped
+    // lookups without asking the customer to type their city separately.
+    selectedCity = null;
+    const components = place.address_components || [];
+    const locality = components.find((c) => c.types.includes("locality"));
+    const fallbackArea = components.find((c) => c.types.includes("administrative_area_level_2"));
+    selectedCity = (locality || fallbackArea)?.long_name || null;
+  });
+
+  // If the user edits the name after selecting, the old place_id no longer
+  // applies - clear it so we don't scan the wrong business.
+  input.addEventListener("input", () => {
+    selectedPlaceId = null;
+    selectedCity = null;
+    confirmedEl.hidden = true;
+  });
+}
+// Called automatically by the Google Maps script's callback= parameter once it loads.
+window.initPlacesAutocomplete = initPlacesAutocomplete;
+
+async function runScan() {
+  const businessName = document.getElementById("businessNameInput").value.trim() || "Sample Business";
+  const emailInput = document.getElementById("scanEmailInput");
+  const email = emailInput ? emailInput.value.trim() : "";
+  const errorEl = document.getElementById("scanError");
+  const dict = window.KYP_I18N.TRANSLATIONS.en;
+
+  // Email gate - required before we spend real API money on a scan
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (errorEl) {
+      errorEl.textContent = dict.scanEmailInvalid || "Please enter a valid email address to run your free scan.";
+      errorEl.hidden = false;
+    }
+    if (emailInput) emailInput.focus();
+    return;
+  }
+  if (errorEl) errorEl.hidden = true;
+
+  runScanBtn.textContent = dict.scanning;
+  runScanBtn.disabled = true;
+
+  try {
+    const res = await fetch("/api/scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        businessName,
+        placeId: selectedPlaceId,
+        email,
+        city: selectedCity,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (res.status === 429) {
+      // Already used their free scan - show the server's message rather than
+      // a generic failure, since this is expected behavior not an error.
+      if (errorEl) {
+        errorEl.textContent = data.message || "You've already used your free scan today.";
+        errorEl.hidden = false;
+      }
+      return;
+    }
+    if (!res.ok) throw new Error(data.error || "Scan request failed");
+
+    lastScanResult = data;
+    renderResults(data);
+  } catch (err) {
+    console.error("Scan failed:", err);
+    if (errorEl) {
+      errorEl.textContent = dict.scanFailed || "Sorry, the scan couldn't run right now. Please try again in a moment.";
+      errorEl.hidden = false;
+    }
+  } finally {
+    runScanBtn.textContent = dict.runScan;
+    runScanBtn.disabled = false;
+  }
+}
+
+runScanBtn.addEventListener("click", runScan);
+
+rescanBtn.addEventListener("click", () => {
+  results.hidden = true;
+  inputCard.hidden = false;
+  document.getElementById("businessNameInput").value = "";
+  selectedPlaceId = null;
+  selectedCity = null;
+  document.getElementById("placeConfirmed").hidden = true;
+});
+
+function renderResults(data) {
+  inputCard.hidden = true;
+  results.hidden = false;
+
+  const dict = window.KYP_I18N.TRANSLATIONS.en;
+  const gradeKeyMap = {
+    Excellent: "gradeExcellent", Strong: "gradeStrong",
+    "Needs Attention": "gradeNeeds", Critical: "gradeCritical",
+  };
+
+  document.getElementById("bizName").textContent = data.businessName;
+  document.getElementById("gradeText").textContent = dict[gradeKeyMap[data.grade]] || data.grade;
+  document.getElementById("potentialScore").textContent = data.potentialScore;
+
+  const scoreNumberEl = document.getElementById("scoreNumber");
+  const gauge = document.getElementById("gauge");
+  const color = scoreColor(data.overall);
+
+  let current = 0;
+  const target = data.overall;
+  const step = () => {
+    current += 2;
+    if (current > target) current = target;
+    const deg = (current / 100) * 360;
+    gauge.style.background = `conic-gradient(${color} ${deg}deg, var(--border) ${deg}deg)`;
+    scoreNumberEl.textContent = current;
+    if (current < target) requestAnimationFrame(step);
+  };
+  step();
+
+  const breakdownEl = document.getElementById("breakdown");
+  breakdownEl.innerHTML = "";
+  data.breakdown.forEach((item) => {
+    const div = document.createElement("div");
+    div.className = "breakdown-item";
+    div.innerHTML = `
+      <div class="label">${item.category}</div>
+      <div class="bar-bg"><div class="bar-fill" style="background:${scoreColor(item.score)}"></div></div>
+      <div class="score-tag">${item.score}/100</div>
+    `;
+    breakdownEl.appendChild(div);
+    requestAnimationFrame(() => { div.querySelector(".bar-fill").style.width = item.score + "%"; });
+  });
+
+  fillList("quickWins", data.actionPlan.quickWins);
+  fillList("momentum", data.actionPlan.momentum);
+  fillList("compound", data.actionPlan.compound);
+}
+
+function fillList(id, items) {
+  const ul = document.getElementById(id);
+  ul.innerHTML = "";
+  if (!items || items.length === 0) {
+    ul.innerHTML = "<li>Nothing urgent here - keep it up.</li>";
+    return;
+  }
+  items.forEach((text) => {
+    const li = document.createElement("li");
+    li.textContent = text;
+    ul.appendChild(li);
+  });
+}
+
+// ============ CHECKOUT FLOW ============
+const ctaBtn = document.getElementById("ctaBtn");
+const checkoutOverlay = document.getElementById("checkoutOverlay");
+const checkoutClose = document.getElementById("checkoutClose");
+const checkoutEmail = document.getElementById("checkoutEmail");
+const checkoutError = document.getElementById("checkoutError");
+const checkoutPayBtn = document.getElementById("checkoutPayBtn");
+const checkoutPriceTag = document.getElementById("checkoutPriceTag");
+
+function openCheckout() {
+  checkoutError.hidden = true;
+  checkoutEmail.value = "";
+  checkoutPriceTag.textContent = priceTag.textContent;
+  checkoutOverlay.hidden = false;
+}
+function closeCheckout() {
+  checkoutOverlay.hidden = true;
+}
+
+document.getElementById("checkoutBizType").addEventListener("change", (e) => {
+  document.getElementById("checkoutDescWrap").hidden = e.target.value !== "other";
+});
+
+ctaBtn.addEventListener("click", openCheckout);
+checkoutClose.addEventListener("click", closeCheckout);
+checkoutOverlay.addEventListener("click", (e) => {
+  if (e.target === checkoutOverlay) closeCheckout();
+});
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+checkoutPayBtn.addEventListener("click", async () => {
+  const email = checkoutEmail.value.trim();
+  const businessName = lastScanResult ? lastScanResult.businessName : document.getElementById("businessNameInput").value.trim();
+  const businessType = document.getElementById("checkoutBizType").value;
+  const businessDescription = document.getElementById("checkoutDesc").value.trim();
+  const waNumber = document.getElementById("checkoutWaNumber").value.trim().replace(/[^0-9]/g, "");
+  const city = document.getElementById("checkoutCity").value.trim();
+  const competitorName = document.getElementById("checkoutCompetitor").value.trim();
+  // Scores come from the free scan already run - avoids re-running the scan at checkout time
+  const scores = lastScanResult && lastScanResult.breakdown
+    ? Object.fromEntries(lastScanResult.breakdown.map((b) => [b.category, b.score]))
+    : null;
+  // Real evidence (HTTPS, mobile-friendliness, real performance score, review
+  // count, rating, photo count etc.) - captured here so the PAID report can
+  // show genuine findings instead of numbers re-derived from the score alone.
+  const scanDetails = lastScanResult ? lastScanResult.details : null;
+
+  if (!isValidEmail(email)) {
+    checkoutError.textContent = "Please enter a valid email address.";
+    checkoutError.hidden = false;
+    return;
+  }
+
+  checkoutPayBtn.disabled = true;
+  checkoutPayBtn.textContent = "Preparing checkout...";
+  checkoutError.hidden = true;
+
+  try {
+    // Create a Dodo checkout session on our backend, then send the customer
+    // to Dodo's hosted checkout page.
+    //
+    // Unlike the old widget flow, fulfilment does NOT depend on this browser
+    // staying open - Dodo's webhook confirms the payment server-side and
+    // triggers the report + emails even if the customer closes the tab.
+    const res = await fetch("/api/checkout/create-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        businessName, email, businessType, businessDescription, city, waNumber, scores, scanDetails, competitorName,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.checkoutUrl) {
+      throw new Error(data.error || "Could not start checkout.");
+    }
+
+    window.location.href = data.checkoutUrl; // hand off to Dodo's hosted page
+  } catch (err) {
+    checkoutError.textContent = err.message || "Something went wrong - please try again.";
+    checkoutError.hidden = false;
+    checkoutPayBtn.disabled = false;
+    checkoutPayBtn.textContent = `Pay ${priceTag.textContent}`;
+  }
+});
+
+
+</script>
+</body>
+</html>

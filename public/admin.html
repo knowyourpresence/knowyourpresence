@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>KYP Admin</title>
+<style>
+:root{--green:#0f9d58;--ink:#0d1321;--bg:#f7f8fa;--border:#e6e8ec;--muted:#5b6472;--red:#d64545;--amber:#e8a33d;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;}
+.topbar{background:var(--ink);color:white;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;}
+.topbar h1{font-size:1rem;font-weight:700;}
+.topbar span{font-size:0.8rem;color:rgba(255,255,255,0.5);}
+.main{max-width:1100px;margin:0 auto;padding:28px 20px;}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px;}
+.stat-card{background:white;border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;}
+.stat-card .num{font-size:2rem;font-weight:800;color:var(--green);display:block;margin-bottom:4px;}
+.stat-card .lbl{font-size:0.8rem;color:var(--muted);}
+.section{background:white;border:1px solid var(--border);border-radius:12px;margin-bottom:24px;overflow:hidden;}
+.section-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.section-head h2{font-size:0.95rem;font-weight:700;}
+.section-head span{font-size:0.78rem;color:var(--muted);}
+table{width:100%;border-collapse:collapse;}
+th{padding:10px 16px;text-align:left;font-size:0.75rem;font-weight:700;color:var(--muted);letter-spacing:0.04em;border-bottom:1px solid var(--border);background:var(--bg);}
+td{padding:11px 16px;border-bottom:1px solid var(--border);font-size:0.85rem;vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f0faf5;}
+.badge{display:inline-block;padding:3px 8px;border-radius:999px;font-size:0.72rem;font-weight:700;}
+.badge-green{background:#eaf6ef;color:#0c6b3d;}
+.badge-amber{background:#fdf3e3;color:#9a6700;}
+.badge-red{background:#fdecea;color:#a02020;}
+.empty{padding:32px;text-align:center;color:var(--muted);}
+.refresh-btn{background:var(--green);color:white;border:none;padding:7px 14px;border-radius:8px;font-size:0.8rem;font-weight:700;cursor:pointer;}
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);}
+.login-card{background:white;border:1px solid var(--border);border-radius:16px;padding:36px;width:100%;max-width:360px;text-align:center;}
+.login-card h2{font-size:1.2rem;margin-bottom:6px;}
+.login-card p{color:var(--muted);font-size:0.88rem;margin-bottom:20px;}
+.login-card input{width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:8px;font-size:0.95rem;margin-bottom:12px;}
+.login-card button{width:100%;padding:12px;background:var(--green);color:white;border:none;border-radius:8px;font-weight:700;font-size:0.95rem;cursor:pointer;}
+.login-error{color:var(--red);font-size:0.82rem;margin-bottom:10px;}
+</style>
+</head>
+<body>
+
+<div id="loginWrap" class="login-wrap" hidden>
+  <div class="login-card">
+    <h2>KYP Admin</h2>
+    <p>Enter your admin password to continue.</p>
+    <div id="loginError" class="login-error" hidden></div>
+    <input type="password" id="pwInput" placeholder="Admin password" />
+    <button id="loginBtn">Sign In</button>
+  </div>
+</div>
+
+<div id="dashWrap" hidden>
+  <div class="topbar">
+    <h1>Know Your Presence — Admin Dashboard</h1>
+    <span id="lastRefresh"></span>
+  </div>
+
+  <div class="main">
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card"><span class="num" id="statOrders">—</span><span class="lbl">Total Orders</span></div>
+      <div class="stat-card"><span class="num" id="statRevenue">—</span><span class="lbl">Est. Revenue (USD)</span></div>
+      <div class="stat-card"><span class="num" id="statLeads">—</span><span class="lbl">Scan Leads</span></div>
+      <div class="stat-card"><span class="num" id="statConversion">—</span><span class="lbl">Lead → Purchase Rate</span></div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2>Recent Orders</h2>
+        <button class="refresh-btn" id="refreshBtn">↻ Refresh</button>
+      </div>
+      <div id="ordersBody"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <h2>Scan Leads</h2>
+        <span id="leadCount">—</span>
+      </div>
+      <div id="leadsBody"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Read key from URL (?key=...) or localStorage
+let adminKey = new URLSearchParams(location.search).get("key") || localStorage.getItem("kyp_admin_key") || "";
+
+function headers() { return { "x-admin-key": adminKey }; }
+
+async function tryLoad() {
+  if (!adminKey) { showLogin(); return; }
+  try {
+    const r = await fetch("/api/admin/orders", { headers: headers() });
+    if (r.status === 401) { showLogin(); return; }
+    const data = await r.json();
+    localStorage.setItem("kyp_admin_key", adminKey);
+    showDash();
+    renderOrders(data);
+    await loadLeads();
+    document.getElementById("lastRefresh").textContent = "Last updated: " + new Date().toLocaleTimeString();
+  } catch(e) { showLogin(); }
+}
+
+function showLogin() {
+  document.getElementById("loginWrap").hidden = false;
+  document.getElementById("dashWrap").hidden = true;
+}
+function showDash() {
+  document.getElementById("loginWrap").hidden = true;
+  document.getElementById("dashWrap").hidden = false;
+}
+
+document.getElementById("loginBtn").onclick = async () => {
+  const pw = document.getElementById("pwInput").value.trim();
+  if (!pw) return;
+  adminKey = pw;
+  const r = await fetch("/api/admin/orders", { headers: headers() });
+  if (r.status === 401) {
+    document.getElementById("loginError").textContent = "Wrong password.";
+    document.getElementById("loginError").hidden = false;
+    return;
+  }
+  const data = await r.json();
+  localStorage.setItem("kyp_admin_key", adminKey);
+  showDash();
+  renderOrders(data);
+  await loadLeads();
+};
+document.getElementById("pwInput").addEventListener("keydown", e => { if(e.key==="Enter") document.getElementById("loginBtn").click(); });
+document.getElementById("refreshBtn").onclick = tryLoad;
+
+function renderOrders(data) {
+  const orders = data.orders || [];
+  const byCountry = data.byCountry || {};
+
+  document.getElementById("statOrders").textContent = orders.length;
+  const revenue = orders.reduce((s, o) => s + (parseFloat(o.amount) || 0), 0);
+  document.getElementById("statRevenue").textContent = "$" + revenue.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
+
+  const el = document.getElementById("ordersBody");
+  if (!orders.length) { el.innerHTML = '<div class="empty">No orders yet.</div>'; return; }
+
+  const rows = [...orders].reverse().map(o => {
+    const date = new Date(o.createdAt).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+    return `<tr>
+      <td>${date}</td>
+      <td><b>${esc(o.businessName||"—")}</b></td>
+      <td>${esc(o.email)}</td>
+      <td>${esc(o.countryCode||"—")}</td>
+      <td><span class="badge badge-green">${esc(o.currency||"")} ${o.amount||""}</span></td>
+      <td style="color:var(--muted);font-size:0.78rem;">${esc(o.id)}</td>
+    </tr>`;
+  }).join("");
+
+  el.innerHTML = `<table>
+    <thead><tr><th>Date</th><th>Business</th><th>Email</th><th>Country</th><th>Amount</th><th>Order ID</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+async function loadLeads() {
+  const r = await fetch("/api/admin/leads", { headers: headers() });
+  const data = await r.json();
+  const stats = data.stats || {};
+  const leads = data.leads || [];
+
+  document.getElementById("statLeads").textContent = stats.totalLeads || 0;
+  document.getElementById("statConversion").textContent = stats.conversionRate || "0%";
+  document.getElementById("leadCount").textContent = `${stats.totalLeads || 0} total · ${stats.converted || 0} converted`;
+
+  const el = document.getElementById("leadsBody");
+  if (!leads.length) { el.innerHTML = '<div class="empty">No leads yet.</div>'; return; }
+
+  const rows = [...leads].reverse().slice(0, 50).map(l => {
+    const date = new Date(l.createdAt).toLocaleDateString("en-US",{month:"short",day:"numeric"});
+    const badge = l.converted
+      ? '<span class="badge badge-green">Converted</span>'
+      : '<span class="badge badge-amber">Lead</span>';
+    return `<tr>
+      <td>${date}</td>
+      <td>${esc(l.email)}</td>
+      <td>${esc(l.businessName||"—")}</td>
+      <td>${esc(l.countryCode||"—")}</td>
+      <td>${l.scanCount||1}x</td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join("");
+
+  el.innerHTML = `<table>
+    <thead><tr><th>Date</th><th>Email</th><th>Business</th><th>Country</th><th>Scans</th><th>Status</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function esc(s) {
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+tryLoad();
+</script>
+</body>
+</html>
