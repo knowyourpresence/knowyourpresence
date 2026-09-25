@@ -399,8 +399,10 @@ async function runApifyEnrichment(websiteUrl, businessName, city, countryCode, c
 
   // Free scrapers — no Apify credits needed
   const { checkWebsiteSeo } = require("./seoChecker");
-  const { scrapeFacebookAdsLibrary: freeScrapeFacebookAds } = require("./facebookAds");
   const { checkInstagramPresence } = require("./instagramChecker");
+  const { searchAdsLibrary } = require("./metaAds");
+  // Use Meta Ads API (free, uses your META_ADS_ACCESS_TOKEN)
+  const freeScrapeFacebookAds = (name, country) => searchAdsLibrary(name, { limit: 6, countryCode: country || "US" });
 
   const [seoR, googleMapsR, reviewsR, instagramR, facebookAdsR, tripadvisorR] =
     await Promise.allSettled([
