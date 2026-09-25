@@ -146,8 +146,9 @@ async function scrapeGoogleMapsEnrichment(businessName, city, country) {
       maxCrawledPlacesPerSearch: 1,
       language: "en",
       maxReviews: 5,
-      // country code helps geo-bias the search
-      ...(country && { countryCode: country }),
+      scrapeReviews: true,
+      scrapeImageUrls: false,
+      maxImages: 0,
     },
     90000
   );
@@ -188,8 +189,9 @@ async function scrapeGoogleReviews(businessName, city, country) {
   const items = await runApifyActor(
     "compass/google-maps-reviews-scraper",
     {
+      startUrls: [],
       searchTerms: [query],
-      maxReviewsPerBusiness: 10,
+      maxReviews: 10,
       language: "en",
       sort: "newest",
     },
@@ -301,7 +303,7 @@ async function scrapeFacebookAds(competitorName, countryCode) {
   if (!competitorName) return null;
 
   const items = await runApifyActor(
-    "apify/facebook-ads-library-scraper",
+    "apify/facebook-ads-scraper",
     {
       searchQuery: competitorName,
       countryCode: countryCode || "US",
