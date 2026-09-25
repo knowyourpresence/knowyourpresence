@@ -872,15 +872,26 @@ document.getElementById('runBtn').addEventListener('click',async()=>{
   }
 });
 
+function getScore(data,category){
+  // Try breakdown array first (new API shape)
+  if(Array.isArray(data.breakdown)){
+    const item=data.breakdown.find(b=>b.category===category);
+    if(item) return item.score;
+  }
+  // Fall back to subScores object (legacy)
+  if(data.subScores) return data.subScores[category]??null;
+  return null;
+}
+
 function showResults(data,bizName){
   document.querySelector('.scan-form').hidden=true;
   document.querySelector('.scan-samples').hidden=true;
   document.querySelector('.scan-card-count').hidden=true;
   const r=document.getElementById('results');
   r.classList.add('show');
-  const score=data.score??75;
-  const potential=data.potential??Math.min(96,score+16);
-  const grade=score>=85?'A':score>=75?'B+':score>=65?'B':score>=55?'C+':'C';
+  const score=data.overall??data.score??75;
+  const potential=data.potentialScore??data.potential??Math.min(96,score+16);
+  const grade=data.grade??(score>=85?'A':score>=75?'B+':score>=65?'B':score>=55?'C+':'C');
   document.getElementById('rScore').textContent=score;
   document.getElementById('rBizName').textContent=bizName;
   document.getElementById('rGrade').textContent=`Grade ${grade} · Top 35% of local businesses`;
@@ -890,10 +901,12 @@ function showResults(data,bizName){
   arc.setAttribute('stroke-dasharray',circ);
   arc.setAttribute('stroke-dashoffset',circ*(1-score/100));
   const cats=[
-    {name:'Google Business',score:data.subScores?.google??81,color:'#22c55e'},
-    {name:'Social Media',score:data.subScores?.social??58,color:'#f59e0b'},
-    {name:'Website & Technical',score:data.subScores?.website??67,color:'#f59e0b'},
-    {name:'Reputation',score:data.subScores?.reputation??74,color:'#3b6ef8'},
+    // breakdown is an array: [{category:'google',score:81,...}, ...]
+    // also support legacy subScores object shape
+    {name:'Google Business',score:getScore(data,'google'),color:'#22c55e'},
+    {name:'Social Media',score:getScore(data,'social'),color:'#f59e0b'},
+    {name:'Website & Technical',score:getScore(data,'website'),color:'#f59e0b'},
+    {name:'Reputation',score:getScore(data,'reputation'),color:'#3b6ef8'},
   ];
   document.getElementById('rBars').innerHTML=cats.map(c=>`
     <div class="r-bar-row">
