@@ -141,11 +141,9 @@ app.post("/api/scan", scanRateLimit, async (req, res) => {
         console.error("Meta Ads teaser failed (non-blocking):", e.message);
         return { business: { checked: false }, competitor: { checked: false } };
       }),
-      // Apify: on-page SEO + Google Maps public enrichment (non-blocking)
-      runApifyEnrichment(websiteUrl, businessName, city, countryCode, null).catch((e) => {
-        console.error("Apify enrichment failed (non-blocking):", e.message);
-        return { checked: false };
-      }),
+      // Apify: DISABLED on free scan to save credits
+      // Only runs on paid report generation (webhook handler below)
+      Promise.resolve({ checked: false, reason: "free_scan_only" }),
       // URLScan: security headers, trackers, screenshot (non-blocking)
       // URLScan takes ~25-30s so only run it if a websiteUrl was provided
       websiteUrl
