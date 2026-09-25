@@ -72,6 +72,36 @@ app.post("/api/scan", scanRateLimit, async (req, res) => {
       console.error("Lead save failed (continuing with scan):", leadErr.message);
     }
 
+    // --- PLACE ID LOOKUP ---
+    // If no placeId passed from frontend, look it up via Places Text Search
+    let resolvedPlaceId = placeId;
+    let resolvedWebsiteUrl = websiteUrl;
+    if (!resolvedPlaceId && businessName && process.env.GOOGLE_PLACES_API_KEY) {
+      try {
+        const query = city ? `${businessName} in ${city}` : businessName;
+        const { data: placeData } = await axios.post(
+          "https://places.googleapis.com/v1/places:searchText",
+          { textQuery: query, maxResultCount: 1 },
+          {
+            headers: {
+              "X-Goog-Api-Key": process.env.GOOGLE_PLACES_API_KEY,
+              "X-Goog-FieldMask": "places.id,places.websiteUri",
+            },
+          }
+        );
+        const place = placeData.places?.[0];
+        if (place) {
+          resolvedPlaceId = place.id;
+          if (!resolvedWebsiteUrl && place.websiteUri) {
+            resolvedWebsiteUrl = place.websiteUri;
+          }
+          console.log("Place ID resolved:", resolvedPlaceId, "for", businessName);
+        }
+      } catch (placeErr) {
+        console.error("Place ID lookup failed (continuing):", placeErr.message);
+      }
+    }
+
     const [
       googleResult,
       socialResult,
@@ -82,9 +112,9 @@ app.post("/api/scan", scanRateLimit, async (req, res) => {
       apifyResult,
       urlscanResult,
     ] = await Promise.all([
-      fetchGoogleBusinessData(placeId),
+      fetchGoogleBusinessData(resolvedPlaceId),
       calculateSocialScore({ youtubeChannelId, instagramUserId, facebookPageId }),
-      fetchWebsiteHealth(websiteUrl),
+      fetchWebsiteHealth(resolvedWebsiteUrl),
       fetchYelpData(businessName, city),
       runTechnicalChecks(websiteUrl),
       // Meta Ads Library: quick teaser check — is this business running ads?
