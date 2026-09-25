@@ -303,12 +303,12 @@ async function scrapeFacebookAds(competitorName, countryCode) {
   if (!competitorName) return null;
 
   const items = await runApifyActor(
-    "apify/facebook-ads-scraper",
+    "apify/facebook-ads-library-scraper",
     {
-      searchQuery: competitorName,
-      countryCode: countryCode || "US",
-      adType: "ALL",
-      maxResults: 10,
+      queries: [competitorName],
+      country: countryCode || "US",
+      adType: "all",
+      maxItems: 10,
     },
     60000
   );
