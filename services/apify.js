@@ -27,7 +27,7 @@ async function runApifyActor(actorId, input, timeoutMs = 90000) {
 
   try {
     const { data: runData } = await axios.post(
-      `${APIFY_BASE}/acts/${actorId}/runs?token=${token}`,
+      `${APIFY_BASE}/acts/${actorId.replace("/","~")}/runs?token=${token}`,
       input,
       { timeout: 15000, headers: { "Content-Type": "application/json" } }
     );
