@@ -190,12 +190,11 @@ async function scrapeGoogleReviews(businessName, city, country) {
     "compass/google-maps-reviews-scraper",
     {
       startUrls: [{ url: `https://www.google.com/maps/search/${encodeURIComponent(query)}` }],
-      maxReviews: 10,
+      maxReviews: 5,
       language: "en",
       sort: "newest",
-      reviewsTranslation: "originalAndTranslated",
     },
-    90000
+    120000
   );
 
   if (!items?.length) return null;
