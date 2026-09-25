@@ -189,11 +189,11 @@ async function scrapeGoogleReviews(businessName, city, country) {
   const items = await runApifyActor(
     "compass/google-maps-reviews-scraper",
     {
-      startUrls: [],
-      searchTerms: [query],
+      startUrls: [{ url: `https://www.google.com/maps/search/${encodeURIComponent(query)}` }],
       maxReviews: 10,
       language: "en",
       sort: "newest",
+      reviewsTranslation: "originalAndTranslated",
     },
     90000
   );
@@ -425,6 +425,34 @@ async function runApifyEnrichment(websiteUrl, businessName, city, countryCode, c
   return result;
 }
 
+
+// ---------------------------------------------------------------------------
+// YELP via Apify — no official API needed
+// Uses Apify's Yelp scraper to pull rating, review count, unanswered reviews
+// ---------------------------------------------------------------------------
+async function scrapeYelpViaApify(businessName, city) {
+  if (!businessName) return null;
+  const query = city ? `${businessName} ${city}` : businessName;
+  const items = await runApifyActor(
+    "petr_cermak/yelp-scraper",
+    {
+      searchTerms: [query],
+      searchLocation: city || "United States",
+      maxResults: 1,
+    },
+    60000
+  );
+  if (!items?.length) return null;
+  const biz = items[0];
+  return {
+    checked: true,
+    rating: biz.rating || null,
+    reviewCount: biz.reviewCount || 0,
+    categories: biz.categories || [],
+    url: biz.url || null,
+  };
+}
+
 module.exports = {
   runApifyEnrichment,
   scrapeWebsiteSeo,
@@ -433,4 +461,5 @@ module.exports = {
   scrapeInstagram,
   scrapeFacebookAds,
   scrapeTripAdvisor,
+  scrapeYelpViaApify,
 };
