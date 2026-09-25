@@ -69,6 +69,23 @@ app.post("/api/scan", scanRateLimit, async (req, res) => {
     // scan itself fails for some reason.
     try {
       saveLead({ email, businessName, countryCode });
+      // Send lead notification email to owner
+      const { Resend } = require("resend");
+      const resendClient = new Resend(process.env.RESEND_API_KEY);
+      if (process.env.OWNER_EMAIL && process.env.RESEND_API_KEY) {
+        resendClient.emails.send({
+          from: process.env.EMAIL_FROM || "reports@knowyourpresence.com",
+          to: process.env.OWNER_EMAIL,
+          subject: `🔍 New Free Scan — ${businessName || "Unknown"} (${city || "?"}, ${countryCode || "?"})`,
+          html: `<p><strong>New free scan lead!</strong></p>
+                 <p>📧 Email: ${email}</p>
+                 <p>🏢 Business: ${businessName || "Not provided"}</p>
+                 <p>🏙️ City: ${city || "Not provided"}</p>
+                 <p>🌍 Country: ${countryCode || "Not provided"}</p>
+                 <p>⏰ Time: ${new Date().toISOString()}</p>
+                 <p><a href="https://knowyourpresence.com/admin">View all leads →</a></p>`
+        }).catch(e => console.error("Lead notification email failed:", e.message));
+      }
     } catch (leadErr) {
       console.error("Lead save failed (continuing with scan):", leadErr.message);
     }
