@@ -140,7 +140,7 @@ async function scrapeGoogleMapsEnrichment(businessName, city, country) {
   const query = parts.join(", ");
 
   const items = await runApifyActor(
-    "compass/crawler-google-places",
+    "compass/google-maps-scraper",
     {
       searchStringsArray: [query],
       maxCrawledPlacesPerSearch: 1,
@@ -301,7 +301,7 @@ async function scrapeFacebookAds(competitorName, countryCode) {
   if (!competitorName) return null;
 
   const items = await runApifyActor(
-    "prodiger/facebook-ads-library-v2",
+    "apify/facebook-ads-scraper",
     {
       searchQuery: competitorName,
       countryCode: countryCode || "US",
@@ -351,7 +351,7 @@ async function scrapeTripAdvisor(businessName, city, country) {
   const query = [businessName, city, country].filter(Boolean).join(" ");
 
   const items = await runApifyActor(
-    "maxcopell/tripadvisor",
+    "maxcopell/tripadvisor-scraper",
     {
       query,
       maxItems: 1,
