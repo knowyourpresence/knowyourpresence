@@ -11,7 +11,7 @@ async function fetchWebsiteHealth(websiteUrl) {
     const url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
     const { data } = await axios.get(url, {
       params: { url: websiteUrl, key: apiKey, category: "PERFORMANCE", strategy: "MOBILE" },
-      timeout: 20000,
+      timeout: 45000,
     });
 
     const perfScore = (data.lighthouseResult?.categories?.performance?.score || 0) * 100;
