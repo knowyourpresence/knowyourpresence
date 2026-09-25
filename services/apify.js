@@ -397,8 +397,10 @@ async function runApifyEnrichment(websiteUrl, businessName, city, countryCode, c
 
   console.log(`[Apify] Starting enrichment for: ${businessName}, ${city}, ${countryCode}`);
 
-  // SEO check runs independently (free, no Apify credits)
+  // Free scrapers — no Apify credits needed
   const { checkWebsiteSeo } = require("./seoChecker");
+  const { scrapeFacebookAdsLibrary: freeScrapeFacebookAds } = require("./facebookAds");
+  const { checkInstagramPresence } = require("./instagramChecker");
 
   const [seoR, googleMapsR, reviewsR, instagramR, facebookAdsR, tripadvisorR] =
     await Promise.allSettled([
@@ -406,7 +408,7 @@ async function runApifyEnrichment(websiteUrl, businessName, city, countryCode, c
       scrapeGoogleMapsEnrichment(businessName, city, countryCode),
       scrapeGoogleReviews(businessName, city, countryCode),
       scrapeInstagram(businessName, city),
-      scrapeFacebookAds(competitorName || businessName, countryCode),
+      freeScrapeFacebookAds(competitorName || businessName, countryCode),
       scrapeTripAdvisor(businessName, city, countryCode),
     ]);
 
