@@ -397,9 +397,12 @@ async function runApifyEnrichment(websiteUrl, businessName, city, countryCode, c
 
   console.log(`[Apify] Starting enrichment for: ${businessName}, ${city}, ${countryCode}`);
 
+  // SEO check runs independently (free, no Apify credits)
+  const { checkWebsiteSeo } = require("./seoChecker");
+
   const [seoR, googleMapsR, reviewsR, instagramR, facebookAdsR, tripadvisorR] =
     await Promise.allSettled([
-      scrapeWebsiteSeo(websiteUrl),
+      checkWebsiteSeo(websiteUrl), // FREE — no Apify credits
       scrapeGoogleMapsEnrichment(businessName, city, countryCode),
       scrapeGoogleReviews(businessName, city, countryCode),
       scrapeInstagram(businessName, city),
