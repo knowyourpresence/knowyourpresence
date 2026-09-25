@@ -1,1 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="description" content="Know Your Presence turns your scattered digital signals into one clear score and a 90-day action plan. Free scan in 60 seconds."/>
+<title>Know Your Presence — See how the world sees your business</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0b0f1e;
+  --navy2:#111827;
+  --blue:#3b6ef8;
+  --blue-dim:#2555e0;
+  --blue-light:#eef2ff;
+  --bg:#f5f6f8;
+  --bg2:#eef0f4;
+  --white:#ffffff;
+  --ink:#0b0f1e;
+  --ink2:#374151;
+  --ink3:#6b7280;
+  --border:#e5e7eb;
+  --border-dark:rgba(255,255,255,0.1);
+  --green:#22c55e;
+  --red:#ef4444;
+  --amber:#f59e0b;
+  --sans:'Inter',system-ui,sans-serif;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--white);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+[hidden]{display:none!important}
+.wrap{max-width:1120px;margin:0 auto;padding:0 40px}
 
+/* ── ANNOUNCEMENT BAR ── */
+.announce{background:var(--navy);padding:9px 0;text-align:center;font-size:11.5px;font-weight:500;color:rgba(255,255,255,0.55);letter-spacing:0.06em;display:flex;align-items:center;justify-content:space-between}
+.announce .wrap{display:flex;align-items:center;justify-content:space-between;width:100%}
+.announce-left{display:flex;align-items:center;gap:6px}
+.announce-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.announce-right{color:rgba(255,255,255,0.45)}
+
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:1px solid var(--border)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;padding:0 40px;max-width:1120px;margin:0 auto;height:60px;gap:32px}
+.nav-brand{display:flex;align-items:center;gap:10px}
+.nav-logo{width:36px;height:36px;background:var(--navy);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.nav-logo svg{width:20px;height:20px}
+.nav-brand-name{font-size:0.92rem;font-weight:700;color:var(--ink);letter-spacing:-0.01em}
+.nav-links{display:flex;gap:28px}
+.nav-links a{font-size:0.85rem;color:var(--ink3);font-weight:500;transition:color .15s}
+.nav-links a:hover{color:var(--ink)}
+.nav-right{display:flex;align-items:center;gap:12px}
+.nav-globe{font-size:0.82rem;color:var(--ink3);display:flex;align-items:center;gap:5px}
+.nav-cta{background:var(--blue);color:#fff;font-size:0.85rem;font-weight:600;padding:8px 18px;border-radius:8px;display:flex;align-items:center;gap:6px;transition:background .15s}
+.nav-cta:hover{background:var(--blue-dim)}
+
+/* ── HERO ── */
+.hero{background:var(--navy);padding:80px 0 0;position:relative;overflow:hidden}
+.hero-eyebrow{display:flex;align-items:center;gap:12px;font-size:10.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:28px}
+.hero-eyebrow span{display:block;width:32px;height:1px;background:rgba(255,255,255,0.25)}
+.hero-layout{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+.hero h1{font-size:clamp(2.8rem,4.5vw,4rem);font-weight:900;line-height:1.0;letter-spacing:-0.04em;color:#fff;margin-bottom:24px}
+.hero h1 .accent{color:var(--blue)}
+.hero-sub{font-size:1rem;color:rgba(255,255,255,0.55);line-height:1.7;max-width:480px;margin-bottom:36px}
+.hero-actions{display:flex;align-items:center;gap:14px;margin-bottom:28px}
+.btn-blue{background:var(--blue);color:#fff;font-weight:700;font-size:0.92rem;padding:12px 24px;border-radius:8px;display:inline-flex;align-items:center;gap:8px;transition:background .15s}
+.btn-blue:hover{background:var(--blue-dim)}
+.btn-outline{background:transparent;color:rgba(255,255,255,0.8);font-weight:500;font-size:0.92rem;padding:12px 20px;border-radius:8px;display:inline-flex;align-items:center;gap:8px;border:none;transition:color .15s}
+.btn-outline:hover{color:#fff}
+.hero-trust-row{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.trust-chip{display:flex;align-items:center;gap:6px;font-size:11.5px;color:rgba(255,255,255,0.45);font-weight:500}
+.trust-chip .dot{width:14px;height:14px;border-radius:50%;background:rgba(34,197,94,0.2);border:1px solid rgba(34,197,94,0.5);display:flex;align-items:center;justify-content:center}
+.trust-chip .dot::after{content:'';width:5px;height:5px;border-radius:50%;background:var(--green)}
+
+/* HERO MOCKUP */
+.hero-mock{border-radius:14px 14px 0 0;border:1px solid rgba(255,255,255,0.12);border-bottom:none;background:#131929;overflow:hidden;box-shadow:0 0 80px rgba(59,110,248,0.12)}
+.mock-bar{background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 14px;display:flex;align-items:center;gap:8px}
+.mock-dot{width:9px;height:9px;border-radius:50%}
+.mock-chip{background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#22c55e;font-size:9px;font-weight:700;letter-spacing:.8px;padding:2px 8px;border-radius:4px;margin-left:auto}
+.mock-label{font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:.8px;margin-left:8px}
+.mock-body{padding:24px}
+.mock-section-label{font-size:8px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:12px}
+.mock-score-row{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}
+.mock-big{font-size:52px;font-weight:900;letter-spacing:-0.04em;color:#fff;line-height:1}
+.mock-denom{font-size:13px;color:rgba(255,255,255,0.3)}
+.mock-score-label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--green);margin-bottom:20px}
+.mock-chart{height:80px;position:relative;margin-bottom:16px;overflow:hidden}
+.mock-chart svg{width:100%;height:100%}
+.mock-lift{position:absolute;top:4px;right:0;background:var(--blue);color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px}
+.mock-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid rgba(255,255,255,0.08)}
+.mock-stat{padding:12px 0;text-align:center}
+.mock-stat-val{font-size:18px;font-weight:800;color:#fff;line-height:1;margin-bottom:2px}
+.mock-stat-label{font-size:8px;color:rgba(255,255,255,0.3);letter-spacing:.5px}
+.mock-footer{border-top:1px solid rgba(255,255,255,0.08);padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
+.mock-status{font-size:9px;display:flex;align-items:center;gap:6px;color:rgba(255,255,255,0.35)}
+.mock-status::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--green)}
+
+/* ── TICKER BAR ── */
+.ticker{background:var(--navy);border-top:1px solid rgba(255,255,255,0.06);padding:14px 0}
+.ticker-inner{display:flex;align-items:center;justify-content:center;gap:48px;flex-wrap:wrap}
+.ticker-item{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.3)}
+.ticker-sep{color:rgba(255,255,255,0.12)}
+
+/* ── SECTION COMMON ── */
+section{padding:100px 0}
+.section-num-label{display:flex;align-items:center;gap:10px;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue);margin-bottom:20px}
+.section-num-label .num{color:rgba(0,0,0,0.25)}
+.section-h{font-size:clamp(2rem,3.5vw,3rem);font-weight:900;line-height:1.05;letter-spacing:-0.04em;color:var(--ink);margin-bottom:16px}
+.section-h .accent{color:var(--blue)}
+.section-sub{font-size:0.95rem;color:var(--ink3);line-height:1.7;max-width:440px}
+.dark-section{background:var(--navy)}
+.dark-section .section-num-label .num{color:rgba(255,255,255,0.2)}
+.dark-section .section-num-label{color:var(--blue)}
+.dark-section .section-h{color:#fff}
+.dark-section .section-sub{color:rgba(255,255,255,0.5)}
+.light-section{background:var(--bg)}
+
+/* ── PROBLEM / INTRO ── */
+.intro-layout{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start}
+.intro-right{padding-top:12px}
+.intro-tagline{font-size:0.9rem;color:var(--ink3);line-height:1.7;margin-bottom:32px}
+.three-col-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--border)}
+.step-col{padding:28px 24px 28px 0;border-right:1px solid var(--border)}
+.step-col:last-child{border-right:none;padding-right:0}
+.step-col-num{font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--blue);margin-bottom:10px}
+.step-col-title{font-size:0.92rem;font-weight:700;color:var(--ink);margin-bottom:6px}
+.step-col-desc{font-size:0.82rem;color:var(--ink3);line-height:1.55}
+
+/* ── SCAN SECTION ── */
+.scan-layout{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.scan-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:36px;box-shadow:0 4px 24px rgba(0,0,0,0.06)}
+.scan-card-label{font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+.scan-card-count{font-size:11px;color:var(--ink3);margin-bottom:24px}
+.scan-form{display:flex;flex-direction:column;gap:14px}
+.scan-field label{font-size:11.5px;font-weight:600;color:var(--ink2);display:block;margin-bottom:5px}
+.scan-input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:11px 14px;font-size:0.92rem;color:var(--ink);font-family:var(--sans);outline:none;transition:border-color .15s}
+.scan-input:focus{border-color:var(--blue);background:#fff}
+.scan-input::placeholder{color:var(--ink3)}
+.scan-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.scan-select{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:11px 14px;font-size:0.92rem;color:var(--ink);font-family:var(--sans);outline:none;cursor:pointer;transition:border-color .15s;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+.scan-select:focus{border-color:var(--blue)}
+.scan-select option{background:#fff}
+.scan-note{font-size:11px;color:var(--ink3);margin-top:-8px}
+.scan-error{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:8px;padding:10px 14px;font-size:0.83rem}
+.scan-btn{width:100%;background:var(--blue);color:#fff;font-weight:700;font-size:0.95rem;padding:14px;border-radius:8px;border:none;cursor:pointer;font-family:var(--sans);display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s}
+.scan-btn:hover{background:var(--blue-dim)}
+.scan-btn:disabled{opacity:.55;cursor:wait}
+.scan-privacy{text-align:center;font-size:11px;color:var(--ink3);margin-top:-6px;display:flex;align-items:center;justify-content:center;gap:5px}
+.scan-samples{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.scan-sample-btn{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--ink3);cursor:pointer;transition:all .15s;font-family:var(--sans)}
+.scan-sample-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
+
+/* RESULTS */
+.results-card{display:none;background:var(--white);border:1.5px solid var(--blue);border-radius:16px;padding:28px;margin-top:12px;box-shadow:0 0 0 4px rgba(59,110,248,0.08)}
+.results-card.show{display:block}
+.result-score-row{display:flex;align-items:center;gap:20px;margin-bottom:22px}
+.result-donut{position:relative;width:88px;height:88px;flex-shrink:0}
+.result-donut svg{width:100%;height:100%}
+.result-donut-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.result-donut-inner .n{font-size:24px;font-weight:900;color:var(--ink);line-height:1;letter-spacing:-0.03em}
+.result-donut-inner .d{font-size:9px;color:var(--ink3)}
+.result-meta h3{font-size:1rem;font-weight:700;color:var(--ink);margin-bottom:3px;letter-spacing:-0.01em}
+.result-grade{font-size:0.82rem;font-weight:700;color:var(--blue);margin-bottom:3px}
+.result-potential{font-size:0.82rem;color:var(--ink3)}
+.result-bars{display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
+.r-bar-row{display:flex;align-items:center;gap:10px}
+.r-bar-name{font-size:0.8rem;color:var(--ink2);width:140px;flex-shrink:0;font-weight:500}
+.r-bar-track{flex:1;height:6px;background:var(--bg2);border-radius:3px;overflow:hidden}
+.r-bar-fill{height:100%;border-radius:3px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.r-bar-val{font-size:0.82rem;font-weight:700;width:24px;text-align:right;color:var(--ink2)}
+.upgrade-box{background:var(--blue-light);border-radius:10px;padding:18px;text-align:center}
+.upgrade-box h4{font-size:0.9rem;font-weight:700;color:var(--ink);margin-bottom:5px;letter-spacing:-0.01em}
+.upgrade-box p{font-size:0.8rem;color:var(--ink3);margin-bottom:14px;line-height:1.5}
+.upgrade-cta{display:inline-flex;align-items:center;gap:6px;background:var(--blue);color:#fff;font-weight:700;font-size:0.85rem;padding:10px 22px;border-radius:8px;transition:background .15s}
+.upgrade-cta:hover{background:var(--blue-dim)}
+
+/* ── 9 CHECKS / FEATURES ── */
+.checks-layout{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start;margin-bottom:56px}
+.checks-desc{font-size:0.92rem;color:rgba(255,255,255,0.5);line-height:1.7;max-width:420px}
+.checks-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;transition:border-color .2s;cursor:default}
+.check-card:hover{border-color:rgba(59,110,248,0.4)}
+.check-card-num{font-size:9px;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,0.25);margin-bottom:8px}
+.check-card-status{font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+.check-card-title{font-size:0.92rem;font-weight:700;color:#fff;margin-bottom:4px}
+.check-card-desc{font-size:0.78rem;color:rgba(255,255,255,0.4);line-height:1.5}
+.check-card-link{font-size:9px;color:rgba(255,255,255,0.25);margin-top:12px;display:flex;justify-content:flex-end}
+
+/* ── OUTPUT / REPORT ── */
+.output-layout{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.output-list{display:flex;flex-direction:column;gap:18px;margin:28px 0 32px}
+.output-item{display:flex;align-items:flex-start;gap:12px}
+.output-check{width:18px;height:18px;border-radius:50%;background:rgba(59,110,248,0.15);border:1px solid rgba(59,110,248,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.output-check svg{width:9px;height:9px}
+.output-item-title{font-size:0.9rem;font-weight:700;color:#fff;margin-bottom:2px}
+.output-item-desc{font-size:0.8rem;color:rgba(255,255,255,0.45);line-height:1.5}
+.report-mockup{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 32px 64px rgba(0,0,0,0.5);transform:rotate(-1deg);transition:transform .3s}
+.report-mockup:hover{transform:rotate(0deg)}
+.report-top{background:var(--navy2);padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+.report-top-label{font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,0.35)}
+.report-body{padding:24px 20px}
+.report-diag{font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin-bottom:10px}
+.report-headline{font-size:1.25rem;font-weight:900;color:var(--ink);line-height:1.2;letter-spacing:-0.03em;margin-bottom:3px}
+.report-headline .accent{color:var(--blue)}
+.report-score-row{display:flex;align-items:baseline;gap:8px;margin:16px 0 4px}
+.report-score-big{font-size:3rem;font-weight:900;color:var(--ink);letter-spacing:-0.05em;line-height:1}
+.report-score-label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+.report-score-sub{font-size:10px;color:var(--ink3);margin-bottom:16px}
+.report-bars{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.rep-bar{display:flex;align-items:center;gap:8px}
+.rep-bar-name{font-size:9px;color:var(--ink3);width:90px;flex-shrink:0}
+.rep-bar-track{flex:1;height:5px;background:var(--bg2);border-radius:3px;overflow:hidden}
+.rep-bar-fill{height:100%;background:var(--blue);border-radius:3px}
+.rep-bar-val{font-size:9px;font-weight:700;color:var(--ink);width:22px;text-align:right}
+.report-footer{border-top:1px solid var(--border);padding:8px 0 0;display:flex;align-items:center;justify-content:space-between}
+.report-footer-label{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+
+/* ── PRICING ── */
+.price-layout{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.price-card{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:32px}
+.price-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.price-card-name{font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+.price-badge{background:var(--blue-light);color:var(--blue);font-size:9px;font-weight:700;padding:3px 10px;border-radius:999px;letter-spacing:.5px}
+.price-amount{display:flex;align-items:baseline;gap:4px;margin-bottom:4px}
+.price-currency{font-size:1.1rem;font-weight:700;color:var(--ink);margin-top:4px}
+.price-num{font-size:3.2rem;font-weight:900;color:var(--ink);line-height:1;letter-spacing:-0.05em}
+.price-period{font-size:0.85rem;color:var(--ink3);font-weight:400}
+.price-note{font-size:11px;color:var(--ink3);margin-bottom:20px}
+.price-divider{height:1px;background:var(--border);margin:20px 0}
+.price-features{display:flex;flex-direction:column;gap:11px;margin-bottom:26px}
+.price-feature{display:flex;align-items:flex-start;gap:10px;font-size:0.87rem;color:var(--ink2)}
+.price-feature .chk{width:16px;height:16px;border-radius:50%;background:rgba(59,110,248,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.price-feature .chk svg{width:8px;height:8px}
+.price-cta{width:100%;padding:13px;border-radius:8px;font-weight:700;font-size:0.9rem;cursor:pointer;font-family:var(--sans);transition:all .15s;border:none;background:var(--blue);color:#fff}
+.price-cta:hover{background:var(--blue-dim)}
+.price-secure{margin-top:14px;display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:8px;padding:12px 14px}
+.price-secure-icon{color:var(--blue);font-size:16px}
+.price-secure-text{font-size:11px;color:var(--ink3)}
+.price-secure-text strong{color:var(--ink);font-weight:600;display:block;margin-bottom:1px}
+.price-left-features{display:flex;flex-direction:column;gap:8px;margin:28px 0}
+.price-left-item{font-size:0.88rem;color:var(--ink2)}
+
+/* ── FAQ ── */
+.faq-layout{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start}
+.faq-list{display:flex;flex-direction:column}
+.faq-item{border-bottom:1px solid var(--border)}
+.faq-q{width:100%;background:none;border:none;color:var(--ink);font-family:var(--sans);font-size:0.9rem;font-weight:600;padding:17px 0;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;letter-spacing:-0.01em}
+.faq-icon{color:var(--ink3);font-size:1.1rem;flex-shrink:0;transition:transform .2s;font-weight:300}
+.faq-a{font-size:0.85rem;color:var(--ink3);line-height:1.65;padding:0 0 16px;display:none}
+.faq-item.open .faq-a{display:block}
+.faq-item.open .faq-icon{transform:rotate(45deg)}
+
+/* ── CTA ── */
+.cta-section{background:var(--navy);padding:100px 0}
+.cta-inner{text-align:center;max-width:540px;margin:0 auto}
+.cta-inner h2{font-size:clamp(2rem,3.5vw,3rem);font-weight:900;line-height:1.05;letter-spacing:-0.04em;color:#fff;margin-bottom:14px}
+.cta-inner h2 .accent{color:var(--blue)}
+.cta-inner p{font-size:0.95rem;color:rgba(255,255,255,0.5);margin-bottom:32px;line-height:1.65}
+.cta-chips{display:flex;align-items:center;justify-content:center;gap:20px;margin-top:22px;flex-wrap:wrap}
+.cta-chip{display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(255,255,255,0.4)}
+.cta-chip svg{width:12px;height:12px;color:var(--green)}
+
+/* ── FOOTER ── */
+footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);padding:28px 0}
+.footer-inner{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.footer-brand{display:flex;align-items:center;gap:8px}
+.footer-logo{width:26px;height:26px;background:rgba(255,255,255,0.08);border-radius:6px;display:flex;align-items:center;justify-content:center}
+.footer-brand-name{font-size:0.82rem;font-weight:600;color:rgba(255,255,255,0.5)}
+.footer-links{display:flex;gap:18px}
+.footer-links a{font-size:11.5px;color:rgba(255,255,255,0.3);transition:color .15s}
+.footer-links a:hover{color:rgba(255,255,255,0.6)}
+.footer-right{font-size:11px;color:rgba(255,255,255,0.2)}
+
+@media(max-width:900px){
+  .hero-layout,.intro-layout,.scan-layout,.checks-layout,.output-layout,.price-layout,.faq-layout{grid-template-columns:1fr}
+  .checks-grid{grid-template-columns:1fr 1fr}
+  .three-col-steps{grid-template-columns:1fr}
+  .step-col{border-right:none;border-bottom:1px solid var(--border);padding:20px 0}
+  .step-col:last-child{border-bottom:none}
+  .report-mockup{transform:none}
+  .wrap{padding:0 20px}
+  .nav-inner{padding:0 20px}
+  .nav-links{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ANNOUNCE -->
+<div class="announce">
+  <div class="wrap">
+    <div class="announce-left"><span class="announce-dot"></span>PREVIEW ENVIRONMENT · LIVE DATA ON ALL PAID REPORTS</div>
+    <div class="announce-right">INTERNATIONAL DELIVERY · USD 129 ONE-TIME</div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-brand">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="40" height="40" rx="9" fill="#0b0f1e"/>
+        <rect x="4" y="5" width="13" height="13" rx="3" fill="rgba(255,255,255,0.15)"/>
+        <rect x="4" y="20" width="13" height="4" rx="1.5" fill="rgba(255,255,255,0.08)"/>
+        <rect x="4" y="26" width="9" height="3" rx="1.5" fill="rgba(255,255,255,0.05)"/>
+        <line x1="20" y1="3" x2="20" y2="37" stroke="#3b6ef8" stroke-width="1.5" stroke-dasharray="3,2.5" stroke-linecap="round"/>
+        <rect x="23" y="5" width="13" height="13" rx="3" fill="#3b6ef8"/>
+        <rect x="23" y="20" width="13" height="4" rx="1.5" fill="#3b6ef8" opacity="0.6"/>
+        <rect x="23" y="26" width="9" height="3" rx="1.5" fill="#3b6ef8" opacity="0.4"/>
+      </svg>
+      <span class="nav-brand-name" style="font-size:0.95rem;font-weight:700;color:#0b0f1e;letter-spacing:-0.02em">KNOW YOUR <span style="color:#3b6ef8">PRESENCE.</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#checks">Sources</a>
+      <a href="#report">Report</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="nav-right">
+      <span class="nav-globe">🌐 Global</span>
+      <a href="#scan" class="nav-cta">Run audit →</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-eyebrow"><span></span>Digital presence intelligence</div>
+    <div class="hero-layout">
+      <div>
+        <h1>Stop guessing how the world sees your <span class="accent">business online.</span></h1>
+        <p class="hero-sub">KYP turns the fragmented signals around your brand into one clear score, one executive report, and the exact next moves to close your growth gaps.</p>
+        <div class="hero-actions">
+          <a href="#scan" class="btn-blue">Run your audit →</a>
+          <a href="#report" class="btn-outline">📄 See what you get</a>
+        </div>
+        <div class="hero-trust-row">
+          <span class="trust-chip"><span class="dot"></span>No passwords required</span>
+          <span class="trust-chip"><span class="dot"></span>Global-ready</span>
+          <span class="trust-chip"><span class="dot"></span>One-time $129</span>
+        </div>
+      </div>
+      <div>
+        <div class="hero-mock">
+          <div class="mock-bar">
+            <span class="mock-dot" style="background:#ff5f57"></span>
+            <span class="mock-dot" style="background:#febc2e"></span>
+            <span class="mock-dot" style="background:#28c840"></span>
+            <span class="mock-label">KYP / PRESENCE ENGINE</span>
+            <span class="mock-chip">LIVE DATA</span>
+          </div>
+          <div class="mock-body">
+            <div class="mock-section-label">AUDIT SIGNAL MAP</div>
+            <div class="mock-score-row">
+              <span class="mock-big">74</span>
+              <span class="mock-denom">/100</span>
+            </div>
+            <div class="mock-score-label">HEALTH SCORE · HIGH IMPROVEMENT POTENTIAL</div>
+            <div class="mock-chart">
+              <svg viewBox="0 0 400 80" preserveAspectRatio="none">
+                <defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b6ef8" stop-opacity=".3"/><stop offset="100%" stop-color="#3b6ef8" stop-opacity="0"/></linearGradient></defs>
+                <path d="M0,70 C40,68 60,55 100,48 C140,41 160,60 200,45 C240,30 260,35 300,22 C330,12 360,15 400,8" fill="none" stroke="#3b6ef8" stroke-width="2"/>
+                <path d="M0,70 C40,68 60,55 100,48 C140,41 160,60 200,45 C240,30 260,35 300,22 C330,12 360,15 400,8 L400,80 L0,80 Z" fill="url(#lg)"/>
+              </svg>
+              <span class="mock-lift">+ 18.4% signal lift</span>
+            </div>
+            <div class="mock-stats">
+              <div class="mock-stat"><div class="mock-stat-val">9</div><div class="mock-stat-label">CHECKS RUN</div></div>
+              <div class="mock-stat"><div class="mock-stat-val">42</div><div class="mock-stat-label">PAGES CRAWLED</div></div>
+              <div class="mock-stat"><div class="mock-stat-val">01:18</div><div class="mock-stat-label">SCAN TIME</div></div>
+            </div>
+          </div>
+          <div class="mock-footer">
+            <span class="mock-status">mock_scan.complete</span>
+            <span style="font-size:9px;color:rgba(255,255,255,0.25)">all systems nominal</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker" style="background:var(--navy)">
+  <div class="ticker-inner">
+    <span class="ticker-item">Built for decision makers</span>
+    <span class="ticker-sep">——</span>
+    <span class="ticker-item">Public signals only</span>
+    <span class="ticker-sep">——</span>
+    <span class="ticker-item">Executive-grade output</span>
+    <span class="ticker-sep">——</span>
+    <span class="ticker-item">No subscription ever</span>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="wrap">
+    <div class="intro-layout">
+      <div>
+        <div class="section-num-label"><span class="num">02</span>FROM FRAGMENTED TO FOCUSED</div>
+        <h2 class="section-h">One scan.<br/>One clear<br/>direction.</h2>
+      </div>
+      <div class="intro-right">
+        <p class="intro-tagline">The signals already exist. KYP brings them into the same room so you can see what matters, what's missing, and what to do next.</p>
+        <div class="three-col-steps">
+          <div class="step-col">
+            <div class="step-col-num">01</div>
+            <div class="step-col-title">Give us the coordinates</div>
+            <div class="step-col-desc">Your business name, city, and market are enough to begin.</div>
+          </div>
+          <div class="step-col">
+            <div class="step-col-num">02</div>
+            <div class="step-col-title">We connect the signals</div>
+            <div class="step-col-desc">Reputation, performance, social, ads, AI visibility, and SEO.</div>
+          </div>
+          <div class="step-col">
+            <div class="step-col-num">03</div>
+            <div class="step-col-title">Make the next move</div>
+            <div class="step-col-desc">A ranked roadmap instead of another analytics dashboard.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCAN TOOL -->
+<section id="scan" class="light-section">
+  <div class="wrap">
+    <div class="scan-layout">
+      <div>
+        <div class="section-num-label"><span class="num">01</span>START WITH THE SIGNALS</div>
+        <h2 class="section-h">Your next growth move starts with <span class="accent">clarity.</span></h2>
+        <div style="margin-top:24px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <div style="width:32px;height:32px;border-radius:8px;background:var(--blue-light);border:1px solid rgba(59,110,248,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0">🗺️</div>
+            <div><div style="font-size:0.9rem;font-weight:600;color:var(--ink);margin-bottom:2px">Instant signal map</div><div style="font-size:0.82rem;color:var(--ink3)">See your baseline before you buy the full report.</div></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <div style="width:32px;height:32px;border-radius:8px;background:var(--blue-light);border:1px solid rgba(59,110,248,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0">🔒</div>
+            <div><div style="font-size:0.9rem;font-weight:600;color:var(--ink);margin-bottom:2px">Privacy-first intake</div><div style="font-size:0.82rem;color:var(--ink3)">Public signals only. No admin access or passwords.</div></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <div style="width:32px;height:32px;border-radius:8px;background:var(--blue-light);border:1px solid rgba(59,110,248,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0">🎯</div>
+            <div><div style="font-size:0.9rem;font-weight:600;color:var(--ink);margin-bottom:2px">Action over noise</div><div style="font-size:0.82rem;color:var(--ink3)">Every finding points to a practical next step.</div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="scan-card">
+          <div class="scan-card-label">AUDIT INTAKE</div>
+          <div class="scan-card-count" style="font-size:1.1rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;margin-bottom:20px">Let's map your presence</div>
+          <div style="font-size:11px;color:var(--ink3);margin-bottom:10px">Try a sample:</div>
+          <div class="scan-samples" id="sampleRow"></div>
+          <div class="scan-form">
+            <div class="scan-field">
+              <label>Business name</label>
+              <input class="scan-input" type="text" id="bizInput" placeholder="e.g. Northstar Studio" autocomplete="off"/>
+            </div>
+            <div class="scan-field">
+              <label>Website URL <span style="font-size:10px;color:var(--ink3);font-weight:400">(optional)</span></label>
+              <input class="scan-input" type="text" id="urlInput" placeholder="https://yourbusiness.com"/>
+            </div>
+            <div class="scan-grid-2">
+              <div class="scan-field">
+                <label>City</label>
+                <input class="scan-input" type="text" id="cityInput" placeholder="e.g. Austin"/>
+              </div>
+              <div class="scan-field">
+                <label>Market</label>
+                <select class="scan-select" id="countryInput">
+                  <option value="">Select…</option>
+                  <optgroup label="Common">
+                    <option value="US">🇺🇸 United States</option>
+                    <option value="IN">🇮🇳 India</option>
+                    <option value="GB">🇬🇧 United Kingdom</option>
+                    <option value="CA">🇨🇦 Canada</option>
+                    <option value="AU">🇦🇺 Australia</option>
+                    <option value="AE">🇦🇪 UAE</option>
+                    <option value="SG">🇸🇬 Singapore</option>
+                  </optgroup>
+                  <optgroup label="Asia">
+                    <option value="MY">🇲🇾 Malaysia</option>
+                    <option value="PH">🇵🇭 Philippines</option>
+                    <option value="ID">🇮🇩 Indonesia</option>
+                    <option value="TH">🇹🇭 Thailand</option>
+                    <option value="BD">🇧🇩 Bangladesh</option>
+                    <option value="PK">🇵🇰 Pakistan</option>
+                  </optgroup>
+                  <optgroup label="Europe">
+                    <option value="DE">🇩🇪 Germany</option>
+                    <option value="FR">🇫🇷 France</option>
+                    <option value="NL">🇳🇱 Netherlands</option>
+                    <option value="IE">🇮🇪 Ireland</option>
+                    <option value="ES">🇪🇸 Spain</option>
+                  </optgroup>
+                  <optgroup label="Middle East & Africa">
+                    <option value="SA">🇸🇦 Saudi Arabia</option>
+                    <option value="QA">🇶🇦 Qatar</option>
+                    <option value="ZA">🇿🇦 South Africa</option>
+                    <option value="NG">🇳🇬 Nigeria</option>
+                    <option value="KE">🇰🇪 Kenya</option>
+                  </optgroup>
+                  <optgroup label="Americas">
+                    <option value="MX">🇲🇽 Mexico</option>
+                    <option value="BR">🇧🇷 Brazil</option>
+                    <option value="CO">🇨🇴 Colombia</option>
+                  </optgroup>
+                  <option value="OTHER">🌐 Other</option>
+                </select>
+              </div>
+            </div>
+            <div class="scan-field">
+              <label>Where should we send your preview?</label>
+              <input class="scan-input" type="email" id="emailInput" placeholder="you@company.com" autocomplete="email"/>
+            </div>
+            <div class="scan-field">
+              <label>Competitor to benchmark <span style="font-size:10px;color:var(--ink3);font-weight:400">optional</span></label>
+              <input class="scan-input" type="text" id="competitorInput" placeholder="e.g. a stronger competitor in your market"/>
+            </div>
+            <div id="scanErr" class="scan-error" hidden></div>
+            <button type="button" class="scan-btn" id="runBtn">Run my scan →</button>
+            <div class="scan-privacy">🔒 Your details stay private. No spam, no subscriptions.</div>
+          </div>
+        </div>
+        <div class="results-card" id="results">
+          <div class="result-score-row">
+            <div class="result-donut">
+              <svg viewBox="0 0 88 88">
+                <circle cx="44" cy="44" r="34" fill="none" stroke="#f3f4f6" stroke-width="12"/>
+                <circle cx="44" cy="44" r="34" fill="none" stroke="#3b6ef8" stroke-width="12"
+                  id="rArc" stroke-dasharray="213.6" stroke-dashoffset="54"
+                  stroke-linecap="round" transform="rotate(-90 44 44)"/>
+              </svg>
+              <div class="result-donut-inner">
+                <span class="n" id="rScore">--</span>
+                <span class="d">/100</span>
+              </div>
+            </div>
+            <div class="result-meta">
+              <h3 id="rBizName">-</h3>
+              <div class="result-grade" id="rGrade">-</div>
+              <div class="result-potential">Potential: <strong id="rPotential" style="color:var(--blue)">--</strong>/100 in 90 days</div>
+            </div>
+          </div>
+          <div class="result-bars" id="rBars"></div>
+          <div class="upgrade-box">
+            <h4>Get your full executive report</h4>
+            <p>10 pages · competitor intelligence · 90-day roadmap · toolkit files. Delivered instantly.</p>
+            <a href="#" class="upgrade-cta" id="upgradeBtn">Get full report — $129 →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 CHECKS -->
+<section id="checks" class="dark-section">
+  <div class="wrap">
+    <div class="checks-layout">
+      <div>
+        <div class="section-num-label"><span class="num" style="color:rgba(255,255,255,0.2)">03</span>THE INTELLIGENCE STACK</div>
+        <h2 class="section-h" style="color:#fff">Eight checks.<br/>One point of view.</h2>
+      </div>
+      <div>
+        <p class="checks-desc">No vanity metrics. Just the public signals that shape whether someone finds you, trusts you, and chooses you.</p>
+      </div>
+    </div>
+    <div class="checks-grid">
+      <div class="check-card">
+        <div class="check-card-num">01</div>
+        <div class="check-card-status">BE FOUND</div>
+        <div class="check-card-title">Visibility</div>
+        <div class="check-card-desc">How easily customers can discover and understand your business across Google and directories.</div>
+        <div class="check-card-link">↗ 35% of score</div>
+      </div>
+      <div class="check-card">
+        <div class="check-card-num">02</div>
+        <div class="check-card-status">MOVE FASTER</div>
+        <div class="check-card-title">Performance</div>
+        <div class="check-card-desc">How quickly and smoothly your website works for visitors — speed, mobile, core web vitals.</div>
+        <div class="check-card-link">↗ 20% of score</div>
+      </div>
+      <div class="check-card">
+        <div class="check-card-num">03</div>
+        <div class="check-card-status">STAY TRUSTED</div>
+        <div class="check-card-title">Safety & Security</div>
+        <div class="check-card-desc">The basic safety signals that protect customer confidence — HTTPS, headers, malware status.</div>
+        <div class="check-card-link">↗ Included</div>
+      </div>
+      <div class="check-card">
+        <div class="check-card-num">04</div>
+        <div class="check-card-status">GROW ATTENTION</div>
+        <div class="check-card-title">Social Reach</div>
+        <div class="check-card-desc">How consistently your business earns attention — post frequency, follower growth, engagement.</div>
+        <div class="check-card-link">↗ 25% of score</div>
+      </div>
+      <div class="check-card">
+        <div class="check-card-num">05</div>
+        <div class="check-card-status">EARN CONFIDENCE</div>
+        <div class="check-card-title">Trust & Reputation</div>
+        <div class="check-card-desc">The customer signals that shape credibility before first contact — Google, Yelp, TripAdvisor.</div>
+        <div class="check-card-link">↗ 20% of score</div>
+      </div>
+      <div class="check-card">
+        <div class="check-card-num">06</div>
+        <div class="check-card-status">SEE THE GAP</div>
+        <div class="check-card-title">Market & Ad Intelligence</div>
+        <div class="check-card-desc">Every active ad your competitors run on Facebook and Instagram — copy, duration, spend.</div>
+        <div class="check-card-link">↗ Live data</div>
+      </div>
+      <div class="check-card">
+        <div class="check-card-num">07</div>
+        <div class="check-card-status">FUTURE-PROOF</div>
+        <div class="check-card-title">AI Visibility</div>
+        <div class="check-card-desc">Whether ChatGPT, Gemini, and Perplexity mention your business when customers ask for recommendations.</div>
+        <div class="check-card-link">↗ New</div>
+      </div>
+      <div class="check-card">
+        <div class="check-card-num">08</div>
+        <div class="check-card-status">CLOSE THE LOOP</div>
+        <div class="check-card-title">90-Day Action Plan</div>
+        <div class="check-card-desc">A prioritised, phase-by-phase plan built from your actual gaps — not templates, not generic advice.</div>
+        <div class="check-card-link">↗ Included</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OUTPUT / REPORT -->
+<section id="report" class="dark-section" style="padding-top:0">
+  <div class="wrap">
+    <div style="height:1px;background:rgba(255,255,255,0.06);margin-bottom:80px"></div>
+    <div class="output-layout">
+      <div>
+        <div class="section-num-label"><span class="num" style="color:rgba(255,255,255,0.2)">04</span>THE OUTPUT</div>
+        <h2 class="section-h" style="color:#fff">The report you'll actually <span class="accent">use.</span></h2>
+        <p style="font-size:0.9rem;color:rgba(255,255,255,0.45);line-height:1.65;margin-bottom:8px">Not a 40-page data dump. A decisive, executive-grade view of what's holding your presence back and the sequence to fix it.</p>
+        <div class="output-list">
+          <div class="output-item">
+            <div class="output-check"><svg viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#3b6ef8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div><div class="output-item-title">Executive summary</div><div class="output-item-desc">Understand the business impact in plain language.</div></div>
+          </div>
+          <div class="output-item">
+            <div class="output-check"><svg viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#3b6ef8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div><div class="output-item-title">Priority score matrix</div><div class="output-item-desc">Know what deserves attention this week.</div></div>
+          </div>
+          <div class="output-item">
+            <div class="output-check"><svg viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#3b6ef8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div><div class="output-item-title">90-day action plan</div><div class="output-item-desc">Move from insight to measurable momentum.</div></div>
+          </div>
+          <div class="output-item">
+            <div class="output-check"><svg viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#3b6ef8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div><div class="output-item-title">10 ready-to-use toolkit files</div><div class="output-item-desc">Reply templates, post schedules, review sequences.</div></div>
+          </div>
+        </div>
+        <a href="#scan" class="btn-blue" style="width:fit-content">Start with your preview →</a>
+      </div>
+      <div>
+        <div class="report-mockup">
+          <div class="report-top">
+            <span class="report-top-label">KYP / AUDIT</span>
+            <span class="report-top-label">CONFIDENTIAL · 2026</span>
+          </div>
+          <div class="report-body">
+            <div class="report-diag">EXECUTIVE DIAGNOSIS</div>
+            <div class="report-headline">Where your presence<br/>creates <span class="accent">momentum.</span></div>
+            <div class="report-score-row">
+              <span class="report-score-big">74</span>
+              <div>
+                <div class="report-score-label">HEALTH SCORE</div>
+                <div class="report-score-sub">High improvement potential</div>
+              </div>
+            </div>
+            <div class="report-bars">
+              <div class="rep-bar"><span class="rep-bar-name">Local presence</span><div class="rep-bar-track"><div class="rep-bar-fill" style="width:86%"></div></div><span class="rep-bar-val">86</span></div>
+              <div class="rep-bar"><span class="rep-bar-name">Website health</span><div class="rep-bar-track"><div class="rep-bar-fill" style="width:72%"></div></div><span class="rep-bar-val">72</span></div>
+              <div class="rep-bar"><span class="rep-bar-name">Social authority</span><div class="rep-bar-track"><div class="rep-bar-fill" style="width:64%"></div></div><span class="rep-bar-val">64</span></div>
+              <div class="rep-bar"><span class="rep-bar-name">Trust signals</span><div class="rep-bar-track"><div class="rep-bar-fill" style="width:91%"></div></div><span class="rep-bar-val">91</span></div>
+            </div>
+            <div class="report-footer">
+              <span class="report-footer-label">8 CHECK ANALYSIS</span>
+              <span class="report-footer-label">PAGE 04 / 10</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="wrap">
+    <div class="price-layout">
+      <div>
+        <div class="section-num-label"><span class="num">05</span>A CLEAR INVESTMENT</div>
+        <h2 class="section-h">Clarity is worth more<br/>than another <span class="accent">tool.</span></h2>
+        <p style="font-size:0.9rem;color:var(--ink3);line-height:1.65;margin-bottom:8px">One audit. One report. One price. Built for teams who would rather make the next right move than pay for another monthly dashboard.</p>
+        <div class="price-left-features">
+          <div style="display:flex;align-items:center;gap:8px;font-size:0.85rem;color:var(--ink2)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#3b6ef8" stroke-width="1.2"/><path d="M5 8.5l2 2 4-4" stroke="#3b6ef8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <strong>Secure, one-time purchase</strong>
+          </div>
+          <div style="font-size:11.5px;color:var(--ink3);padding-left:24px">Secure payment via Dodo Payments. Instant delivery.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
+          <a href="#scan" style="display:inline-flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:600;color:var(--blue)">→ Run a free scan first</a>
+          <a href="#scan" style="display:inline-flex;align-items:center;gap:6px;font-size:0.85rem;color:var(--ink3)">→ Rescan pricing — $79 for existing customers</a>
+        </div>
+      </div>
+      <div>
+        <div class="price-card">
+          <div class="price-card-top">
+            <span class="price-card-name">FULL PRESENCE AUDIT</span>
+            <span class="price-badge">ONE-TIME</span>
+          </div>
+          <div class="price-amount">
+            <span class="price-currency">$</span>
+            <span class="price-num">129</span>
+            <span class="price-period">USD</span>
+          </div>
+          <div class="price-note">For a deeper look at the signals shaping your growth.</div>
+          <div class="price-divider"></div>
+          <div class="price-features">
+            <div class="price-feature"><span class="chk"><svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2.5 2.5L7 1.5" stroke="#3b6ef8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>10-page executive report</div>
+            <div class="price-feature"><span class="chk"><svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2.5 2.5L7 1.5" stroke="#3b6ef8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Eight-check presence analysis</div>
+            <div class="price-feature"><span class="chk"><svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2.5 2.5L7 1.5" stroke="#3b6ef8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Priority score matrix</div>
+            <div class="price-feature"><span class="chk"><svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2.5 2.5L7 1.5" stroke="#3b6ef8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>90-day action roadmap</div>
+            <div class="price-feature"><span class="chk"><svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2.5 2.5L7 1.5" stroke="#3b6ef8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Competitor ad intelligence</div>
+            <div class="price-feature"><span class="chk"><svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2.5 2.5L7 1.5" stroke="#3b6ef8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>10 ready-to-use toolkit files</div>
+            <div class="price-feature"><span class="chk"><svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2.5 2.5L7 1.5" stroke="#3b6ef8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Report delivered to your inbox</div>
+          </div>
+          <button class="price-cta" onclick="document.getElementById('scan').scrollIntoView({behavior:'smooth'})">Get the full report ↗</button>
+          <div class="price-secure">
+            <span class="price-secure-icon">🔒</span>
+            <div class="price-secure-text"><strong>Secure, one-time purchase</strong>Secure payment handoff ready for production.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="light-section">
+  <div class="wrap">
+    <div class="faq-layout">
+      <div>
+        <div class="section-num-label"><span class="num">06</span>THE SHORT ANSWERS</div>
+        <h2 class="section-h">A few things worth knowing.</h2>
+      </div>
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">What does the audit actually check? <span class="faq-icon">+</span></button>
+          <div class="faq-a">Eight live checks: Google Business health, website performance and security, social media pulse, review platforms (Google, Yelp, TripAdvisor), competitor ad intelligence via Meta Ads Library, AI visibility across ChatGPT/Gemini/Perplexity, and your site's technical SEO. All pulled live — not cached.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">Do I need to share passwords or admin access? <span class="faq-icon">+</span></button>
+          <div class="faq-a">Never. We read only public signals — the same data any visitor or competitor can see. No admin access, no Google Search Console, no social media login required.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">Are the results live? <span class="faq-icon">+</span></button>
+          <div class="faq-a">Yes. Every scan runs fresh at the moment you submit. We do not cache or recycle previous results. The data in your report reflects your actual presence right now.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">How long does it take? <span class="faq-icon">+</span></button>
+          <div class="faq-a">Free scan: 60–90 seconds. Full paid report: typically 3–5 minutes for the deeper competitor ad and review scraping. You'll receive it by email the moment it's complete.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">What is your refund policy? <span class="faq-icon">+</span></button>
+          <div class="faq-a">Refunds are issued only for technical failures where a report could not be generated or delivered. Successfully generated and delivered reports are non-refundable. Email support@knowyourpresence.com within 48 hours with your order ID.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">Can I run a rescan after fixing things? <span class="faq-icon">+</span></button>
+          <div class="faq-a">Yes — rescans are $79 for existing customers and include a before/after score comparison, updated 90-day plan, and fresh competitor intelligence. Most customers rescan 90 days after their first report.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="wrap">
+    <div class="cta-inner">
+      <h2>Know exactly where you stand. Start with a <span class="accent">free scan.</span></h2>
+      <p>No login, no credit card. Your Presence Score in 90 seconds.</p>
+      <a href="#scan" class="btn-blue" style="font-size:1rem;padding:13px 28px;display:inline-flex">Run your audit →</a>
+      <div class="cta-chips">
+        <span class="cta-chip"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>No passwords</span>
+        <span class="cta-chip"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Global-ready</span>
+        <span class="cta-chip"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>One-time $129</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="40" height="40" rx="9" fill="rgba(255,255,255,0.06)"/>
+          <rect x="4" y="5" width="13" height="13" rx="3" fill="rgba(255,255,255,0.15)"/>
+          <rect x="4" y="20" width="13" height="4" rx="1.5" fill="rgba(255,255,255,0.08)"/>
+          <rect x="4" y="26" width="9" height="3" rx="1.5" fill="rgba(255,255,255,0.05)"/>
+          <line x1="20" y1="3" x2="20" y2="37" stroke="#3b6ef8" stroke-width="1.5" stroke-dasharray="3,2.5" stroke-linecap="round"/>
+          <rect x="23" y="5" width="13" height="13" rx="3" fill="#3b6ef8"/>
+          <rect x="23" y="20" width="13" height="4" rx="1.5" fill="#3b6ef8" opacity="0.6"/>
+          <rect x="23" y="26" width="9" height="3" rx="1.5" fill="#3b6ef8" opacity="0.4"/>
+        </svg>
+        <span class="footer-brand-name">KNOW YOUR <span style="color:#3b6ef8">PRESENCE.</span></span>
+      </div>
+      <div class="footer-links">
+        <a href="#how">How it works</a>
+        <a href="#checks">Sources</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq">FAQ</a>
+        <a href="mailto:support@knowyourpresence.com">Support</a>
+        <a href="/privacy">Privacy</a>
+      </div>
+      <div class="footer-right">© 2026 Know Your Presence</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+const SAMPLES=['Maple & Main Cafe','Blue Bottle Coffee','Corner Roast Co.'];
+const sr=document.getElementById('sampleRow');
+SAMPLES.forEach(n=>{
+  const b=document.createElement('button');
+  b.className='scan-sample-btn';b.textContent=n;
+  b.onclick=()=>{document.getElementById('bizInput').value=n};
+  sr.appendChild(b);
+});
+
+function toggleFaq(btn){
+  const item=btn.parentElement;
+  const open=item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));
+  if(!open)item.classList.add('open');
+}
+
+document.getElementById('runBtn').addEventListener('click',async()=>{
+  const biz=document.getElementById('bizInput').value.trim();
+  const city=document.getElementById('cityInput').value.trim();
+  const email=document.getElementById('emailInput').value.trim();
+  const country=document.getElementById('countryInput').value;
+  const err=document.getElementById('scanErr');
+  err.hidden=true;
+  if(!biz){err.hidden=false;err.textContent='Please enter your business name.';return}
+  if(!city){err.hidden=false;err.textContent='Please enter your city.';return}
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){err.hidden=false;err.textContent='Please enter a valid email address.';return}
+  const btn=document.getElementById('runBtn');
+  btn.disabled=true;btn.textContent='Scanning…';
+  try{
+    const res=await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({businessName:biz,email,city,countryCode:country||'US',websiteUrl:document.getElementById('urlInput').value.trim(),competitorName:document.getElementById('competitorInput').value.trim()})});
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error||'Scan failed');
+    showResults(data,biz);
+  }catch(e){
+    err.hidden=false;err.textContent=e.message||'Scan failed. Please try again.';
+    btn.disabled=false;btn.textContent='Run my scan →';
+  }
+});
+
+function showResults(data,bizName){
+  document.querySelector('.scan-form').hidden=true;
+  document.querySelector('.scan-samples').hidden=true;
+  document.querySelector('.scan-card-count').hidden=true;
+  const r=document.getElementById('results');
+  r.classList.add('show');
+  const score=data.score??75;
+  const potential=data.potential??Math.min(96,score+16);
+  const grade=score>=85?'A':score>=75?'B+':score>=65?'B':score>=55?'C+':'C';
+  document.getElementById('rScore').textContent=score;
+  document.getElementById('rBizName').textContent=bizName;
+  document.getElementById('rGrade').textContent=`Grade ${grade} · Top 35% of local businesses`;
+  document.getElementById('rPotential').textContent=potential;
+  const circ=2*Math.PI*34;
+  const arc=document.getElementById('rArc');
+  arc.setAttribute('stroke-dasharray',circ);
+  arc.setAttribute('stroke-dashoffset',circ*(1-score/100));
+  const cats=[
+    {name:'Google Business',score:data.subScores?.google??81,color:'#22c55e'},
+    {name:'Social Media',score:data.subScores?.social??58,color:'#f59e0b'},
+    {name:'Website & Technical',score:data.subScores?.website??67,color:'#f59e0b'},
+    {name:'Reputation',score:data.subScores?.reputation??74,color:'#3b6ef8'},
+  ];
+  document.getElementById('rBars').innerHTML=cats.map(c=>`
+    <div class="r-bar-row">
+      <span class="r-bar-name">${c.name}</span>
+      <div class="r-bar-track"><div class="r-bar-fill" style="width:${c.score}%;background:${c.color}"></div></div>
+      <span class="r-bar-val">${c.score}</span>
+    </div>`).join('');
+  if(data.checkoutUrl)document.getElementById('upgradeBtn').href=data.checkoutUrl;
+}
+</script>
+</body>
+</html>
