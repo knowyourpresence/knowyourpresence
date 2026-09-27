@@ -385,6 +385,12 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
     // generates fine — aiInsights will just be null.
     let aiInsights = null;
     try {
+      // FIX: normalise reviews — Apify sometimes returns an object, not an array
+      const rawReviews = apifyEnrichment?.reviews;
+      const reviewsArray = Array.isArray(rawReviews)
+        ? rawReviews
+        : (rawReviews?.reviews || rawReviews?.results || rawReviews?.items || []);
+
       aiInsights = await generateAllInsights({
         businessName: meta.businessName || "Your Business",
         city: meta.city || "",
@@ -395,10 +401,11 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
           "Website": scores?.website ?? 0,
           "Reputation": scores?.reputation ?? 0,
         },
-        reviews: apifyEnrichment?.reviews || [],
+        reviews: reviewsArray,
         socialData: null,
-        aiVisibility: null, // wire up if you add aiVisibility service later
+        aiVisibility: null,
       });
+      console.log("AI Insights: All 6 modules complete.");
     } catch (err) {
       console.error("AI Insights failed (non-blocking):", err.message);
     }
@@ -424,7 +431,6 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
       aiInsights,
     };
 
-
     let reportUrl = "";
     let webReportUrl = "";
     let toolkitUrl = "";
@@ -439,12 +445,11 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
         }),
         // Save interactive web report HTML
         (async () => {
-          const fs = require("fs");
-          const path = require("path");
           const htmlContent = generateWebReport(reportData);
           const htmlPath = path.join(REPORTS_DIR, `${reportId}.html`);
           fs.writeFileSync(htmlPath, htmlContent, "utf8");
           webReportUrl = `${process.env.PUBLIC_BASE_URL || ""}/api/report/${reportId}/view`;
+          console.log("Web report saved:", webReportUrl);
         })(),
       ]);
     } catch (genErr) {
@@ -456,6 +461,11 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
     sendCustomerConfirmation(orderWithScores, reportUrl, toolkitUrl, webReportUrl, aiInsights).catch((e) => console.error("Customer email failed:", e.message));
     sendOwnerNotification(order).catch((e) => console.error("Owner notification failed:", e.message));
 
+    // FIX: use reportData.scores for overall grade — scoreResult is from /api/scan scope, not here
+    const overallGrade = scores
+      ? (calculateOverallScore(scores)?.grade || "")
+      : "";
+
     // Push completed order record to Coupler analytics sheet (non-blocking)
     pushScanRecord({
       reportId,
@@ -463,8 +473,8 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
       businessType: reportData.businessType,
       city: reportData.city,
       email,
-      scores: { ...reportData.scores, overall: scores ? undefined : 60 },
-      grade: scoreResult?.grade || "",
+      scores: reportData.scores,
+      grade: overallGrade,
       urlscan: urlscanEnrichment,
       apify: apifyEnrichment,
       metaAds: metaAdsEnrichment,
@@ -472,15 +482,14 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
       currency: order.currency,
       paymentId: order.paymentId,
     }).catch(() => {});
+
+    console.log(`[webhook] Fulfilment complete for ${email} — report ${reportId}`);
   } catch (err) {
     console.error("Webhook fulfilment error:", err);
   }
 });
 
-// --- Serves a generated report PDF. Anyone with the exact reportId (a long
-// random-looking string) can download it - fine for a report that isn't
-// sensitive, but add real access control here before handling anything
-// more private.
+// --- Serves a generated report HTML web view.
 app.get("/api/report/:reportId/view", (req, res) => {
   const htmlPath = path.join(REPORTS_DIR, `${req.params.reportId}.html`);
   if (!fs.existsSync(htmlPath)) {
