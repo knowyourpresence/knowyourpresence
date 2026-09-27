@@ -193,7 +193,8 @@ function renderScores(scores) {
 
 function renderReviews(reviews) {
   if (!reviews || reviews.length === 0) return "";
-  const shown = reviews.slice(0, 5);
+ const reviewsNorm = Array.isArray(reviews) ? reviews : (reviews?.reviews || reviews?.results || reviews?.items || []);
+const shown = reviewsNorm.slice(0, 5);
   const stars = n => "★".repeat(Math.min(n, 5)) + "☆".repeat(Math.max(5 - n, 0));
   const cards = shown.map(r => `
 <div class="review-card">
