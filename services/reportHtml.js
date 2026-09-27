@@ -192,9 +192,12 @@ function renderScores(scores) {
 // ─── reviews section ──────────────────────────────────────────────────────────
 
 function renderReviews(reviews) {
-  if (!reviews || reviews.length === 0) return "";
- const reviewsNorm = Array.isArray(reviews) ? reviews : (reviews?.reviews || reviews?.results || reviews?.items || []);
-const shown = reviewsNorm.slice(0, 5);
+  // Normalise: Apify sometimes returns an object instead of an array
+  const reviewsNorm = Array.isArray(reviews)
+    ? reviews
+    : (reviews?.reviews || reviews?.results || reviews?.items || []);
+  if (!reviewsNorm || reviewsNorm.length === 0) return "";
+  const shown = reviewsNorm.slice(0, 5);
   const stars = n => "★".repeat(Math.min(n, 5)) + "☆".repeat(Math.max(5 - n, 0));
   const cards = shown.map(r => `
 <div class="review-card">
@@ -229,9 +232,13 @@ function generateWebReport(data) {
     aiInsights,
   } = data;
 
-  const overall = scanDetails?.overall ?? Math.round(
-    Object.values(scores).reduce((a, b) => a + b, 0) / Math.max(Object.keys(scores).length, 1)
-  );
+  // FIX: only average non-zero scores; fall back to scanDetails.overall if scores are empty
+  const validScores = Object.values(scores).filter(v => typeof v === "number" && v > 0);
+  const overall = scanDetails?.overall
+    ?? (validScores.length > 0
+        ? Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length)
+        : null)
+    ?? 0;
   const grade = scanDetails?.grade ?? (overall >= 80 ? "A" : overall >= 65 ? "B" : overall >= 50 ? "C" : "D");
 
   // Patch business name into AI insights for personalisation in render
@@ -404,7 +411,6 @@ a { color: var(--purple); text-decoration: none; }
     <a href="#scores">Scores</a>
     ${aiInsights ? '<a href="#ai-insights">✦ AI Insights</a>' : ""}
     <a href="#details">Details</a>
-    ${apify?.reviews?.length ? '<a href="#reviews">Reviews</a>' : ""}
     <a href="#next-steps">Next Steps</a>
   </div>
 </nav>
@@ -518,7 +524,7 @@ ${renderReviews(apify?.reviews)}
       ["📞", "Book a Free Strategy Call", "Get a 30-min walkthrough of your results with a KYP advisor."],
       ["🔄", "Re-Scan in 30 Days", "After implementing fixes, run a new scan to measure improvement."],
       ["📧", "Share This Report", "Forward this link to your team or marketing agency."],
-      ["📥", "Download PDF", "Check your email for the PDF + Toolkit ZIP attached to your purchase receipt."],
+      ["📥", "Download PDF", "Check your email for the PDF attached to your purchase receipt."],
     ].map(([icon, title, desc]) => `
     <div style="background:#fff;border-radius:10px;padding:1.1rem;border:1px solid #ddd6fe">
       <div style="font-size:1.3rem;margin-bottom:.4rem">${icon}</div>
