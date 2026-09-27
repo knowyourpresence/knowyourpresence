@@ -26,6 +26,7 @@
   --green:#22c55e;
   --red:#ef4444;
   --amber:#f59e0b;
+  --purple:#8b5cf6;
   --sans:'Inter',system-ui,sans-serif;
 }
 html{scroll-behavior:smooth}
@@ -97,6 +98,17 @@ nav{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:1px 
 .mock-status{font-size:9px;display:flex;align-items:center;gap:6px;color:rgba(255,255,255,0.35)}
 .mock-status::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--green)}
 
+/* ── AI INSIGHTS BANNER ── */
+.ai-banner{background:linear-gradient(135deg,#0b0f1e 0%,#1a1040 50%,#0b0f1e 100%);border-top:1px solid rgba(139,92,246,0.2);border-bottom:1px solid rgba(139,92,246,0.2);padding:20px 0}
+.ai-banner-inner{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.ai-banner-left{display:flex;align-items:center;gap:16px}
+.ai-banner-badge{background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);color:#a78bfa;font-size:9px;font-weight:700;letter-spacing:.12em;padding:4px 10px;border-radius:4px;text-transform:uppercase;white-space:nowrap}
+.ai-banner-text{font-size:0.9rem;font-weight:600;color:#fff}
+.ai-banner-text span{color:#a78bfa}
+.ai-banner-chips{display:flex;gap:10px;flex-wrap:wrap}
+.ai-banner-chip{display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,0.45);background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:999px;padding:4px 12px}
+.ai-banner-chip .ai-dot{width:5px;height:5px;border-radius:50%;background:#a78bfa;flex-shrink:0}
+
 /* ── TICKER BAR ── */
 .ticker{background:var(--navy);border-top:1px solid rgba(255,255,255,0.06);padding:14px 0}
 .ticker-inner{display:flex;align-items:center;justify-content:center;gap:48px;flex-wrap:wrap}
@@ -109,7 +121,6 @@ section{padding:100px 0}
 .section-num-label .num{color:rgba(0,0,0,0.25)}
 .section-h{font-size:clamp(2rem,3.5vw,3rem);font-weight:900;line-height:1.05;letter-spacing:-0.04em;color:var(--ink);margin-bottom:16px}
 .section-h .accent{color:var(--blue)}
-.section-sub{font-size:0.95rem;color:var(--ink3);line-height:1.7;max-width:440px}
 .dark-section{background:var(--navy)}
 .dark-section .section-num-label .num{color:rgba(255,255,255,0.2)}
 .dark-section .section-num-label{color:var(--blue)}
@@ -182,11 +193,16 @@ section{padding:100px 0}
 .checks-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .check-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;transition:border-color .2s;cursor:default}
 .check-card:hover{border-color:rgba(59,110,248,0.4)}
+.check-card.ai-card{background:rgba(139,92,246,0.06);border-color:rgba(139,92,246,0.2)}
+.check-card.ai-card:hover{border-color:rgba(139,92,246,0.5)}
 .check-card-num{font-size:9px;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,0.25);margin-bottom:8px}
 .check-card-status{font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+.check-card.ai-card .check-card-status{color:#a78bfa}
 .check-card-title{font-size:0.92rem;font-weight:700;color:#fff;margin-bottom:4px}
 .check-card-desc{font-size:0.78rem;color:rgba(255,255,255,0.4);line-height:1.5}
 .check-card-link{font-size:9px;color:rgba(255,255,255,0.25);margin-top:12px;display:flex;justify-content:flex-end}
+.check-card.ai-card .check-card-link{color:rgba(167,139,250,0.5)}
+.ai-new-badge{display:inline-block;background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.4);color:#a78bfa;font-size:8px;font-weight:700;letter-spacing:.08em;padding:2px 7px;border-radius:3px;margin-left:6px;vertical-align:middle}
 
 /* ── OUTPUT / REPORT ── */
 .output-layout{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
@@ -194,6 +210,7 @@ section{padding:100px 0}
 .output-item{display:flex;align-items:flex-start;gap:12px}
 .output-check{width:18px;height:18px;border-radius:50%;background:rgba(59,110,248,0.15);border:1px solid rgba(59,110,248,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
 .output-check svg{width:9px;height:9px}
+.output-check.ai{background:rgba(139,92,246,0.15);border-color:rgba(139,92,246,0.4)}
 .output-item-title{font-size:0.9rem;font-weight:700;color:#fff;margin-bottom:2px}
 .output-item-desc{font-size:0.8rem;color:rgba(255,255,255,0.45);line-height:1.5}
 .report-mockup{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 32px 64px rgba(0,0,0,0.5);transform:rotate(-1deg);transition:transform .3s}
@@ -217,6 +234,23 @@ section{padding:100px 0}
 .report-footer{border-top:1px solid var(--border);padding:8px 0 0;display:flex;align-items:center;justify-content:space-between}
 .report-footer-label{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
 
+/* ── AI INSIGHTS SECTION ── */
+.ai-insights-section{background:linear-gradient(180deg,#0d0720 0%,#0b0f1e 100%);padding:80px 0;border-top:1px solid rgba(139,92,246,0.15)}
+.ai-insights-header{text-align:center;margin-bottom:56px}
+.ai-insights-eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);border-radius:999px;padding:6px 16px;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#a78bfa;margin-bottom:20px}
+.ai-insights-title{font-size:clamp(1.8rem,3vw,2.6rem);font-weight:900;line-height:1.05;letter-spacing:-0.04em;color:#fff;margin-bottom:12px}
+.ai-insights-title .accent{color:#a78bfa}
+.ai-insights-sub{font-size:0.92rem;color:rgba(255,255,255,0.45);max-width:500px;margin:0 auto;line-height:1.65}
+.ai-modules-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:40px}
+.ai-module-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:24px;transition:border-color .2s,background .2s}
+.ai-module-card:hover{border-color:rgba(139,92,246,0.35);background:rgba(139,92,246,0.05)}
+.ai-module-icon{font-size:1.5rem;margin-bottom:12px}
+.ai-module-label{font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#a78bfa;margin-bottom:6px}
+.ai-module-title{font-size:0.95rem;font-weight:700;color:#fff;margin-bottom:6px}
+.ai-module-desc{font-size:0.78rem;color:rgba(255,255,255,0.4);line-height:1.55}
+.ai-insights-cta{text-align:center}
+.ai-insights-note{font-size:11px;color:rgba(255,255,255,0.3);margin-top:12px}
+
 /* ── PRICING ── */
 .price-layout{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
 .price-card{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:32px}
@@ -229,10 +263,16 @@ section{padding:100px 0}
 .price-period{font-size:0.85rem;color:var(--ink3);font-weight:400}
 .price-note{font-size:11px;color:var(--ink3);margin-bottom:20px}
 .price-divider{height:1px;background:var(--border);margin:20px 0}
-.price-features{display:flex;flex-direction:column;gap:11px;margin-bottom:26px}
+.price-section-label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:10px;margin-top:4px}
+.price-features{display:flex;flex-direction:column;gap:11px;margin-bottom:10px}
 .price-feature{display:flex;align-items:flex-start;gap:10px;font-size:0.87rem;color:var(--ink2)}
 .price-feature .chk{width:16px;height:16px;border-radius:50%;background:rgba(59,110,248,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
 .price-feature .chk svg{width:8px;height:8px}
+.price-feature .chk.ai-chk{background:rgba(139,92,246,0.1)}
+.price-feature .chk.ai-chk svg path{stroke:#8b5cf6}
+.price-ai-divider{height:1px;background:linear-gradient(90deg,rgba(139,92,246,0.3),transparent);margin:14px 0}
+.price-ai-label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8b5cf6;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.price-ai-label::before{content:'✦';font-size:8px}
 .price-cta{width:100%;padding:13px;border-radius:8px;font-weight:700;font-size:0.9rem;cursor:pointer;font-family:var(--sans);transition:all .15s;border:none;background:var(--blue);color:#fff}
 .price-cta:hover{background:var(--blue-dim)}
 .price-secure{margin-top:14px;display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:8px;padding:12px 14px}
@@ -276,6 +316,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
 @media(max-width:900px){
   .hero-layout,.intro-layout,.scan-layout,.checks-layout,.output-layout,.price-layout,.faq-layout{grid-template-columns:1fr}
   .checks-grid{grid-template-columns:1fr 1fr}
+  .ai-modules-grid{grid-template-columns:1fr 1fr}
   .three-col-steps{grid-template-columns:1fr}
   .step-col{border-right:none;border-bottom:1px solid var(--border);padding:20px 0}
   .step-col:last-child{border-bottom:none}
@@ -283,6 +324,10 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
   .wrap{padding:0 20px}
   .nav-inner{padding:0 20px}
   .nav-links{display:none}
+}
+@media(max-width:600px){
+  .ai-modules-grid{grid-template-columns:1fr}
+  .ai-banner-inner{flex-direction:column;align-items:flex-start}
 }
 </style>
 </head>
@@ -315,6 +360,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
     <div class="nav-links">
       <a href="#how">How it works</a>
       <a href="#checks">Sources</a>
+      <a href="#ai-insights">AI Insights</a>
       <a href="#report">Report</a>
       <a href="#faq">FAQ</a>
     </div>
@@ -332,7 +378,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
     <div class="hero-layout">
       <div>
         <h1>Stop guessing how the world sees your <span class="accent">business online.</span></h1>
-        <p class="hero-sub">KYP turns the fragmented signals around your brand into one clear score, one executive report, and the exact next moves to close your growth gaps.</p>
+        <p class="hero-sub">KYP turns the fragmented signals around your brand into one clear score, one executive report, and the exact next moves to close your growth gaps — now with AI-written insights from Claude.</p>
         <div class="hero-actions">
           <a href="#scan" class="btn-blue">Run your audit →</a>
           <a href="#report" class="btn-outline">📄 See what you get</a>
@@ -382,6 +428,26 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
     </div>
   </div>
 </section>
+
+<!-- AI INSIGHTS BANNER (just below hero) -->
+<div class="ai-banner">
+  <div class="wrap">
+    <div class="ai-banner-inner">
+      <div class="ai-banner-left">
+        <span class="ai-banner-badge">✦ New in paid reports</span>
+        <span class="ai-banner-text">Now includes <span>6 AI-written insight modules</span> — personalised for your business</span>
+      </div>
+      <div class="ai-banner-chips">
+        <span class="ai-banner-chip"><span class="ai-dot"></span>Report narrative</span>
+        <span class="ai-banner-chip"><span class="ai-dot"></span>30-day action plan</span>
+        <span class="ai-banner-chip"><span class="ai-dot"></span>Competitor analysis</span>
+        <span class="ai-banner-chip"><span class="ai-dot"></span>Review intelligence</span>
+        <span class="ai-banner-chip"><span class="ai-dot"></span>SEO content ideas</span>
+        <span class="ai-banner-chip"><span class="ai-dot"></span>Social audit</span>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- TICKER -->
 <div class="ticker" style="background:var(--navy)">
@@ -550,7 +616,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
           <div class="result-bars" id="rBars"></div>
           <div class="upgrade-box">
             <h4>Get your full executive report</h4>
-            <p>10 pages · competitor intelligence · 90-day roadmap · toolkit files. Delivered instantly.</p>
+            <p>10 pages · competitor intelligence · 90-day roadmap · 6 AI insight modules · toolkit files. Delivered instantly.</p>
             <a href="#" class="upgrade-cta" id="upgradeBtn">Get full report — $129 →</a>
           </div>
         </div>
@@ -559,7 +625,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
   </div>
 </section>
 
-<!-- 9 CHECKS -->
+<!-- 8 CHECKS -->
 <section id="checks" class="dark-section">
   <div class="wrap">
     <div class="checks-layout">
@@ -621,19 +687,72 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
         <div class="check-card-desc">Whether ChatGPT, Gemini, and Perplexity mention your business when customers ask for recommendations.</div>
         <div class="check-card-link">↗ New</div>
       </div>
-      <div class="check-card">
+      <div class="check-card ai-card">
         <div class="check-card-num">08</div>
-        <div class="check-card-status">CLOSE THE LOOP</div>
-        <div class="check-card-title">90-Day Action Plan</div>
-        <div class="check-card-desc">A prioritised, phase-by-phase plan built from your actual gaps — not templates, not generic advice.</div>
-        <div class="check-card-link">↗ Included</div>
+        <div class="check-card-status">THINK AHEAD <span class="ai-new-badge">AI</span></div>
+        <div class="check-card-title">AI-Written Insights</div>
+        <div class="check-card-desc">Six personalised modules written by Claude AI — your report summary, 30-day plan, competitor landscape, review intelligence, SEO content ideas, and social audit.</div>
+        <div class="check-card-link">↗ Paid reports only</div>
       </div>
     </div>
   </div>
 </section>
 
+<!-- AI INSIGHTS SECTION -->
+<section id="ai-insights" class="ai-insights-section">
+  <div class="wrap">
+    <div class="ai-insights-header">
+      <div class="ai-insights-eyebrow">✦ Powered by Claude AI</div>
+      <h2 class="ai-insights-title">Six modules. Written for <span class="accent">your business.</span></h2>
+      <p class="ai-insights-sub">Every paid report includes six AI-written sections personalised to your business name, city, scores, and customer reviews. Not templates — real analysis.</p>
+    </div>
+    <div class="ai-modules-grid">
+      <div class="ai-module-card">
+        <div class="ai-module-icon">📋</div>
+        <div class="ai-module-label">Module 01</div>
+        <div class="ai-module-title">Your Report Summary</div>
+        <div class="ai-module-desc">A plain-English diagnosis of your digital health — what's working, what's not, and the single most important thing to fix first.</div>
+      </div>
+      <div class="ai-module-card">
+        <div class="ai-module-icon">🎯</div>
+        <div class="ai-module-label">Module 02</div>
+        <div class="ai-module-title">30-Day Action Plan</div>
+        <div class="ai-module-desc">Week-by-week tasks ranked by impact. Urgent wins in Week 1, strategic moves in Weeks 3–4. Specific platform names, not generic tips.</div>
+      </div>
+      <div class="ai-module-card">
+        <div class="ai-module-icon">🏆</div>
+        <div class="ai-module-label">Module 03</div>
+        <div class="ai-module-title">Competitive Landscape</div>
+        <div class="ai-module-desc">Top 5 competitors in your city and category — who they are, why they're winning online, and where you have an edge.</div>
+      </div>
+      <div class="ai-module-card">
+        <div class="ai-module-icon">⭐</div>
+        <div class="ai-module-label">Module 04</div>
+        <div class="ai-module-title">Review Intelligence</div>
+        <div class="ai-module-desc">Sentiment analysis of your customer reviews — what they love, recurring complaints, and one actionable tip to lift your rating.</div>
+      </div>
+      <div class="ai-module-card">
+        <div class="ai-module-icon">✍️</div>
+        <div class="ai-module-label">Module 05</div>
+        <div class="ai-module-title">Content That Will Rank</div>
+        <div class="ai-module-desc">Five blog or FAQ ideas targeting real search queries in your city. Each one explained with why it will attract local customers from Google.</div>
+      </div>
+      <div class="ai-module-card">
+        <div class="ai-module-icon">📱</div>
+        <div class="ai-module-label">Module 06</div>
+        <div class="ai-module-title">Social Media Audit</div>
+        <div class="ai-module-desc">Consistency score, profile optimisation rating, three quick wins for your bio and posts, and one content idea to publish this week.</div>
+      </div>
+    </div>
+    <div class="ai-insights-cta">
+      <a href="#scan" class="btn-blue" style="font-size:0.95rem;padding:13px 28px;display:inline-flex">Get your AI insights — $129 →</a>
+      <div class="ai-insights-note">Included in every paid report. Generated fresh for each customer.</div>
+    </div>
+  </div>
+</section>
+
 <!-- OUTPUT / REPORT -->
-<section id="report" class="dark-section" style="padding-top:0">
+<section id="report" class="dark-section" style="padding-top:60px">
   <div class="wrap">
     <div style="height:1px;background:rgba(255,255,255,0.06);margin-bottom:80px"></div>
     <div class="output-layout">
@@ -653,6 +772,10 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
           <div class="output-item">
             <div class="output-check"><svg viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#3b6ef8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
             <div><div class="output-item-title">90-day action plan</div><div class="output-item-desc">Move from insight to measurable momentum.</div></div>
+          </div>
+          <div class="output-item">
+            <div class="output-check ai"><svg viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div><div class="output-item-title">6 AI insight modules <span style="font-size:10px;color:#a78bfa;font-weight:600">NEW</span></div><div class="output-item-desc">Personalised narrative, competitor analysis, review intelligence, SEO ideas, social audit, and 30-day plan — written by Claude AI for your exact business.</div></div>
           </div>
           <div class="output-item">
             <div class="output-check"><svg viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#3b6ef8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
@@ -682,6 +805,10 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
               <div class="rep-bar"><span class="rep-bar-name">Website health</span><div class="rep-bar-track"><div class="rep-bar-fill" style="width:72%"></div></div><span class="rep-bar-val">72</span></div>
               <div class="rep-bar"><span class="rep-bar-name">Social authority</span><div class="rep-bar-track"><div class="rep-bar-fill" style="width:64%"></div></div><span class="rep-bar-val">64</span></div>
               <div class="rep-bar"><span class="rep-bar-name">Trust signals</span><div class="rep-bar-track"><div class="rep-bar-fill" style="width:91%"></div></div><span class="rep-bar-val">91</span></div>
+            </div>
+            <div style="background:#f5f6f8;border-radius:6px;padding:8px 10px;margin-bottom:8px">
+              <div style="font-size:7.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8b5cf6;margin-bottom:3px">✦ AI INSIGHTS INCLUDED</div>
+              <div style="font-size:8px;color:#6b7280;line-height:1.4">6 modules · narrative · action plan · competitor analysis · review intelligence · SEO ideas · social audit</div>
             </div>
             <div class="report-footer">
               <span class="report-footer-label">8 CHECK ANALYSIS</span>
@@ -727,6 +854,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
           </div>
           <div class="price-note">For a deeper look at the signals shaping your growth.</div>
           <div class="price-divider"></div>
+          <div class="price-section-label">Audit & Data</div>
           <div class="price-features">
             <div class="price-feature"><span class="chk"><svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2.5 2.5L7 1.5" stroke="#3b6ef8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>10-page executive report</div>
             <div class="price-feature"><span class="chk"><svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2.5 2.5L7 1.5" stroke="#3b6ef8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Eight-check presence analysis</div>
@@ -735,6 +863,16 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
             <div class="price-feature"><span class="chk"><svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2.5 2.5L7 1.5" stroke="#3b6ef8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Competitor ad intelligence</div>
             <div class="price-feature"><span class="chk"><svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2.5 2.5L7 1.5" stroke="#3b6ef8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>10 ready-to-use toolkit files</div>
             <div class="price-feature"><span class="chk"><svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2.5 2.5L7 1.5" stroke="#3b6ef8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Report delivered to your inbox</div>
+          </div>
+          <div class="price-ai-divider"></div>
+          <div class="price-ai-label">AI Insights — 6 modules by Claude</div>
+          <div class="price-features">
+            <div class="price-feature"><span class="chk ai-chk"><svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2.5 2.5L7 1.5" stroke="#8b5cf6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Personalised report narrative</div>
+            <div class="price-feature"><span class="chk ai-chk"><svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2.5 2.5L7 1.5" stroke="#8b5cf6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>30-day priority action plan</div>
+            <div class="price-feature"><span class="chk ai-chk"><svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2.5 2.5L7 1.5" stroke="#8b5cf6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Competitor landscape analysis</div>
+            <div class="price-feature"><span class="chk ai-chk"><svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2.5 2.5L7 1.5" stroke="#8b5cf6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Review sentiment intelligence</div>
+            <div class="price-feature"><span class="chk ai-chk"><svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2.5 2.5L7 1.5" stroke="#8b5cf6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>5 local SEO content ideas</div>
+            <div class="price-feature"><span class="chk ai-chk"><svg viewBox="0 0 8 8" fill="none"><path d="M1 4l2.5 2.5L7 1.5" stroke="#8b5cf6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Social media audit + quick wins</div>
           </div>
           <button class="price-cta" onclick="document.getElementById('scan').scrollIntoView({behavior:'smooth'})">Get the full report ↗</button>
           <div class="price-secure">
@@ -761,6 +899,10 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
           <div class="faq-a">Eight live checks: Google Business health, website performance and security, social media pulse, review platforms (Google, Yelp, TripAdvisor), competitor ad intelligence via Meta Ads Library, AI visibility across ChatGPT/Gemini/Perplexity, and your site's technical SEO. All pulled live — not cached.</div>
         </div>
         <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">What are the AI Insights modules? <span class="faq-icon">+</span></button>
+          <div class="faq-a">Six sections written by Claude AI specifically for your business — not templates. You get a personalised report narrative, a 30-day priority action plan, a competitor landscape for your city and category, review sentiment analysis, five local SEO content ideas, and a social media audit with quick wins. Generated fresh for every paid report.</div>
+        </div>
+        <div class="faq-item">
           <button class="faq-q" onclick="toggleFaq(this)">Do I need to share passwords or admin access? <span class="faq-icon">+</span></button>
           <div class="faq-a">Never. We read only public signals — the same data any visitor or competitor can see. No admin access, no Google Search Console, no social media login required.</div>
         </div>
@@ -770,7 +912,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
         </div>
         <div class="faq-item">
           <button class="faq-q" onclick="toggleFaq(this)">How long does it take? <span class="faq-icon">+</span></button>
-          <div class="faq-a">Free scan: 60–90 seconds. Full paid report: typically 3–5 minutes for the deeper competitor ad and review scraping. You'll receive it by email the moment it's complete.</div>
+          <div class="faq-a">Free scan: 60–90 seconds. Full paid report: typically 3–5 minutes for the deeper competitor ad and review scraping plus AI insight generation. You'll receive it by email the moment it's complete.</div>
         </div>
         <div class="faq-item">
           <button class="faq-q" onclick="toggleFaq(this)">What is your refund policy? <span class="faq-icon">+</span></button>
@@ -778,7 +920,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
         </div>
         <div class="faq-item">
           <button class="faq-q" onclick="toggleFaq(this)">Can I run a rescan after fixing things? <span class="faq-icon">+</span></button>
-          <div class="faq-a">Yes — rescans are $79 for existing customers and include a before/after score comparison, updated 90-day plan, and fresh competitor intelligence. Most customers rescan 90 days after their first report.</div>
+          <div class="faq-a">Yes — rescans are $79 for existing customers and include a before/after score comparison, updated 90-day plan, fresh competitor intelligence, and a new set of AI insights. Most customers rescan 90 days after their first report.</div>
         </div>
       </div>
     </div>
@@ -796,6 +938,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
         <span class="cta-chip"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>No passwords</span>
         <span class="cta-chip"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Global-ready</span>
         <span class="cta-chip"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>One-time $129</span>
+        <span class="cta-chip"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>6 AI insight modules</span>
       </div>
     </div>
   </div>
@@ -821,6 +964,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
       <div class="footer-links">
         <a href="#how">How it works</a>
         <a href="#checks">Sources</a>
+        <a href="#ai-insights">AI Insights</a>
         <a href="#pricing">Pricing</a>
         <a href="#faq">FAQ</a>
         <a href="mailto:support@knowyourpresence.com">Support</a>
@@ -873,12 +1017,10 @@ document.getElementById('runBtn').addEventListener('click',async()=>{
 });
 
 function getScore(data,category){
-  // Try breakdown array first (new API shape)
   if(Array.isArray(data.breakdown)){
     const item=data.breakdown.find(b=>b.category===category);
     if(item) return item.score;
   }
-  // Fall back to subScores object (legacy)
   if(data.subScores) return data.subScores[category]??null;
   return null;
 }
@@ -901,8 +1043,6 @@ function showResults(data,bizName){
   arc.setAttribute('stroke-dasharray',circ);
   arc.setAttribute('stroke-dashoffset',circ*(1-score/100));
   const cats=[
-    // breakdown is an array: [{category:'google',score:81,...}, ...]
-    // also support legacy subScores object shape
     {name:'Google Business',score:getScore(data,'google'),color:'#22c55e'},
     {name:'Social Media',score:getScore(data,'social'),color:'#f59e0b'},
     {name:'Website & Technical',score:getScore(data,'website'),color:'#f59e0b'},
