@@ -1054,7 +1054,46 @@ function showResults(data,bizName){
       <div class="r-bar-track"><div class="r-bar-fill" style="width:${c.score}%;background:${c.color}"></div></div>
       <span class="r-bar-val">${c.score}</span>
     </div>`).join('');
-  if(data.checkoutUrl)document.getElementById('upgradeBtn').href=data.checkoutUrl;
+  // Store scan data on the button so checkout can use it
+  const btn = document.getElementById('upgradeBtn');
+  btn.dataset.scanData = JSON.stringify({
+    businessName: bizName,
+    email: document.getElementById('emailInput').value.trim(),
+    city: document.getElementById('cityInput').value.trim(),
+    businessType: data.businessType || '',
+    businessDescription: data.businessDescription || '',
+    waNumber: data.waNumber || '',
+    scores: data.scores || {},
+    scanDetails: data.scanDetails || {},
+    competitorName: document.getElementById('competitorInput')?.value.trim() || '',
+  });
+  btn.href = '#';
+  btn.onclick = async function(e) {
+    e.preventDefault();
+    btn.textContent = 'Preparing checkout…';
+    btn.style.opacity = '0.7';
+    btn.style.pointerEvents = 'none';
+    try {
+      const scanData = JSON.parse(btn.dataset.scanData);
+      const res = await fetch('/api/checkout/create-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(scanData),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Checkout failed');
+      if (json.checkoutUrl) {
+        window.location.href = json.checkoutUrl;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch(err) {
+      btn.textContent = 'Get full report — $129 →';
+      btn.style.opacity = '';
+      btn.style.pointerEvents = '';
+      alert('Could not start checkout: ' + err.message);
+    }
+  };
 }
 </script>
 </body>
