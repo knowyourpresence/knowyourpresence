@@ -225,7 +225,11 @@ app.post("/api/checkout/create-session", async (req, res) => {
       return res.status(400).json({ error: "businessName, email, and businessType are required." });
     }
 
-    const returnUrl = `${req.protocol}://${req.get("host")}/?payment=success`;
+    // Generate reportId BEFORE checkout so we can embed it in the return URL.
+    // The webhook will use the same ID when saving the report, so the loading
+    // page can poll for it and redirect as soon as it's ready.
+    const preReportId = makeReportId();
+    const returnUrl = `${req.protocol}://${req.get("host")}/report-ready?id=${preReportId}`;
 
     const { checkoutUrl, sessionId } = await createCheckoutSession({
       email,
@@ -239,6 +243,7 @@ app.post("/api/checkout/create-session", async (req, res) => {
         scores: scores || { google: 60, social: 60, website: 60, reputation: 60 },
         scanDetails: scanDetails || null,
         competitorName: competitorName || "",
+        reportId: preReportId,
       },
     });
 
@@ -411,7 +416,9 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
     }
     // ─────────────────────────────────────────────────────────────────────────
 
-    const reportId = makeReportId();
+    // Use the pre-generated reportId from checkout metadata (so the loading
+    // page that's already polling for it gets the right file).
+    const reportId = meta.reportId || makeReportId();
     const reportData = {
       businessName: meta.businessName || "Your Business",
       businessType: meta.businessType || "service",
@@ -456,9 +463,10 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
       console.error("Report/toolkit generation failed after payment:", genErr.message);
     }
 
-    // Pass aiInsights so the customer email includes the 6 AI module sections
+    // Email sends only the PDF — the web report is shown immediately after
+    // payment via the /report-ready loading page, not linked in the email.
     const orderWithScores = { ...order, scores: reportData.scores, grade: scanDetails?.grade };
-    sendCustomerConfirmation(orderWithScores, reportUrl, toolkitUrl, webReportUrl, aiInsights).catch((e) => console.error("Customer email failed:", e.message));
+    sendCustomerConfirmation(orderWithScores, reportUrl, toolkitUrl, null, null).catch((e) => console.error("Customer email failed:", e.message));
     sendOwnerNotification(order).catch((e) => console.error("Owner notification failed:", e.message));
 
     // FIX: use reportData.scores for overall grade — scoreResult is from /api/scan scope, not here
@@ -487,6 +495,90 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
   } catch (err) {
     console.error("Webhook fulfilment error:", err);
   }
+});
+
+// --- Report ready status: polled by the /report-ready loading page.
+// Returns { ready: true } as soon as the HTML file exists on disk.
+app.get("/api/report/:reportId/status", (req, res) => {
+  const htmlPath = path.join(REPORTS_DIR, `${req.params.reportId}.html`);
+  res.json({ ready: fs.existsSync(htmlPath) });
+});
+
+// --- Loading page shown immediately after Dodo redirects the customer back.
+// Polls /api/report/:id/status every 3 s and auto-redirects once ready.
+app.get("/report-ready", (req, res) => {
+  const reportId = req.query.id || "";
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Preparing Your Report — Know Your Presence</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{min-height:100vh;display:flex;flex-direction:column;align-items:center;
+       justify-content:center;background:#0a0f1e;color:#fff;font-family:'Segoe UI',sans-serif;
+       text-align:center;padding:24px;}
+  .logo{font-size:13px;letter-spacing:3px;color:#4ade80;text-transform:uppercase;margin-bottom:40px;}
+  .spinner{width:64px;height:64px;border:4px solid rgba(74,222,128,0.2);
+           border-top-color:#4ade80;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 32px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  h1{font-size:28px;font-weight:700;margin-bottom:12px;}
+  p{color:#94a3b8;font-size:16px;line-height:1.6;max-width:420px;}
+  .steps{margin-top:32px;display:flex;flex-direction:column;gap:10px;max-width:340px;}
+  .step{background:rgba(255,255,255,0.05);border-radius:8px;padding:10px 16px;
+        font-size:14px;color:#cbd5e1;text-align:left;display:flex;align-items:center;gap:10px;}
+  .step .dot{width:8px;height:8px;border-radius:50%;background:#334155;flex-shrink:0;}
+  .step.done .dot{background:#4ade80;}
+  .step.active .dot{background:#f59e0b;animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+  #eta{margin-top:24px;font-size:13px;color:#64748b;}
+</style>
+</head>
+<body>
+<div class="logo">Know Your Presence</div>
+<div class="spinner"></div>
+<h1>Building Your Report</h1>
+<p>Payment confirmed ✓ — we're now generating your full Business Presence Report with AI insights.</p>
+<div class="steps">
+  <div class="step done"><span class="dot"></span>Payment verified</div>
+  <div class="step done"><span class="dot"></span>Deep enrichment scan running</div>
+  <div class="step active" id="s3"><span class="dot"></span>Generating AI insights (6 modules)</div>
+  <div class="step" id="s4"><span class="dot"></span>Building interactive report</div>
+  <div class="step" id="s5"><span class="dot"></span>Sending PDF to your email</div>
+</div>
+<p id="eta">Usually ready in 60–90 seconds…</p>
+<script>
+  const reportId = ${JSON.stringify(reportId)};
+  let attempts = 0;
+  const maxAttempts = 60; // 3 min max
+  function check() {
+    if (!reportId) { window.location.href = '/'; return; }
+    fetch('/api/report/' + reportId + '/status')
+      .then(r => r.json())
+      .then(data => {
+        attempts++;
+        if (data.ready) {
+          document.getElementById('s3').className = 'step done';
+          document.getElementById('s4').className = 'step done';
+          document.getElementById('s5').className = 'step active';
+          document.getElementById('eta').textContent = 'Report ready! Opening now…';
+          setTimeout(() => { window.location.href = '/api/report/' + reportId + '/view'; }, 800);
+        } else if (attempts >= maxAttempts) {
+          document.getElementById('eta').textContent = 'Taking longer than usual — check your email for the PDF link.';
+        } else {
+          if (attempts > 10) document.getElementById('s3').className = 'step done';
+          if (attempts > 10) document.getElementById('s4').className = 'step active';
+          setTimeout(check, 3000);
+        }
+      })
+      .catch(() => { if (attempts < maxAttempts) setTimeout(check, 3000); });
+  }
+  setTimeout(check, 3000);
+</script>
+</body>
+</html>`);
 });
 
 // --- Serves a generated report HTML web view.
