@@ -26,6 +26,7 @@ const { runApifyEnrichment } = require("./services/apify");
 const { scanUrl: urlScanUrl } = require("./services/urlscan");
 const { pushScanRecord, pushLeadRecord } = require("./services/coupler");
 const { runAdIntelligence } = require("./services/metaAds");
+const { generateAllInsights } = require("./services/aiInsights"); // ← AI Insights (6 modules)
 
 const app = express();
 // Required when running behind a proxy (Render, Railway, Heroku, nginx etc.)
@@ -377,6 +378,31 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
       }
     }
 
+    // ─── AI INSIGHTS — 6 Claude-powered modules ──────────────────────────────
+    // Runs in parallel with nothing — already after all enrichment is done.
+    // Non-blocking: if Claude API key is missing or call fails, report still
+    // generates fine — aiInsights will just be null.
+    let aiInsights = null;
+    try {
+      aiInsights = await generateAllInsights({
+        businessName: meta.businessName || "Your Business",
+        city: meta.city || "",
+        businessType: meta.businessType || "",
+        scores: {
+          "Google Business Profile": scores?.google ?? 0,
+          "Social Media": scores?.social ?? 0,
+          "Website": scores?.website ?? 0,
+          "Reputation": scores?.reputation ?? 0,
+        },
+        reviews: apifyEnrichment?.reviews || [],
+        socialData: null,
+        aiVisibility: null, // wire up if you add aiVisibility service later
+      });
+    } catch (err) {
+      console.error("AI Insights failed (non-blocking):", err.message);
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     const reportId = makeReportId();
     const reportData = {
       businessName: meta.businessName || "Your Business",
@@ -393,6 +419,8 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
       apify: apifyEnrichment,
       urlscan: urlscanEnrichment,
       metaAds: metaAdsEnrichment,
+      // AI Insights — 6 Claude-powered sections (null if API key not set)
+      aiInsights,
     };
 
 
