@@ -450,7 +450,9 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
       console.error("Report/toolkit generation failed after payment:", genErr.message);
     }
 
-    sendCustomerConfirmation(order, reportUrl, toolkitUrl, webReportUrl).catch((e) => console.error("Customer email failed:", e.message));
+    // Pass aiInsights so the customer email includes the 6 AI module sections
+    const orderWithScores = { ...order, scores: reportData.scores, grade: scanDetails?.grade };
+    sendCustomerConfirmation(orderWithScores, reportUrl, toolkitUrl, webReportUrl, aiInsights).catch((e) => console.error("Customer email failed:", e.message));
     sendOwnerNotification(order).catch((e) => console.error("Owner notification failed:", e.message));
 
     // Push completed order record to Coupler analytics sheet (non-blocking)
