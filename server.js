@@ -27,6 +27,7 @@ const { scanUrl: urlScanUrl } = require("./services/urlscan");
 const { pushScanRecord, pushLeadRecord } = require("./services/coupler");
 const { runAdIntelligence } = require("./services/metaAds");
 const { generateAllInsights } = require("./services/aiInsights"); // ← AI Insights (6 modules)
+const { startFollowUpJob } = require("./services/followUpJob");   // ← 24h upsell follow-up
 
 const app = express();
 // Required when running behind a proxy (Render, Railway, Heroku, nginx etc.)
@@ -545,4 +546,6 @@ app.get("/health", (req, res) => res.json({ status: "ok", ts: Date.now() }));
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`KYP Scanner running at http://localhost:${PORT}`);
+  // Start the 24-hour follow-up email job for unconverted free-scan leads
+  startFollowUpJob();
 });
