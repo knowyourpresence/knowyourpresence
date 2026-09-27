@@ -98,7 +98,8 @@ async function analyzeReviews(reportData) {
   // reviews can be an array of strings or a single summary string
   let reviewText = "";
   if (Array.isArray(reviews) && reviews.length > 0) {
-    reviewText = reviews.slice(0, 20).join("\n---\n");
+    const reviewsArr = Array.isArray(reviews) ? reviews : (reviews?.reviews || reviews?.results || reviews?.items || []);
+reviewText = reviewsArr.slice(0, 20).map(r => typeof r === "string" ? r : (r?.text || r?.snippet || r?.comment || JSON.stringify(r))).join("\n---\n");
   } else if (typeof reviews === "string" && reviews.length > 0) {
     reviewText = reviews;
   } else {
