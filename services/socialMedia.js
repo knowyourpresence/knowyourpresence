@@ -20,52 +20,65 @@ async function fetchFacebookData(businessName, city) {
     return { platform: "Facebook", score: 0, real: false, raw: { note: "no token" } };
   }
 
-  try {
-    // Search public pages by name
-    const query = city ? `${businessName} ${city}` : businessName;
-    const searchRes = await axios.get("https://graph.facebook.com/v19.0/search", {
-      params: {
-        q: query,
-        type: "page",
-        fields: "id,name,fan_count,followers_count,posts.limit(5){created_time}",
-        access_token: token,
-        limit: 3,
-      },
-      timeout: 10000,
-    });
+  // Try multiple search queries: with city, without city, name-only variations
+  // This prevents city-mismatch false negatives (e.g. "Sydney Salon" based in Florida)
+  const queries = [];
+  if (city) queries.push(`${businessName} ${city}`);
+  queries.push(businessName);
+  // Also try name without common suffixes like "by X" → first two words
+  const shortName = businessName.split(/\s+/).slice(0, 2).join(" ");
+  if (shortName !== businessName) queries.push(shortName);
 
-    const pages = searchRes.data?.data || [];
-    if (!pages.length) {
-      return { platform: "Facebook", score: 0, real: true, raw: { note: "no page found" } };
+  for (const query of queries) {
+    try {
+      const searchRes = await axios.get("https://graph.facebook.com/v19.0/search", {
+        params: {
+          q: query,
+          type: "page",
+          fields: "id,name,fan_count,followers_count,posts.limit(5){created_time}",
+          access_token: token,
+          limit: 5,
+        },
+        timeout: 10000,
+      });
+
+      const pages = searchRes.data?.data || [];
+      if (!pages.length) continue; // try next query
+
+      // Find the best match — prefer pages whose name closely matches businessName
+      const nameLower = businessName.toLowerCase();
+      const page = pages.find(p => p.name && p.name.toLowerCase().includes(nameLower.split(/\s+/)[0]))
+        || pages[0];
+
+      const followers = page.followers_count || page.fan_count || 0;
+
+      // Check post recency — did they post in the last 90 days?
+      const posts = page.posts?.data || [];
+      const recentPost = posts[0]?.created_time;
+      const daysSincePost = recentPost
+        ? Math.floor((Date.now() - new Date(recentPost).getTime()) / 86400000)
+        : 999;
+      const isActive = daysSincePost <= 90;
+
+      // Score: follower volume (up to 60 pts) + activity (up to 40 pts)
+      let score = 0;
+      score += Math.min(60, Math.log10(followers + 1) * 18); // 1k followers ≈ 54pts
+      score += isActive ? 40 : daysSincePost <= 180 ? 20 : 0;
+
+      console.log(`[socialMedia] Facebook matched: "${page.name}" (query: "${query}") — followers: ${followers}`);
+
+      return {
+        platform: "Facebook",
+        score: Math.round(Math.min(100, score)),
+        real: true,
+        raw: { followers, daysSincePost, isActive, pageName: page.name, matchedQuery: query },
+      };
+    } catch (err) {
+      console.error(`Facebook search failed for query "${query}":`, err.message);
     }
-
-    // Pick the best-matching page (first result is usually best)
-    const page = pages[0];
-    const followers = page.followers_count || page.fan_count || 0;
-
-    // Check post recency — did they post in the last 90 days?
-    const posts = page.posts?.data || [];
-    const recentPost = posts[0]?.created_time;
-    const daysSincePost = recentPost
-      ? Math.floor((Date.now() - new Date(recentPost).getTime()) / 86400000)
-      : 999;
-    const isActive = daysSincePost <= 90;
-
-    // Score: follower volume (up to 60 pts) + activity (up to 40 pts)
-    let score = 0;
-    score += Math.min(60, Math.log10(followers + 1) * 18); // 1k followers ≈ 54pts
-    score += isActive ? 40 : daysSincePost <= 180 ? 20 : 0;
-
-    return {
-      platform: "Facebook",
-      score: Math.round(Math.min(100, score)),
-      real: true,
-      raw: { followers, daysSincePost, isActive, pageName: page.name },
-    };
-  } catch (err) {
-    console.error("Facebook page fetch failed:", err.message);
-    return { platform: "Facebook", score: 0, real: false, raw: { note: err.message } };
   }
+
+  return { platform: "Facebook", score: 0, real: true, raw: { note: "no page found after all queries" } };
 }
 
 // ── YouTube public channel ────────────────────────────────────────────────────
@@ -101,27 +114,154 @@ async function fetchYouTubeData(channelId) {
   }
 }
 
+// ── Instagram presence check (public profile via web scraping) ────────────────
+// Uses the Graph API to search for Instagram Business accounts linked to pages.
+// Falls back to a simple web-fetch of the public profile if no token/page.
+async function fetchInstagramData(businessName, city) {
+  const token = process.env.FACEBOOK_APP_TOKEN; // same token — IG uses Graph API too
+  if (!token || !businessName) {
+    return { platform: "Instagram", score: 0, real: false, raw: { note: "no token" } };
+  }
+
+  // Build candidate Instagram handles from the business name
+  const slug = businessName.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const slugUnderscore = businessName.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+  const handles = [slug, slugUnderscore];
+  // Also try "<name><city>" combos
+  if (city) {
+    const citySlug = city.toLowerCase().replace(/[^a-z0-9]/g, "");
+    handles.push(`${slug}${citySlug}`, `${slug}_${citySlug}`);
+  }
+
+  // Search Facebook Pages (which often have a linked Instagram account)
+  try {
+    const queries = [businessName];
+    if (city) queries.unshift(`${businessName} ${city}`);
+
+    for (const query of queries) {
+      const searchRes = await axios.get("https://graph.facebook.com/v19.0/search", {
+        params: {
+          q: query,
+          type: "page",
+          fields: "id,name,instagram_business_account",
+          access_token: token,
+          limit: 3,
+        },
+        timeout: 10000,
+      });
+
+      const pages = searchRes.data?.data || [];
+      const pageWithIg = pages.find(p => p.instagram_business_account?.id);
+
+      if (pageWithIg) {
+        const igId = pageWithIg.instagram_business_account.id;
+        const igRes = await axios.get(`https://graph.facebook.com/v19.0/${igId}`, {
+          params: {
+            fields: "followers_count,media_count,biography",
+            access_token: token,
+          },
+          timeout: 10000,
+        });
+        const ig = igRes.data;
+        const followers = ig.followers_count || 0;
+        const posts = ig.media_count || 0;
+
+        let score = 0;
+        score += Math.min(60, Math.log10(followers + 1) * 18);
+        score += posts >= 12 ? 40 : posts >= 6 ? 25 : posts > 0 ? 15 : 0;
+
+        console.log(`[socialMedia] Instagram found via FB page: followers=${followers}, posts=${posts}`);
+        return {
+          platform: "Instagram",
+          score: Math.round(Math.min(100, score)),
+          real: true,
+          raw: { followers, posts },
+        };
+      }
+    }
+  } catch (err) {
+    console.error("Instagram via FB Graph failed:", err.message);
+  }
+
+  // Fallback: try fetching the public Instagram profile page directly
+  try {
+    for (const handle of handles) {
+      try {
+        const res = await axios.get(`https://www.instagram.com/${handle}/`, {
+          timeout: 8000,
+          headers: { "User-Agent": "Mozilla/5.0" },
+        });
+        if (res.status === 200 && res.data.includes('"edge_followed_by"')) {
+          // Extract follower count from the page JSON
+          const match = res.data.match(/"edge_followed_by":\{"count":(\d+)/);
+          const followers = match ? parseInt(match[1], 10) : 0;
+          const postsMatch = res.data.match(/"edge_owner_to_timeline_media":\{"count":(\d+)/);
+          const posts = postsMatch ? parseInt(postsMatch[1], 10) : 0;
+
+          let score = 0;
+          score += Math.min(60, Math.log10(followers + 1) * 18);
+          score += posts >= 12 ? 40 : posts >= 6 ? 25 : posts > 0 ? 15 : 0;
+
+          console.log(`[socialMedia] Instagram found via web for @${handle}: followers=${followers}`);
+          return {
+            platform: "Instagram",
+            score: Math.round(Math.min(100, score)),
+            real: true,
+            raw: { followers, posts, handle },
+          };
+        }
+        // If 200 but no follower JSON — account exists but data not exposed; give partial credit
+        if (res.status === 200 && !res.data.includes("Sorry, this page isn't available")) {
+          console.log(`[socialMedia] Instagram @${handle} exists (partial data)`);
+          return {
+            platform: "Instagram",
+            score: 35, // account exists, can't read metrics
+            real: true,
+            raw: { handle, note: "exists, metrics not exposed" },
+          };
+        }
+      } catch (_) {
+        // 404 = handle doesn't exist, try next
+      }
+    }
+  } catch (err) {
+    console.error("Instagram web fallback failed:", err.message);
+  }
+
+  return { platform: "Instagram", score: 0, real: false, raw: { note: "not found" } };
+}
+
 // ── Combined social score ─────────────────────────────────────────────────────
 /**
  * Returns a single social sub-score (0–100) from real public platform data.
  *
  * @param {object} handles
  * @param {string} [handles.youtubeChannelId]
- * @param {string} [handles.businessName]   — used for Facebook page search
- * @param {string} [handles.city]           — improves Facebook search accuracy
+ * @param {string} [handles.businessName]   — used for Facebook/Instagram search
+ * @param {string} [handles.city]           — improves search accuracy
  */
 async function calculateSocialScore(handles = {}) {
-  const [fb, yt] = await Promise.all([
+  const [fb, yt, ig] = await Promise.all([
     fetchFacebookData(handles.businessName, handles.city),
     fetchYouTubeData(handles.youtubeChannelId),
+    fetchInstagramData(handles.businessName, handles.city),
   ]);
 
-  const realResults = [fb, yt].filter(r => r.real && r.score > 0);
+  const realResults = [fb, yt, ig].filter(r => r.real && r.score > 0);
 
   let score;
   if (realResults.length > 0) {
-    // Average only the platforms we actually got data for
-    score = Math.round(realResults.reduce((s, r) => s + r.score, 0) / realResults.length);
+    // Weight: Instagram (40%) + Facebook (40%) + YouTube (20%) when all present
+    // Otherwise average what we have
+    if (ig.score > 0 && fb.score > 0) {
+      score = Math.round(
+        ig.score * 0.40 +
+        fb.score * 0.40 +
+        (yt.score || 0) * 0.20
+      );
+    } else {
+      score = Math.round(realResults.reduce((s, r) => s + r.score, 0) / realResults.length);
+    }
   } else {
     // No real data at all — return 0 so caller knows
     score = 0;
@@ -129,7 +269,7 @@ async function calculateSocialScore(handles = {}) {
 
   return {
     score,
-    platforms: [fb, yt],
+    platforms: [fb, yt, ig],
     hasRealData: realResults.length > 0,
   };
 }

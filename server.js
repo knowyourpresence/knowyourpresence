@@ -683,14 +683,63 @@ app.get("/api/report/:reportId", (req, res) => {
   res.sendFile(filePath);
 });
 
-// PDF download — alias used by report HTML download buttons
-app.get("/api/report/:reportId/pdf", (req, res) => {
-  const filePath = path.join(REPORTS_DIR, `${req.params.reportId}.pdf`);
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).send("PDF not found. It may still be generating — please check your email for the attached copy.");
+// PDF download — alias used by report HTML download buttons.
+// If the PDF was lost (Render ephemeral disk restart), regenerate it on-the-fly
+// from the HTML report which is also stored on disk.
+app.get("/api/report/:reportId/pdf", async (req, res) => {
+  const reportId = req.params.reportId;
+  const pdfPath  = path.join(REPORTS_DIR, `${reportId}.pdf`);
+  const htmlPath = path.join(REPORTS_DIR, `${reportId}.html`);
+
+  // Happy path — PDF already exists
+  if (fs.existsSync(pdfPath)) {
+    res.setHeader("Content-Disposition", `attachment; filename="KYP_Report_${reportId}.pdf"`);
+    return res.sendFile(pdfPath);
   }
-  res.setHeader("Content-Disposition", `attachment; filename="KYP_Report_${req.params.reportId}.pdf"`);
-  res.sendFile(filePath);
+
+  // HTML exists — regenerate PDF from it (handles post-restart Render wipes)
+  if (fs.existsSync(htmlPath)) {
+    try {
+      console.log(`[pdf] Regenerating PDF for ${reportId} from stored HTML…`);
+      const { chromium } = require("playwright");
+      const CHROMIUM_PATH = process.env.CHROMIUM_PATH ||
+        (() => {
+          try {
+            const { execSync } = require("child_process");
+            const p = execSync("node -e \"console.log(require('playwright').chromium.executablePath())\"", { timeout: 5000 }).toString().trim();
+            if (p && fs.existsSync(p)) return p;
+          } catch (_) {}
+          return "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+        })();
+
+      const browser = await chromium.launch({
+        executablePath: CHROMIUM_PATH,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      });
+      const page = await browser.newPage();
+      await page.setViewportSize({ width: 900, height: 1200 });
+      await page.goto(`file://${htmlPath}`, { waitUntil: "networkidle" });
+      await page.waitForTimeout(2500);
+      await page.pdf({
+        path: pdfPath,
+        format: "A4",
+        printBackground: true,
+        margin: { top: "0", bottom: "0", left: "0", right: "0" },
+        displayHeaderFooter: false,
+      });
+      await browser.close();
+      console.log(`[pdf] Regenerated PDF saved: ${pdfPath}`);
+
+      res.setHeader("Content-Disposition", `attachment; filename="KYP_Report_${reportId}.pdf"`);
+      return res.sendFile(pdfPath);
+    } catch (err) {
+      console.error(`[pdf] Regeneration failed for ${reportId}:`, err.message);
+      return res.status(500).send("PDF generation failed. Please contact support@knowyourpresence.com with your report ID.");
+    }
+  }
+
+  // Neither exists — report ID is unknown
+  return res.status(404).send("Report not found. Please check your email for the PDF, or contact support@knowyourpresence.com.");
 });
 
 // Toolkit ZIP download - same ID as the report, different file extension.
