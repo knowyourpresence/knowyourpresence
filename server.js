@@ -685,37 +685,47 @@ app.get("/api/report/:reportId", (req, res) => {
 
 // PDF download — alias used by report HTML download buttons.
 // If the PDF was lost (Render ephemeral disk restart), regenerate it on-the-fly
-// from the HTML report which is also stored on disk.
+// by re-rendering the stored HTML report through Playwright.
 app.get("/api/report/:reportId/pdf", async (req, res) => {
   const reportId = req.params.reportId;
   const pdfPath  = path.join(REPORTS_DIR, `${reportId}.pdf`);
   const htmlPath = path.join(REPORTS_DIR, `${reportId}.html`);
 
-  // Happy path — PDF already exists
+  // Happy path — PDF already on disk
   if (fs.existsSync(pdfPath)) {
     res.setHeader("Content-Disposition", `attachment; filename="KYP_Report_${reportId}.pdf"`);
     return res.sendFile(pdfPath);
   }
 
-  // HTML exists — regenerate PDF from it (handles post-restart Render wipes)
+  // HTML exists — regenerate PDF from it using the same Playwright helper
+  // that generated it originally (handles post-restart Render disk wipes)
   if (fs.existsSync(htmlPath)) {
     try {
       console.log(`[pdf] Regenerating PDF for ${reportId} from stored HTML…`);
+      // Re-use the same generateReportPdf path resolution + Playwright setup
+      // by passing a minimal reportData with a pre-built htmlOverride path
       const { chromium } = require("playwright");
-      const CHROMIUM_PATH = process.env.CHROMIUM_PATH ||
+      const playwrightChromium = require("./services/reportPdf").__chromiumPath ||
         (() => {
           try {
             const { execSync } = require("child_process");
-            const p = execSync("node -e \"console.log(require('playwright').chromium.executablePath())\"", { timeout: 5000 }).toString().trim();
+            const p = execSync(
+              "node -e \"try{console.log(require('playwright').chromium.executablePath())}catch(e){}\"",
+              { timeout: 8000, env: { ...process.env } }
+            ).toString().trim();
             if (p && fs.existsSync(p)) return p;
           } catch (_) {}
-          return "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+          return process.env.CHROMIUM_PATH || null;
         })();
 
-      const browser = await chromium.launch({
-        executablePath: CHROMIUM_PATH,
-        args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      });
+      const launchOpts = {
+        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+      };
+      // Only set executablePath if we found one — otherwise let Playwright
+      // use its own bundled Chromium (installed via `playwright install chromium`)
+      if (playwrightChromium) launchOpts.executablePath = playwrightChromium;
+
+      const browser = await chromium.launch(launchOpts);
       const page = await browser.newPage();
       await page.setViewportSize({ width: 900, height: 1200 });
       await page.goto(`file://${htmlPath}`, { waitUntil: "networkidle" });
@@ -733,13 +743,19 @@ app.get("/api/report/:reportId/pdf", async (req, res) => {
       res.setHeader("Content-Disposition", `attachment; filename="KYP_Report_${reportId}.pdf"`);
       return res.sendFile(pdfPath);
     } catch (err) {
-      console.error(`[pdf] Regeneration failed for ${reportId}:`, err.message);
-      return res.status(500).send("PDF generation failed. Please contact support@knowyourpresence.com with your report ID.");
+      console.error(`[pdf] Regeneration failed for ${reportId}:`, err.message, err.stack);
+      // Fall through to email link fallback
+      return res.status(500).send(
+        `PDF generation failed. Your report is available online at /api/report/${reportId}/view — ` +
+        `or email support@knowyourpresence.com with ID ${reportId} and we'll send it manually.`
+      );
     }
   }
 
-  // Neither exists — report ID is unknown
-  return res.status(404).send("Report not found. Please check your email for the PDF, or contact support@knowyourpresence.com.");
+  // Neither file exists — unknown report ID
+  return res.status(404).send(
+    `Report not found. Check your email for the PDF, or contact support@knowyourpresence.com with ID ${reportId}.`
+  );
 });
 
 // Toolkit ZIP download - same ID as the report, different file extension.

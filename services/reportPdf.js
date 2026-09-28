@@ -16,20 +16,20 @@ const archiver = require("archiver"); // already in your package.json
 const REPORTS_DIR = process.env.REPORTS_DIR || path.join(__dirname, "../reports");
 if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR, { recursive: true });
 
-// On Render: set CHROMIUM_PATH env var, or let Playwright find its own build.
-// On local dev: falls back to the pre-installed path in the Claude container.
-const CHROMIUM_PATH =
-  process.env.CHROMIUM_PATH ||
-  (() => {
-    // Try Playwright's own installed chromium first
-    try {
-      const { execSync } = require("child_process");
-      const p = execSync("node -e \"console.log(require('playwright').chromium.executablePath())\"", { timeout: 5000 }).toString().trim();
-      if (p && require("fs").existsSync(p)) return p;
-    } catch (_) {}
-    // Fallback for local Claude container
-    return "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
-  })();
+// CHROMIUM_PATH: set this env var on Render only if auto-detection fails.
+// In production (Render), `playwright install chromium` runs at build time,
+// so Playwright finds its own bundled Chromium without executablePath.
+// On local dev (Claude container), we fall back to the pre-installed path.
+const CHROMIUM_PATH = process.env.CHROMIUM_PATH || (() => {
+  // Local dev fallback only — check the Claude container pre-installed path
+  const localPath = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+  if (require("fs").existsSync(localPath)) return localPath;
+  // Let Playwright use its own bundled Chromium (production / CI)
+  return null;
+})();
+
+// Export for reuse in server.js PDF regeneration route
+module.exports.__chromiumPath = CHROMIUM_PATH;
 
 // ── Unique report ID ──────────────────────────────────────────────────────────
 function makeReportId() {
@@ -847,10 +847,9 @@ async function generateReportPdf(reportData) {
 
   fs.writeFileSync(tmpHtml, buildPrintHtml(reportData), "utf8");
 
-  const browser = await chromium.launch({
-    executablePath: CHROMIUM_PATH,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
+  const launchOpts = { args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"] };
+  if (CHROMIUM_PATH) launchOpts.executablePath = CHROMIUM_PATH;
+  const browser = await chromium.launch(launchOpts);
   const page = await browser.newPage();
   await page.setViewportSize({ width: 900, height: 1200 });
   await page.goto(`file://${tmpHtml}`, { waitUntil: "networkidle" });
