@@ -10,12 +10,13 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const OWNER_EMAIL = process.env.OWNER_EMAIL || "support@knowyourpresence.com";
 
 // ── 1. Customer email with PDF attached ───────────────────────────────────────
-async function sendReportEmail({ to, businessName, city, score, grade, reportId, pdfPath }) {
+async function sendReportEmail({ to, businessName, city, score, grade, reportId, pdfPath, toolkitUrl }) {
   // Attach PDF only if the file actually exists — if PDF generation failed on
   // the server, we still send the email with a link to the web report rather
   // than crashing here and sending nothing at all.
   let attachments = [];
-  if (pdfPath && fs.existsSync(pdfPath)) {
+  const hasPdf = pdfPath && fs.existsSync(pdfPath);
+  if (hasPdf) {
     const pdfBuffer = fs.readFileSync(pdfPath);
     const pdfBase64 = pdfBuffer.toString("base64");
     const fileName  = `KYP_Report_${businessName.replace(/\s+/g, "_")}_${reportId}.pdf`;
@@ -23,6 +24,9 @@ async function sendReportEmail({ to, businessName, city, score, grade, reportId,
   } else {
     console.warn(`sendReportEmail: PDF not found at "${pdfPath}" — sending email without attachment.`);
   }
+
+  const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || "https://knowyourpresence.com";
+  const webReportUrl = `${PUBLIC_BASE_URL}/api/report/${reportId}/view`;
 
   const { data, error } = await resend.emails.send({
     from:    "Know Your Presence <reports@knowyourpresence.com>",
@@ -69,19 +73,28 @@ async function sendReportEmail({ to, businessName, city, score, grade, reportId,
         <!-- Body -->
         <tr><td style="padding:24px 36px;">
           <p style="font-size:14px;color:#1a2332;line-height:1.65;margin:0 0 14px;">
-            Your full Presence Report for <strong>${businessName}</strong> is attached to this email as a PDF.
+            Your full Presence Report for <strong>${businessName}</strong> is ready.
             It includes your score breakdown, ranked opportunities, AI visibility signals, competitor comparison,
             and a 90-day roadmap — everything in one place.
           </p>
           <p style="font-size:14px;color:#6b7280;line-height:1.65;margin:0 0 20px;">
-            Open the attachment to read the full report. We recommend starting with <strong>Section 09 — Start Here</strong>
-            for the seven actions that move the needle fastest.
+            ${hasPdf
+              ? `Your PDF is attached to this email. We recommend starting with <strong>Section 09 — Start Here</strong> for the seven actions that move the needle fastest.`
+              : `View your full interactive report below. We recommend starting with <strong>Section 09 — Start Here</strong> for the seven actions that move the needle fastest.`
+            }
           </p>
-          <table cellpadding="0" cellspacing="0"><tr><td style="background:#152030;border-radius:6px;">
-            <a href="https://knowyourpresence.com" style="display:block;padding:12px 28px;font-size:13px;font-weight:600;color:#fff;text-decoration:none;letter-spacing:.3px;">
-              Visit Know Your Presence →
-            </a>
-          </td></tr></table>
+          <table cellpadding="0" cellspacing="0" style="margin-bottom:12px;"><tr>
+            <td style="background:#152030;border-radius:6px;padding-right:10px;">
+              <a href="${webReportUrl}" style="display:block;padding:12px 28px;font-size:13px;font-weight:600;color:#fff;text-decoration:none;letter-spacing:.3px;">
+                View Your Full Report →
+              </a>
+            </td>
+            ${toolkitUrl ? `<td style="background:#1f6b45;border-radius:6px;">
+              <a href="${toolkitUrl}" style="display:block;padding:12px 28px;font-size:13px;font-weight:600;color:#fff;text-decoration:none;letter-spacing:.3px;">
+                Download Toolkit →
+              </a>
+            </td>` : ""}
+          </tr></table>
         </td></tr>
 
         <!-- Divider -->
@@ -209,6 +222,7 @@ async function sendCustomerConfirmation(order, reportUrl, toolkitUrl) {
     grade,
     reportId:     order.reportId,
     pdfPath:      order.pdfPath,
+    toolkitUrl,
   });
 }
 
