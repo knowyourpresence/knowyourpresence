@@ -449,28 +449,33 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
     let webReportUrl = "";
     let toolkitUrl = "";
     let pdfPath = "";
-    try {
-      // Run PDF + toolkit in parallel; also save web report HTML
-      await Promise.all([
-        generateReportPdf(reportData).then((savedPdfPath) => {
+
+    // Generate PDF, toolkit, and web report — run in parallel, each failure
+    // is logged individually so one failure doesn't silently block the others.
+    await Promise.allSettled([
+      generateReportPdf(reportData)
+        .then((savedPdfPath) => {
           pdfPath = savedPdfPath;
           reportUrl = `${process.env.PUBLIC_BASE_URL || ""}/api/report/${reportId}`;
-        }),
-        generateToolkitZip(reportData).then(() => {
+          console.log("[webhook] PDF generated:", pdfPath);
+        })
+        .catch((e) => console.error("[webhook] PDF generation FAILED:", e.message, e.stack)),
+
+      generateToolkitZip(reportData)
+        .then(() => {
           toolkitUrl = `${process.env.PUBLIC_BASE_URL || ""}/api/toolkit/${reportId}`;
-        }),
-        // Save interactive web report HTML
-        (async () => {
-          const htmlContent = generateWebReport(reportData);
-          const htmlPath = path.join(REPORTS_DIR, `${reportId}.html`);
-          fs.writeFileSync(htmlPath, htmlContent, "utf8");
-          webReportUrl = `${process.env.PUBLIC_BASE_URL || ""}/api/report/${reportId}/view`;
-          console.log("Web report saved:", webReportUrl);
-        })(),
-      ]);
-    } catch (genErr) {
-      console.error("Report/toolkit generation failed after payment:", genErr.message);
-    }
+          console.log("[webhook] Toolkit generated:", toolkitUrl);
+        })
+        .catch((e) => console.error("[webhook] Toolkit generation FAILED:", e.message)),
+
+      (async () => {
+        const htmlContent = generateWebReport(reportData);
+        const htmlPath = path.join(REPORTS_DIR, `${reportId}.html`);
+        fs.writeFileSync(htmlPath, htmlContent, "utf8");
+        webReportUrl = `${process.env.PUBLIC_BASE_URL || ""}/api/report/${reportId}/view`;
+        console.log("[webhook] Web report saved:", webReportUrl);
+      })().catch((e) => console.error("[webhook] Web report generation FAILED:", e.message)),
+    ]);
 
     // Email sends only the PDF — the web report is shown immediately after
     // payment via the /report-ready loading page, not linked in the email.

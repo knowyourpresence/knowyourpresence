@@ -11,9 +11,18 @@ const OWNER_EMAIL = process.env.OWNER_EMAIL || "support@knowyourpresence.com";
 
 // ── 1. Customer email with PDF attached ───────────────────────────────────────
 async function sendReportEmail({ to, businessName, city, score, grade, reportId, pdfPath }) {
-  const pdfBuffer = fs.readFileSync(pdfPath);
-  const pdfBase64 = pdfBuffer.toString("base64");
-  const fileName  = `KYP_Report_${businessName.replace(/\s+/g, "_")}_${reportId}.pdf`;
+  // Attach PDF only if the file actually exists — if PDF generation failed on
+  // the server, we still send the email with a link to the web report rather
+  // than crashing here and sending nothing at all.
+  let attachments = [];
+  if (pdfPath && fs.existsSync(pdfPath)) {
+    const pdfBuffer = fs.readFileSync(pdfPath);
+    const pdfBase64 = pdfBuffer.toString("base64");
+    const fileName  = `KYP_Report_${businessName.replace(/\s+/g, "_")}_${reportId}.pdf`;
+    attachments = [{ filename: fileName, content: pdfBase64 }];
+  } else {
+    console.warn(`sendReportEmail: PDF not found at "${pdfPath}" — sending email without attachment.`);
+  }
 
   const { data, error } = await resend.emails.send({
     from:    "Know Your Presence <reports@knowyourpresence.com>",
@@ -91,7 +100,7 @@ async function sendReportEmail({ to, businessName, city, score, grade, reportId,
   </table>
 </body>
 </html>`,
-    attachments: [{ filename: fileName, content: pdfBase64 }],
+    attachments,
   });
 
   if (error) {
