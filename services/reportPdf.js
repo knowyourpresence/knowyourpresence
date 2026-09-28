@@ -871,8 +871,9 @@ async function generateReportPdf(reportData) {
   return pdfPath;
 }
 
-// ── generateToolkitZip — called from server.js ────────────────────────────────
-async function generateToolkitZip(reportData) {
+// ── generateToolkitZip — delegates to toolkitDocx.js (10 styled DOCX files) ───
+const { generateToolkitZip } = require("./toolkitDocx");
+async function _generateToolkitZip_UNUSED(reportData) {
   const reportId  = reportData.reportId || makeReportId();
   const zipPath   = path.join(REPORTS_DIR, `${reportId}-toolkit.zip`);
   const businessName = reportData.businessName || "Your Business";
@@ -1485,3 +1486,4 @@ knowyourpresence.com | support@knowyourpresence.com
 }
 
 module.exports = { generateReportPdf, generateToolkitZip, makeReportId, REPORTS_DIR };
+// Note: generateToolkitZip is re-exported from ./toolkitDocx (10 styled DOCX files)
