@@ -184,6 +184,13 @@ app.post("/api/scan", scanRateLimit, async (req, res) => {
       grade: scoreResult.grade,
       potentialScore: potential,
       breakdown: scoreResult.breakdown,
+      // scores object passed through to checkout → webhook → reportData
+      scores: {
+        google:     subScores.google     ?? 0,
+        social:     subScores.social     ?? 0,
+        website:    subScores.website    ?? 0,
+        reputation: subScores.reputation ?? 0,
+      },
       details: {
         google: googleResult.raw,
         social: socialResult.platforms,
@@ -240,7 +247,7 @@ app.post("/api/checkout/create-session", async (req, res) => {
         businessDescription: businessDescription || "",
         city: city || "",
         waNumber: waNumber || "",
-        scores: scores || { google: 60, social: 60, website: 60, reputation: 60 },
+        scores: (scores && typeof scores.google === 'number') ? scores : { google: 60, social: 60, website: 60, reputation: 60 },
         scanDetails: scanDetails || null,
         competitorName: competitorName || "",
         reportId: preReportId,
@@ -427,7 +434,7 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
       reportId,
       reportDate: new Date().toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" }),
       waNumber: meta.waNumber || "",
-      scores: scores || { google: 60, social: 60, website: 60, reputation: 60 },
+      scores: (scores && typeof scores.google === 'number') ? scores : { google: 60, social: 60, website: 60, reputation: 60 },
       scanDetails,
       competitor: competitorData,
       // Enrichment layers baked into the PDF report
