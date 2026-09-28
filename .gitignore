@@ -3,5 +3,6 @@ node_modules/
 data/reports/
 data/orders/
 data/leads/
+data/scanned_emails.json
 *.log
 .DS_Store

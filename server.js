@@ -20,7 +20,7 @@ const { saveOrder, getAllOrders, getOrdersByCountry } = require("./services/orde
 const { sendCustomerConfirmation, sendOwnerNotification } = require("./services/email");
 const { generateReportPdf, generateToolkitZip, makeReportId, REPORTS_DIR } = require("./services/reportPdf");
 const { generateWebReport } = require("./services/reportHtml");
-const { scanRateLimit } = require("./services/rateLimit");
+const { scanRateLimit, hasEmailScanned, recordEmailScan } = require("./services/rateLimit");
 const { saveLead, markConverted, getAllLeads, getLeadStats, getPublicScanCount } = require("./services/leads");
 const { runApifyEnrichment } = require("./services/apify");
 const { scanUrl: urlScanUrl } = require("./services/urlscan");
@@ -68,6 +68,18 @@ app.post("/api/scan", scanRateLimit, async (req, res) => {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({ error: "A valid email is required to run a free scan." });
     }
+
+    // Email restriction — 1 free scan per email address, forever (persisted to disk).
+    if (hasEmailScanned(email)) {
+      return res.status(429).json({
+        error: "already_scanned",
+        message: "This email has already used its free scan. Upgrade to get your full report with AI insights, PDF, and toolkit.",
+      });
+    }
+
+    // Record the email NOW (before the scan runs) so even a failed/aborted
+    // scan counts — prevents someone refreshing to get unlimited free scans.
+    recordEmailScan(email);
 
     // Save the lead before running the scan, so we capture it even if the
     // scan itself fails for some reason.

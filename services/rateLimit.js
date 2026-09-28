@@ -1,51 +1,97 @@
 // services/rateLimit.js
-// Simple in-memory IP rate limiter for the free scan endpoint.
+// Two-layer protection for the free scan endpoint:
 //
-// Why this exists: each free scan costs real money in Google Places API
-// calls (~4 cents at the Enterprise+Atmosphere tier, since we request
-// reviews and photos). Without a limit, a single bot hammering /api/scan
-// could run up a serious bill in minutes.
+//  Layer 1 — EMAIL (primary, persistent)
+//    Each email address gets exactly 1 free scan, forever.
+//    Stored in a JSON file on disk → survives server restarts.
+//    Checked AFTER email validation in server.js via hasEmailScanned()
+//    and recorded via recordEmailScan().
 //
-// LIMITATION: this stores counts in memory, so it resets whenever the
-// server restarts, and it does NOT work correctly across multiple server
-// instances (each would keep its own separate count). For a single small
-// server this is fine. If you scale to multiple instances, move this to
-// Redis or your database.
+//  Layer 2 — IP (secondary, in-memory, bot abuse only)
+//    3 scans per IP per 24 hours, in-memory.
+//    Prevents bots hammering the endpoint with throwaway emails.
+//    Resets on restart — acceptable since email layer is the real gate.
 
-const scanRecords = new Map(); // ip -> { count, firstSeen }
+const fs   = require("fs");
+const path = require("path");
 
-const WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
-const MAX_SCANS_PER_WINDOW = 3; // 3 free scans per IP per day
-// The email gate is the real friction — IP limit just prevents bot abuse.
-// 3/day is enough to let someone scan themselves, a competitor, and a sample
-// without being blocked by shared IPs (offices, cafes, mobile networks).
+// ── Email restriction (persistent file) ───────────────────────────────────────
+const SCANNED_EMAILS_FILE = process.env.SCANNED_EMAILS_FILE ||
+  path.join(__dirname, "../data/scanned_emails.json");
+
+// Ensure the data directory exists
+const dataDir = path.dirname(SCANNED_EMAILS_FILE);
+if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+
+// Load existing scanned emails from disk into a Set for O(1) lookups.
+// If the file doesn't exist or is corrupt, start fresh.
+let scannedEmails = new Set();
+try {
+  if (fs.existsSync(SCANNED_EMAILS_FILE)) {
+    const raw = fs.readFileSync(SCANNED_EMAILS_FILE, "utf8");
+    const arr = JSON.parse(raw);
+    scannedEmails = new Set(arr.map(e => e.toLowerCase().trim()));
+    console.log(`[rateLimit] Loaded ${scannedEmails.size} scanned emails from disk.`);
+  }
+} catch (e) {
+  console.error("[rateLimit] Could not load scanned_emails.json — starting fresh:", e.message);
+}
+
+function _saveEmails() {
+  try {
+    fs.writeFileSync(SCANNED_EMAILS_FILE, JSON.stringify([...scannedEmails]), "utf8");
+  } catch (e) {
+    console.error("[rateLimit] Could not save scanned_emails.json:", e.message);
+  }
+}
 
 /**
- * Express middleware. Rejects with 429 if this IP has already used its
- * free scan within the current window.
+ * Returns true if this email has already used their one free scan.
+ * Call this AFTER validating the email format.
+ */
+function hasEmailScanned(email) {
+  return scannedEmails.has(email.toLowerCase().trim());
+}
+
+/**
+ * Mark an email as having used their free scan.
+ * Call this just before running the scan (not after — we want to record
+ * the attempt even if the scan itself fails mid-way).
+ */
+function recordEmailScan(email) {
+  scannedEmails.add(email.toLowerCase().trim());
+  _saveEmails();
+}
+
+// ── IP restriction (in-memory, bot layer) ─────────────────────────────────────
+const scanRecords = new Map(); // ip -> { count, firstSeen }
+
+const WINDOW_MS          = 24 * 60 * 60 * 1000; // 24 hours
+const MAX_SCANS_PER_IP   = 5; // generous — real users share IPs (offices, cafes)
+// Email layer is the real gate; IP layer just stops bot floods.
+
+/**
+ * Express middleware. Rejects with 429 if this IP has exceeded its daily limit.
  */
 function scanRateLimit(req, res, next) {
-  // Respect proxy headers - hosts like Render/Railway put the real client
-  // IP in x-forwarded-for, since req.ip would otherwise be the proxy's IP.
   const forwarded = req.headers["x-forwarded-for"];
   const ip = (forwarded ? forwarded.split(",")[0] : req.ip || "").trim();
 
-  if (!ip) return next(); // can't identify - fail open rather than block real users
+  if (!ip) return next(); // can't identify — fail open
 
-  const now = Date.now();
+  const now    = Date.now();
   const record = scanRecords.get(ip);
 
   if (!record || now - record.firstSeen > WINDOW_MS) {
-    // First scan, or previous window expired - start fresh
     scanRecords.set(ip, { count: 1, firstSeen: now });
     return next();
   }
 
-  if (record.count >= MAX_SCANS_PER_WINDOW) {
+  if (record.count >= MAX_SCANS_PER_IP) {
     const hoursLeft = Math.ceil((WINDOW_MS - (now - record.firstSeen)) / (60 * 60 * 1000));
     return res.status(429).json({
       error: "rate_limited",
-      message: `You've used your 3 free scans for today. Try again in ${hoursLeft} hour${hoursLeft === 1 ? "" : "s"}, or get your full report now.`,
+      message: `Too many scan attempts from your network. Try again in ${hoursLeft} hour${hoursLeft === 1 ? "" : "s"}.`,
     });
   }
 
@@ -53,15 +99,13 @@ function scanRateLimit(req, res, next) {
   next();
 }
 
-// Periodically drop expired entries so the Map doesn't grow forever.
-// .unref() lets Node exit naturally if this timer is the only thing left -
-// without it, the process would hang forever on shutdown or in tests.
+// Hourly cleanup so the IP Map doesn't grow forever
 const cleanupTimer = setInterval(() => {
   const now = Date.now();
   for (const [ip, record] of scanRecords.entries()) {
     if (now - record.firstSeen > WINDOW_MS) scanRecords.delete(ip);
   }
-}, 60 * 60 * 1000); // hourly cleanup
+}, 60 * 60 * 1000);
 cleanupTimer.unref();
 
-module.exports = { scanRateLimit };
+module.exports = { scanRateLimit, hasEmailScanned, recordEmailScan };

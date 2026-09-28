@@ -1096,7 +1096,17 @@ document.getElementById('runBtn').addEventListener('click',async()=>{
     const res=await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({businessName:biz,email,city,countryCode:country||'US',websiteUrl:document.getElementById('urlInput').value.trim(),competitorName:document.getElementById('competitorInput').value.trim(),placeId:selectedPlaceId||undefined})});
     const data=await res.json();
-    if(!res.ok)throw new Error(data.error||'Scan failed');
+    if(res.status===429){
+      err.hidden=false;
+      if(data.error==='already_scanned'){
+        err.innerHTML='This email has already used its free scan. <a href="#pricing" style="color:#dc2626;font-weight:700;text-decoration:underline">Upgrade to get your full report →</a>';
+      } else {
+        err.textContent=data.message||'Too many attempts. Please try again later.';
+      }
+      btn.disabled=false;btn.textContent='Run my FREE scan →';
+      return;
+    }
+    if(!res.ok)throw new Error(data.message||data.error||'Scan failed');
     showResults(data,biz);
   }catch(e){
     err.hidden=false;err.textContent=e.message||'Scan failed. Please try again.';
