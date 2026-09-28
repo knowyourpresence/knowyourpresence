@@ -1,554 +1,810 @@
-// services/reportHtml.js
-// Generates the hosted web report HTML page customers see after purchase.
-// Called from server.js: const htmlContent = generateWebReport(reportData);
-// Saved to REPORTS_DIR/{reportId}.html and served at /api/report/{reportId}
-
-"use strict";
-
-// ─── helpers ─────────────────────────────────────────────────────────────────
+'use strict';
 
 function esc(str) {
-  if (str == null) return "";
+  if (str === null || str === undefined) return '';
   return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-function scoreColor(n) {
-  if (n >= 80) return "#22c55e"; // green
-  if (n >= 60) return "#f59e0b"; // amber
-  return "#ef4444";              // red
+function calcOverall(scores) {
+  const rep = typeof scores.reputation === 'number' ? scores.reputation : null;
+  const gb  = typeof scores.google    === 'number' ? scores.google    : null;
+  const web = typeof scores.website   === 'number' ? scores.website   : null;
+  const soc = typeof scores.social    === 'number' ? scores.social    : null;
+  if (rep !== null && gb !== null && web !== null && soc !== null) {
+    return Math.round((rep * 0.20) + (gb * 0.35) + (web * 0.20) + (soc * 0.25));
+  }
+  const vals = [rep, gb, web, soc].filter(v => v !== null && v > 0);
+  if (vals.length > 0) return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+  return 0;
 }
 
-function scoreLabel(n) {
-  if (n >= 80) return "Strong";
-  if (n >= 60) return "Average";
-  return "Needs Work";
+function getGrade(score) {
+  if (score >= 90) return 'A+';
+  if (score >= 80) return 'A';
+  if (score >= 70) return 'B';
+  if (score >= 60) return 'C';
+  return 'D';
 }
 
-function gradeBadge(grade) {
-  const colors = { A: "#22c55e", B: "#84cc16", C: "#f59e0b", D: "#ef4444", F: "#dc2626" };
-  const g = (grade || "C")[0].toUpperCase();
-  return `<span style="background:${colors[g] || "#6b7280"};color:#fff;padding:4px 14px;border-radius:6px;font-size:1.4rem;font-weight:700;">${g}</span>`;
+function scoreColor(score) {
+  if (score >= 75) return '#1f6b45';
+  if (score >= 50) return '#d97706';
+  return '#dc2626';
 }
 
-// Convert markdown-style **bold** and \n to HTML
-function mdToHtml(text) {
-  if (!text) return "";
-  return esc(text)
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\n/g, "<br>");
+function getInsightText(val) {
+  if (!val) return '';
+  if (typeof val === 'string') return val;
+  if (typeof val === 'object') {
+    return val.summary || val.text || val.content || JSON.stringify(val);
+  }
+  return String(val);
 }
 
-// Render a numbered/bulleted list from text that has lines starting with 1. 2. or - •
-function listToHtml(text) {
-  if (!text) return "";
-  const lines = text.split("\n").filter(l => l.trim());
-  const items = lines.map(l => {
-    const clean = l.replace(/^[\d]+\.\s*/, "").replace(/^[-•*]\s*/, "").trim();
-    return `<li>${mdToHtml(clean)}</li>`;
-  });
-  return `<ul style="margin:0;padding-left:1.2rem;line-height:1.8">${items.join("")}</ul>`;
+function scoreBar(score, color) {
+  const s = Math.max(0, Math.min(100, score || 0));
+  return `<div class="bar-wrap"><div class="bar-fill" style="width:${s}%;background:${color || scoreColor(s)}"></div></div>`;
 }
-
-// ─── score ring SVG ───────────────────────────────────────────────────────────
-
-function scoreRing(value, size = 80) {
-  const r = (size / 2) - 8;
-  const circ = 2 * Math.PI * r;
-  const pct = Math.min(Math.max(value, 0), 100) / 100;
-  const dash = circ * pct;
-  const color = scoreColor(value);
-  return `
-<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block">
-  <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#e5e7eb" stroke-width="7"/>
-  <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="7"
-    stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}"
-    stroke-dashoffset="${(circ * 0.25).toFixed(1)}"
-    stroke-linecap="round" transform="rotate(-90 ${size/2} ${size/2})"/>
-  <text x="${size/2}" y="${size/2}" text-anchor="middle" dominant-baseline="central"
-    font-size="${size < 70 ? 13 : 16}" font-weight="700" fill="${color}">${value}</text>
-</svg>`;
-}
-
-// ─── AI Insights section ──────────────────────────────────────────────────────
-
-function renderAiInsights(ai) {
-  if (!ai) return `
-<div class="section ai-section" style="border:2px dashed #d1d5db;text-align:center;padding:2.5rem;border-radius:12px;">
-  <p style="color:#9ca3af;font-size:.95rem;margin:0">
-    AI Insights not available for this report.<br>
-    <small>Contact support if you expected AI analysis.</small>
-  </p>
-</div>`;
-
-  const modules = [
-    {
-      key: "narrative",
-      icon: "📊",
-      title: "Executive Summary",
-      sub: "AI-written overview of your digital presence",
-      content: ai.narrative,
-      type: "prose"
-    },
-    {
-      key: "competitor",
-      icon: "🏁",
-      title: "Competitor Landscape",
-      sub: "How you compare to local competitors",
-      content: ai.competitor,
-      type: "prose"
-    },
-    {
-      key: "reviewAnalysis",
-      icon: "⭐",
-      title: "Review Intelligence",
-      sub: "What your customers are really saying",
-      content: ai.reviewAnalysis,
-      type: "prose"
-    },
-    {
-      key: "seoContent",
-      icon: "🔍",
-      title: "SEO & Content Ideas",
-      sub: "Keywords and content angles to pursue",
-      content: ai.seoContent,
-      type: "list"
-    },
-    {
-      key: "socialAudit",
-      icon: "📱",
-      title: "Social Media Audit",
-      sub: "Platform-by-platform recommendations",
-      content: ai.socialAudit,
-      type: "prose"
-    },
-    {
-      key: "priorityPlan",
-      icon: "🎯",
-      title: "30-Day Priority Plan",
-      sub: "Your personalised action roadmap",
-      content: ai.priorityPlan,
-      type: "list"
-    }
-  ];
-
-  const cards = modules.map(({ icon, title, sub, content, type }) => {
-    const body = content
-      ? (type === "list" ? listToHtml(content) : `<p style="margin:0;line-height:1.75;color:#374151">${mdToHtml(content)}</p>`)
-      : `<p style="margin:0;color:#9ca3af;font-style:italic">Analysis not available.</p>`;
-
-    return `
-<div class="ai-module-card">
-  <div class="ai-module-head">
-    <span class="ai-module-icon">${icon}</span>
-    <div>
-      <div class="ai-module-title">${esc(title)}</div>
-      <div class="ai-module-sub">${esc(sub)}</div>
-    </div>
-  </div>
-  <div class="ai-module-body">${body}</div>
-</div>`;
-  }).join("");
-
-  return `
-<div class="section ai-section">
-  <div class="section-header">
-    <h2 class="section-title">✦ AI-Written Insights</h2>
-    <span class="section-badge">Powered by Claude AI</span>
-  </div>
-  <p style="color:#6b7280;margin:0 0 1.5rem;font-size:.95rem">
-    Six intelligence modules written specifically for ${esc(ai._businessName || "your business")} based on your digital presence data.
-  </p>
-  <div class="ai-modules-grid">${cards}</div>
-</div>`;
-}
-
-// ─── score cards ──────────────────────────────────────────────────────────────
-
-function renderScores(scores) {
-  const cats = [
-    { key: "google",     label: "Google Business",  icon: "🗺️" },
-    { key: "social",     label: "Social Media",      icon: "📱" },
-    { key: "website",    label: "Website",           icon: "🌐" },
-    { key: "reputation", label: "Reputation",        icon: "⭐" },
-  ];
-  return cats.map(({ key, label, icon }) => {
-    const v = scores?.[key] ?? 0;
-    return `
-<div class="score-card">
-  <div class="score-card-top">
-    <span class="score-icon">${icon}</span>
-    <span class="score-label">${label}</span>
-  </div>
-  ${scoreRing(v, 90)}
-  <div class="score-status" style="color:${scoreColor(v)}">${scoreLabel(v)}</div>
-</div>`;
-  }).join("");
-}
-
-// ─── reviews section ──────────────────────────────────────────────────────────
-
-function renderReviews(reviews) {
-  // Normalise: Apify sometimes returns an object instead of an array
-  const reviewsNorm = Array.isArray(reviews)
-    ? reviews
-    : (reviews?.reviews || reviews?.results || reviews?.items || []);
-  if (!reviewsNorm || reviewsNorm.length === 0) return "";
-  const shown = reviewsNorm.slice(0, 5);
-  const stars = n => "★".repeat(Math.min(n, 5)) + "☆".repeat(Math.max(5 - n, 0));
-  const cards = shown.map(r => `
-<div class="review-card">
-  <div class="review-stars" style="color:#f59e0b">${stars(r.rating || 5)}</div>
-  <p class="review-text">"${esc(r.text || r.snippet || r.body || "")}"</p>
-  <div class="review-author">— ${esc(r.author || r.name || "Customer")}</div>
-</div>`).join("");
-  return `
-<div class="section">
-  <div class="section-header">
-    <h2 class="section-title">Customer Reviews Sample</h2>
-  </div>
-  <div class="reviews-grid">${cards}</div>
-</div>`;
-}
-
-// ─── main export ──────────────────────────────────────────────────────────────
 
 function generateWebReport(data) {
-  const {
-    businessName = "Your Business",
-    businessType = "",
-    city = "",
-    reportId = "",
-    reportDate = new Date().toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" }),
-    scores = {},
-    scanDetails = {},
-    competitor,
-    apify,
-    urlscan,
-    metaAds,
-    aiInsights,
-  } = data;
+  const scores   = data.scores || {};
+  const overall  = calcOverall(scores);
+  const grade    = getGrade(overall);
+  const ai       = data.aiInsights || {};
+  const comp     = data.competitor || {};
+  const apify    = data.apify || {};
+  const urlscan  = data.urlscan || {};
+  const metaAds  = data.metaAds || {};
+  const scan     = data.scanDetails || {};
+  const reportId = data.reportId || '';
 
-  // FIX: only average non-zero scores; fall back to scanDetails.overall if scores are empty
-  const validScores = Object.values(scores).filter(v => typeof v === "number" && v > 0);
-  const overall = scanDetails?.overall
-    ?? (validScores.length > 0
-        ? Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length)
-        : null)
-    ?? 0;
-  const grade = scanDetails?.grade ?? (overall >= 80 ? "A" : overall >= 65 ? "B" : overall >= 50 ? "C" : "D");
+  const gScore   = scores.google     || 0;
+  const sScore   = scores.social     || 0;
+  const wScore   = scores.website    || 0;
+  const rScore   = scores.reputation || 0;
 
-  // Patch business name into AI insights for personalisation in render
-  if (aiInsights) aiInsights._businessName = businessName;
+  // Donut ring calc
+  const circ   = 2 * Math.PI * 54; // ≈339.29
+  const offset = circ * (1 - overall / 100) + circ * 0.25;
+  const ringColor = scoreColor(overall);
 
-  return `<!DOCTYPE html>
-<html lang="en">
+  // Reviews
+  const reviews = Array.isArray(apify.reviews) ? apify.reviews : [];
+  const reviewCount = reviews.length;
+  const sampleReviews = reviews.slice(0, 3);
+
+  // Priority plan split into phases
+  const priorityPlanRaw = getInsightText(ai.priorityPlan) || '';
+  function splitPhases(text) {
+    if (!text) return { p1: 'No data available.', p2: 'No data available.', p3: 'No data available.' };
+    const lines = text.split('\n').filter(l => l.trim());
+    const third = Math.ceil(lines.length / 3);
+    return {
+      p1: lines.slice(0, third).join('\n') || 'No data available.',
+      p2: lines.slice(third, third * 2).join('\n') || 'No data available.',
+      p3: lines.slice(third * 2).join('\n') || 'No data available.',
+    };
+  }
+  const phases = splitPhases(priorityPlanRaw);
+
+  function renderTextBlock(text, fallback) {
+    const t = text || fallback || 'Data not available.';
+    return t.split('\n').filter(l => l.trim()).map(l => `<p>${esc(l)}</p>`).join('');
+  }
+
+  function renderPriorityItems(text) {
+    if (!text) return '<li>Data not available.</li>';
+    const lines = text.split('\n').filter(l => l.trim()).slice(0, 7);
+    return lines.map((l, i) => `<li><span class="num">${String(i+1).padStart(2,'0')}</span>${esc(l.replace(/^[\d\.\-\*]+\s*/, ''))}</li>`).join('');
+  }
+
+  const html = `<!DOCTYPE html>
+<html lang="en" data-mode="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(businessName)} — Digital Presence Report | Know Your Presence</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>${esc(data.businessName)} — Digital Presence Report | Know Your Presence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 <style>
-/* ── reset & tokens ─────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --purple: #8b5cf6;
-  --purple-light: #ede9fe;
-  --green: #22c55e;
-  --amber: #f59e0b;
-  --red: #ef4444;
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-600: #4b5563;
-  --gray-700: #374151;
-  --gray-900: #111827;
-  --radius: 12px;
-  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+  --navy:#152030;
+  --green:#1f6b45;
+  --bg:#f5f2ec;
+  --serif:'EB Garamond',Georgia,serif;
+  --sans:'Inter',system-ui,sans-serif;
+  --sidebar-w:260px;
+  --text:#1a1a1a;
+  --muted:#6b7280;
+  --border:#e2ddd6;
+  --card-bg:#ffffff;
+  --topbar-bg:#ffffff;
+  --section-bg:#f5f2ec;
 }
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--gray-50); color: var(--gray-900); line-height: 1.6; }
-a { color: var(--purple); text-decoration: none; }
-
-/* ── layout ─────────────────────────────────── */
-.wrap { max-width: 900px; margin: 0 auto; padding: 0 1.25rem; }
-
-/* ── header ─────────────────────────────────── */
-.report-header {
-  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #4c1d95 100%);
-  color: #fff; padding: 2.5rem 0 2rem;
+[data-mode="dark"] {
+  --bg:#0f1923;
+  --text:#e8e3da;
+  --muted:#9ca3af;
+  --border:#2a3a4a;
+  --card-bg:#1a2535;
+  --topbar-bg:#152030;
+  --section-bg:#0f1923;
 }
-.report-header .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem; }
-.header-brand { font-size: .8rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; opacity: .7; margin-bottom: .3rem; }
-.header-biz { font-size: 1.9rem; font-weight: 800; line-height: 1.2; }
-.header-meta { font-size: .9rem; opacity: .75; margin-top: .3rem; }
-.header-score-wrap { margin-left: auto; text-align: center; background: rgba(255,255,255,.1); border-radius: var(--radius); padding: 1.2rem 2rem; }
-.header-score-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; opacity: .7; margin-bottom: .4rem; }
-.header-score-num { font-size: 3rem; font-weight: 800; line-height: 1; }
-.header-grade { margin-top: .5rem; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);display:flex;min-height:100vh;transition:background .2s,color .2s}
 
-/* ── nav strip ──────────────────────────────── */
-.report-nav {
-  background: #fff; border-bottom: 1px solid var(--gray-200);
-  position: sticky; top: 0; z-index: 100;
+/* SIDEBAR */
+#sidebar{
+  position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;
+  background:var(--navy);color:#fff;display:flex;flex-direction:column;
+  overflow-y:auto;z-index:100;transition:transform .3s;
 }
-.report-nav .wrap { display: flex; gap: 0; overflow-x: auto; }
-.report-nav a {
-  flex-shrink: 0; padding: .75rem 1.1rem; font-size: .82rem; font-weight: 600;
-  color: var(--gray-600); border-bottom: 2px solid transparent; white-space: nowrap;
+.sb-brand{padding:24px 20px 8px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sb-kyp{font-family:var(--serif);font-size:28px;font-weight:700;color:#1f6b45;letter-spacing:-.5px}
+.sb-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-top:2px}
+.sb-biz{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sb-biz-name{font-size:14px;font-weight:600;color:#fff;line-height:1.3}
+.sb-biz-city{font-size:12px;color:rgba(255,255,255,.5);margin-top:3px}
+
+/* Donut */
+.sb-donut{padding:20px;display:flex;flex-direction:column;align-items:center;border-bottom:1px solid rgba(255,255,255,.1)}
+.donut-wrap{position:relative;width:120px;height:120px}
+.donut-wrap svg{transform:rotate(-90deg)}
+.donut-track{fill:none;stroke:rgba(255,255,255,.1);stroke-width:10}
+.donut-ring{fill:none;stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset .8s ease}
+.donut-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.donut-score{font-size:28px;font-weight:700;color:#fff;line-height:1}
+.donut-grade{font-size:12px;color:rgba(255,255,255,.6);margin-top:2px;letter-spacing:1px}
+
+/* Nav */
+.sb-nav{flex:1;padding:8px 0}
+.sb-nav a{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:12px;color:rgba(255,255,255,.6);text-decoration:none;letter-spacing:.5px;transition:background .15s,color .15s;border-left:3px solid transparent}
+.sb-nav a:hover,.sb-nav a.active{background:rgba(255,255,255,.07);color:#fff;border-left-color:#1f6b45}
+.sb-nav a .nav-num{font-size:10px;color:rgba(255,255,255,.35);font-variant-numeric:tabular-nums;min-width:18px}
+
+/* Sidebar bottom */
+.sb-bottom{padding:16px 20px;border-top:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;gap:8px}
+.sb-btn{display:block;padding:9px 14px;border-radius:6px;font-size:12px;font-weight:600;text-align:center;text-decoration:none;cursor:pointer;border:none;font-family:var(--sans);transition:opacity .15s}
+.sb-btn-primary{background:#1f6b45;color:#fff}
+.sb-btn-secondary{background:rgba(255,255,255,.1);color:rgba(255,255,255,.8)}
+.sb-btn:hover{opacity:.85}
+
+/* Hamburger */
+#hamburger{display:none;position:fixed;top:14px;left:14px;z-index:200;background:var(--navy);border:none;border-radius:6px;padding:8px;cursor:pointer}
+#hamburger span{display:block;width:20px;height:2px;background:#fff;margin:4px 0;transition:.3s}
+
+/* MAIN */
+#main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+/* TOPBAR */
+#topbar{position:sticky;top:0;z-index:50;background:var(--topbar-bg);border-bottom:1px solid var(--border);padding:12px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.topbar-left{display:flex;flex-direction:column}
+.topbar-name{font-size:15px;font-weight:600;color:var(--text)}
+.topbar-id{font-size:11px;color:var(--muted);letter-spacing:.5px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.btn-icon{background:none;border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;color:var(--text);font-family:var(--sans);transition:background .15s}
+.btn-icon:hover{background:var(--border)}
+
+/* SECTIONS */
+section{padding:48px 32px;border-bottom:1px solid var(--border)}
+section:last-child{border-bottom:none}
+.section-tag{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--green);font-weight:600;margin-bottom:8px}
+.section-title{font-family:var(--serif);font-size:32px;font-weight:700;color:var(--text);margin-bottom:24px;line-height:1.2}
+
+/* CARDS */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:20px}
+.card-label{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.card-value{font-size:28px;font-weight:700;color:var(--text);line-height:1}
+.card-sub{font-size:12px;color:var(--muted);margin-top:4px}
+
+/* Score bar */
+.bar-wrap{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:8px}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
+
+/* Hero (cover) */
+.hero{background:var(--navy);color:#fff;padding:40px 32px;margin:-48px -32px 32px}
+.hero-tag{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#1f6b45;font-weight:600;margin-bottom:8px}
+.hero-name{font-family:var(--serif);font-size:40px;font-weight:700;line-height:1.1;margin-bottom:4px}
+.hero-city{font-size:16px;color:rgba(255,255,255,.6);margin-bottom:20px}
+.hero-score-row{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+.hero-score{font-size:72px;font-weight:700;line-height:1;font-family:var(--serif)}
+.hero-grade{font-size:36px;color:rgba(255,255,255,.6)}
+.hero-date{font-size:12px;color:rgba(255,255,255,.4);margin-top:8px}
+
+/* Export bar */
+.export-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:32px}
+.export-btn{padding:10px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--sans);text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:opacity .15s}
+.export-btn-primary{background:#1f6b45;color:#fff}
+.export-btn-secondary{background:var(--card-bg);color:var(--text);border:1px solid var(--border)}
+.export-btn:hover{opacity:.85}
+
+/* Narrative */
+.narrative{font-size:15px;line-height:1.8;color:var(--text);max-width:72ch}
+.narrative p{margin-bottom:12px}
+
+/* Score breakdown */
+.score-row{display:flex;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--border)}
+.score-row:last-child{border-bottom:none}
+.score-row-label{min-width:160px;font-size:14px;font-weight:600}
+.score-row-val{min-width:40px;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.score-row-bar{flex:1}
+.weight-badge{font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(31,107,69,.12);color:#1f6b45;font-weight:600;margin-left:auto}
+
+/* Priority list */
+.priority-list{list-style:none;display:flex;flex-direction:column;gap:12px}
+.priority-list li{display:flex;align-items:flex-start;gap:14px;padding:14px 16px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;font-size:14px;line-height:1.5}
+.priority-list .num{font-size:10px;font-weight:700;letter-spacing:1px;color:#1f6b45;min-width:22px;padding-top:2px}
+
+/* AI badge */
+.ai-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;background:linear-gradient(135deg,#1f6b45,#152030);color:#fff;font-size:11px;font-weight:600;letter-spacing:.5px;margin-bottom:16px}
+
+/* Comparison table */
+.comp-table{width:100%;border-collapse:collapse;margin-top:16px}
+.comp-table th{text-align:left;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:10px 14px;border-bottom:2px solid var(--border);font-weight:600}
+.comp-table td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:14px}
+.comp-table tr:last-child td{border-bottom:none}
+.comp-table .you{font-weight:600;color:var(--green)}
+
+/* Review card */
+.review-card{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px}
+.review-meta{font-size:12px;color:var(--muted);margin-bottom:6px}
+.review-text{font-size:14px;line-height:1.6;font-style:italic}
+.stars{color:#f59e0b;letter-spacing:1px}
+
+/* Roadmap */
+.phase-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;margin-top:16px}
+.phase-card{background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:20px}
+.phase-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#1f6b45;font-weight:700;margin-bottom:6px}
+.phase-title{font-size:16px;font-weight:700;margin-bottom:12px}
+.phase-body{font-size:13px;line-height:1.7;color:var(--muted)}
+.phase-body p{margin-bottom:6px}
+
+/* Refund box */
+.refund-box{background:var(--card-bg);border:1px solid var(--border);border-left:4px solid #1f6b45;border-radius:8px;padding:20px;margin-top:32px;font-size:14px;line-height:1.7}
+.refund-box strong{color:var(--green)}
+
+/* Footer */
+.footer{padding:32px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);line-height:1.7}
+.footer strong{color:var(--text)}
+
+/* Toast */
+#toast{position:fixed;bottom:24px;right:24px;background:#1f6b45;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;opacity:0;transform:translateY(10px);transition:opacity .25s,transform .25s;pointer-events:none;z-index:9999}
+#toast.show{opacity:1;transform:translateY(0)}
+
+/* Overlay */
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90}
+
+/* Responsive */
+@media(max-width:768px){
+  #sidebar{transform:translateX(-100%)}
+  #sidebar.open{transform:translateX(0)}
+  #main{margin-left:0}
+  #topbar{padding:12px 16px;padding-left:56px}
+  section{padding:32px 16px}
+  .hero{margin:-32px -16px 24px;padding:28px 16px}
+  .hero-name{font-size:28px}
+  .hero-score{font-size:52px}
+  #hamburger{display:block}
+  #overlay.show{display:block}
+  .section-title{font-size:24px}
+  .phase-grid{grid-template-columns:1fr}
 }
-.report-nav a:hover, .report-nav a.active { color: var(--purple); border-bottom-color: var(--purple); }
-
-/* ── content ────────────────────────────────── */
-.report-body { padding: 2.5rem 0 4rem; }
-.section { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); padding: 2rem; margin-bottom: 1.5rem; }
-.section-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
-.section-title { font-size: 1.15rem; font-weight: 700; }
-.section-badge {
-  font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-  background: var(--purple-light); color: var(--purple); padding: .3rem .75rem; border-radius: 99px;
-}
-
-/* ── score cards ────────────────────────────── */
-.scores-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
-.score-card { background: var(--gray-50); border-radius: 10px; padding: 1.2rem; text-align: center; border: 1px solid var(--gray-200); }
-.score-card-top { display: flex; align-items: center; justify-content: center; gap: .4rem; margin-bottom: .75rem; }
-.score-icon { font-size: 1.1rem; }
-.score-label { font-size: .8rem; font-weight: 600; color: var(--gray-700); }
-.score-status { font-size: .78rem; font-weight: 700; margin-top: .5rem; }
-
-/* ── overall banner ─────────────────────────── */
-.overall-banner {
-  border-radius: var(--radius); padding: 1.5rem 2rem;
-  display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
-  margin-bottom: 1.5rem;
-}
-.overall-banner.good  { background: #f0fdf4; border: 1px solid #bbf7d0; }
-.overall-banner.avg   { background: #fffbeb; border: 1px solid #fde68a; }
-.overall-banner.poor  { background: #fef2f2; border: 1px solid #fecaca; }
-.overall-label { font-size: .8rem; text-transform: uppercase; letter-spacing: .1em; font-weight: 600; opacity: .7; }
-.overall-num { font-size: 2.5rem; font-weight: 800; line-height: 1; }
-.overall-tagline { font-size: 1rem; font-weight: 600; margin-top: .2rem; }
-.overall-desc { font-size: .9rem; color: var(--gray-600); margin-top: .35rem; }
-
-/* ── ai section ─────────────────────────────── */
-.ai-section { border: 2px solid var(--purple-light); }
-.ai-section .section-title { color: var(--purple); }
-.ai-modules-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem; }
-.ai-module-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 10px; overflow: hidden; }
-.ai-module-head { display: flex; align-items: flex-start; gap: .75rem; padding: 1rem 1rem .75rem; border-bottom: 1px solid var(--gray-200); background: #fff; }
-.ai-module-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: .05rem; }
-.ai-module-title { font-weight: 700; font-size: .95rem; }
-.ai-module-sub { font-size: .77rem; color: var(--gray-600); margin-top: .15rem; }
-.ai-module-body { padding: 1rem; font-size: .88rem; }
-.ai-module-body ul { list-style: none; }
-.ai-module-body li { padding: .25rem 0; padding-left: 1.1rem; position: relative; }
-.ai-module-body li::before { content: "→"; position: absolute; left: 0; color: var(--purple); font-weight: 700; }
-
-/* ── reviews ────────────────────────────────── */
-.reviews-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
-.review-card { background: var(--gray-50); border-radius: 10px; padding: 1.1rem; border: 1px solid var(--gray-200); }
-.review-stars { font-size: 1rem; margin-bottom: .4rem; }
-.review-text { font-size: .88rem; color: var(--gray-700); line-height: 1.6; margin-bottom: .5rem; }
-.review-author { font-size: .78rem; color: var(--gray-600); font-weight: 600; }
-
-/* ── detail tables ──────────────────────────── */
-.detail-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
-.detail-table th { text-align: left; padding: .5rem .75rem; background: var(--gray-100); font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--gray-600); }
-.detail-table td { padding: .6rem .75rem; border-bottom: 1px solid var(--gray-100); }
-.detail-table tr:last-child td { border-bottom: none; }
-.chk-yes { color: var(--green); font-weight: 700; }
-.chk-no  { color: var(--red);   font-weight: 700; }
-
-/* ── footer ─────────────────────────────────── */
-.report-footer { background: #1e1b4b; color: rgba(255,255,255,.65); text-align: center; padding: 2rem; font-size: .8rem; }
-.report-footer strong { color: #fff; }
-
-/* ── print ──────────────────────────────────── */
-@media print {
-  .report-nav { display: none; }
-  .section { break-inside: avoid; box-shadow: none; border: 1px solid var(--gray-200); }
-}
-
-/* ── responsive ─────────────────────────────── */
-@media (max-width: 600px) {
-  .header-biz { font-size: 1.4rem; }
-  .header-score-wrap { margin-left: 0; width: 100%; }
-  .ai-modules-grid { grid-template-columns: 1fr; }
-  .scores-grid { grid-template-columns: 1fr 1fr; }
+@media print{
+  #sidebar,#topbar,#hamburger,#overlay,.export-bar,.sb-bottom{display:none!important}
+  #main{margin-left:0}
+  section{page-break-inside:avoid}
 }
 </style>
 </head>
 <body>
 
-<!-- ═══ HEADER ═══════════════════════════════════════════════════════════ -->
-<header class="report-header">
-  <div class="wrap">
-    <div>
-      <div class="header-brand">Know Your Presence — Digital Audit Report</div>
-      <div class="header-biz">${esc(businessName)}</div>
-      <div class="header-meta">
-        ${city ? `📍 ${esc(city)}` : ""}
-        ${businessType ? ` &nbsp;·&nbsp; ${esc(businessType)}` : ""}
-        &nbsp;·&nbsp; ${esc(reportDate)}
+<!-- Hamburger -->
+<button id="hamburger" aria-label="Menu" onclick="toggleSidebar()">
+  <span></span><span></span><span></span>
+</button>
+<div id="overlay" onclick="toggleSidebar()"></div>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sb-brand">
+    <div class="sb-kyp">KYP</div>
+    <div class="sb-label">Know Your Presence</div>
+  </div>
+  <div class="sb-biz">
+    <div class="sb-biz-name">${esc(data.businessName)}</div>
+    <div class="sb-biz-city">${esc(data.city)}</div>
+  </div>
+  <div class="sb-donut">
+    <div class="donut-wrap">
+      <svg width="120" height="120" viewBox="0 0 120 120">
+        <circle class="donut-track" cx="60" cy="60" r="54"/>
+        <circle class="donut-ring" cx="60" cy="60" r="54"
+          stroke="${esc(ringColor)}"
+          stroke-dasharray="${circ.toFixed(2)}"
+          stroke-dashoffset="${offset.toFixed(2)}"
+          id="donutRing"/>
+      </svg>
+      <div class="donut-inner">
+        <div class="donut-score">${overall}</div>
+        <div class="donut-grade">${grade}</div>
       </div>
-      <div style="margin-top:.75rem;font-size:.8rem;opacity:.6">Report ID: ${esc(reportId)}</div>
-    </div>
-    <div class="header-score-wrap">
-      <div class="header-score-label">Overall Score</div>
-      <div class="header-score-num" style="color:${scoreColor(overall)}">${overall}</div>
-      <div class="header-grade">${gradeBadge(grade)}</div>
-      <div style="margin-top:.5rem;font-size:.75rem;opacity:.7">out of 100</div>
     </div>
   </div>
-</header>
-
-<!-- ═══ NAV ══════════════════════════════════════════════════════════════ -->
-<nav class="report-nav">
-  <div class="wrap">
-    <a href="#overview">Overview</a>
-    <a href="#scores">Scores</a>
-    ${aiInsights ? '<a href="#ai-insights">✦ AI Insights</a>' : ""}
-    <a href="#details">Details</a>
-    <a href="#next-steps">Next Steps</a>
+  <div class="sb-nav">
+    <a href="#cover"      class="active"><span class="nav-num">00</span>Overview</a>
+    <a href="#scores"            ><span class="nav-num">01</span>Scores</a>
+    <a href="#opportunities"     ><span class="nav-num">02</span>Opportunities</a>
+    <a href="#ai"                ><span class="nav-num">03</span>AI Visibility</a>
+    <a href="#competitor"        ><span class="nav-num">04</span>Competitor</a>
+    <a href="#website"           ><span class="nav-num">05</span>Website &amp; Reputation</a>
+    <a href="#ads"               ><span class="nav-num">06</span>Ad Intelligence</a>
+    <a href="#roadmap"           ><span class="nav-num">07</span>90-Day Roadmap</a>
+    <a href="#benchmarks"        ><span class="nav-num">08</span>Benchmarks</a>
+    <a href="#start"             ><span class="nav-num">09</span>Start Here</a>
+  </div>
+  <div class="sb-bottom">
+    <a href="/api/report/${esc(reportId)}/pdf" class="sb-btn sb-btn-primary">⬇ Download PDF</a>
+    <button class="sb-btn sb-btn-secondary" onclick="toggleDark()">◐ Toggle Dark Mode</button>
+    <button class="sb-btn sb-btn-secondary" onclick="window.print()">⎙ Print</button>
   </div>
 </nav>
 
-<!-- ═══ BODY ══════════════════════════════════════════════════════════════ -->
-<main class="report-body">
-<div class="wrap">
+<!-- MAIN -->
+<div id="main">
 
-<!-- overall banner -->
-<div id="overview" class="overall-banner ${overall >= 75 ? "good" : overall >= 50 ? "avg" : "poor"}">
-  <div>
-    ${scoreRing(overall, 100)}
-  </div>
-  <div>
-    <div class="overall-label">Overall Presence Score</div>
-    <div class="overall-num" style="color:${scoreColor(overall)}">${overall} / 100 &nbsp;${gradeBadge(grade)}</div>
-    <div class="overall-tagline">${scoreLabel(overall)} Digital Presence</div>
-    <div class="overall-desc">
-      ${overall >= 75
-        ? `${esc(businessName)} has a solid digital footprint. Focus on maintaining consistency and amplifying strengths.`
-        : overall >= 50
-        ? `${esc(businessName)} has room to grow. Address the priority actions below to unlock real growth.`
-        : `${esc(businessName)}'s digital presence needs attention. The action plan below gives you a clear path forward.`}
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="topbar-left">
+      <div class="topbar-name">${esc(data.businessName)}</div>
+      <div class="topbar-id">Report ID: ${esc(reportId)}</div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-icon" onclick="toggleDark()">◐ Dark</button>
     </div>
   </div>
-</div>
 
-<!-- ── Scores ──────────────────────────────────────────────────────── -->
-<div id="scores" class="section">
-  <div class="section-header">
-    <h2 class="section-title">Category Scores</h2>
-  </div>
-  <div class="scores-grid">${renderScores(scores)}</div>
-</div>
+  <!-- 00 COVER / OVERVIEW -->
+  <section id="cover">
+    <div class="hero">
+      <div class="hero-tag">00 — Digital Presence Report</div>
+      <div class="hero-name">${esc(data.businessName)}</div>
+      <div class="hero-city">${esc(data.city)}${data.businessType ? ' · ' + esc(data.businessType) : ''}</div>
+      <div class="hero-score-row">
+        <div class="hero-score" style="color:${esc(ringColor)}">${overall}</div>
+        <div class="hero-grade">${grade}</div>
+      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,.4);margin-bottom:4px">Overall Digital Presence Score</div>
+      <div class="hero-date">Report Date: ${esc(data.reportDate)}</div>
+    </div>
 
-<!-- ── AI Insights ─────────────────────────────────────────────────── -->
-<div id="ai-insights">
-  ${renderAiInsights(aiInsights)}
-</div>
+    <div class="export-bar">
+      <a href="/api/report/${esc(reportId)}/pdf" class="export-btn export-btn-primary">⬇ Download PDF</a>
+      <button class="export-btn export-btn-secondary" onclick="copyLink()">🔗 Copy Link</button>
+      <button class="export-btn export-btn-secondary" onclick="window.print()">⎙ Print</button>
+    </div>
 
-<!-- ── Details ─────────────────────────────────────────────────────── -->
-<div id="details" class="section">
-  <div class="section-header">
-    <h2 class="section-title">Presence Checklist</h2>
-  </div>
-  <table class="detail-table">
-    <thead><tr><th>Check</th><th>Status</th><th>Detail</th></tr></thead>
-    <tbody>
-      ${[
-        ["Google Business Profile", scanDetails?.hasGBP,        scanDetails?.gbpStatus || ""],
-        ["Website Detected",        scanDetails?.hasWebsite,     scanDetails?.websiteUrl || ""],
-        ["SSL Certificate",         scanDetails?.hasSSL,         ""],
-        ["Mobile Friendly",         scanDetails?.isMobile,       ""],
-        ["Facebook Page",           scanDetails?.hasFacebook,    ""],
-        ["Instagram Account",       scanDetails?.hasInstagram,   ""],
-        ["Reviews Present",         scanDetails?.hasReviews,     scanDetails?.reviewCount ? `${scanDetails.reviewCount} reviews` : ""],
-        ["Meta Ads Running",        metaAds?.adsFound,           metaAds?.adsFound ? `${metaAds.adCount || ""} active ads found` : "Not running ads"],
-      ].map(([label, status, detail]) => `
-      <tr>
-        <td>${esc(label)}</td>
-        <td class="${status ? "chk-yes" : "chk-no"}">${status ? "✓ Yes" : "✗ No"}</td>
-        <td style="color:#6b7280">${esc(detail)}</td>
-      </tr>`).join("")}
-    </tbody>
-  </table>
-</div>
+    <div class="narrative">
+      ${renderTextBlock(getInsightText(ai.narrative), 'This report provides a comprehensive analysis of your business\'s digital presence.')}
+    </div>
 
-<!-- ── Competitor ──────────────────────────────────────────────────── -->
-${competitor ? `
-<div class="section">
-  <div class="section-header">
-    <h2 class="section-title">Top Competitor Snapshot</h2>
-  </div>
-  <table class="detail-table">
-    <tbody>
-      <tr><td><strong>Name</strong></td><td>${esc(competitor.name || "")}</td></tr>
-      <tr><td><strong>Rating</strong></td><td>${esc(competitor.rating || "")}</td></tr>
-      <tr><td><strong>Reviews</strong></td><td>${esc(competitor.reviewCount || "")}</td></tr>
-      <tr><td><strong>Address</strong></td><td>${esc(competitor.address || "")}</td></tr>
-    </tbody>
-  </table>
-</div>` : ""}
+    <div class="card-grid" style="margin-top:32px">
+      <div class="card">
+        <div class="card-label">Google Business</div>
+        <div class="card-value" style="color:${scoreColor(gScore)}">${gScore}</div>
+        <div class="card-sub">35% weight</div>
+        ${scoreBar(gScore, scoreColor(gScore))}
+      </div>
+      <div class="card">
+        <div class="card-label">Social Media</div>
+        <div class="card-value" style="color:${scoreColor(sScore)}">${sScore}</div>
+        <div class="card-sub">25% weight</div>
+        ${scoreBar(sScore, scoreColor(sScore))}
+      </div>
+      <div class="card">
+        <div class="card-label">Website</div>
+        <div class="card-value" style="color:${scoreColor(wScore)}">${wScore}</div>
+        <div class="card-sub">20% weight</div>
+        ${scoreBar(wScore, scoreColor(wScore))}
+      </div>
+      <div class="card">
+        <div class="card-label">Reputation</div>
+        <div class="card-value" style="color:${scoreColor(rScore)}">${rScore}</div>
+        <div class="card-sub">20% weight</div>
+        ${scoreBar(rScore, scoreColor(rScore))}
+      </div>
+    </div>
+  </section>
 
-<!-- ── URL Scan ────────────────────────────────────────────────────── -->
-${urlscan ? `
-<div class="section">
-  <div class="section-header">
-    <h2 class="section-title">Website Security Scan</h2>
-    <span class="section-badge">URLScan.io</span>
-  </div>
-  <table class="detail-table">
-    <tbody>
-      ${urlscan.screenshotUrl ? `<tr><td colspan="2"><img src="${esc(urlscan.screenshotUrl)}" alt="Website screenshot" style="max-width:100%;border-radius:8px;border:1px solid var(--gray-200)"></td></tr>` : ""}
-      <tr><td><strong>URL Scanned</strong></td><td>${esc(urlscan.url || "")}</td></tr>
-      <tr><td><strong>Malicious Flags</strong></td><td class="${urlscan.malicious ? "chk-no" : "chk-yes"}">${urlscan.malicious ? "⚠ Flagged" : "✓ Clean"}</td></tr>
-      ${urlscan.country ? `<tr><td><strong>Server Country</strong></td><td>${esc(urlscan.country)}</td></tr>` : ""}
-    </tbody>
-  </table>
-</div>` : ""}
+  <!-- 01 SCORES -->
+  <section id="scores">
+    <div class="section-tag">01 — Score Breakdown</div>
+    <div class="section-title">Your Digital Scores</div>
 
-<!-- ── Reviews ─────────────────────────────────────────────────────── -->
-${renderReviews(apify?.reviews)}
+    <div class="score-row">
+      <div class="score-row-label">Google Business</div>
+      <div class="score-row-val" style="color:${scoreColor(gScore)}">${gScore}</div>
+      <div class="score-row-bar">${scoreBar(gScore, scoreColor(gScore))}</div>
+      <div class="weight-badge">35%</div>
+    </div>
+    <div class="score-row">
+      <div class="score-row-label">Social Media</div>
+      <div class="score-row-val" style="color:${scoreColor(sScore)}">${sScore}</div>
+      <div class="score-row-bar">${scoreBar(sScore, scoreColor(sScore))}</div>
+      <div class="weight-badge">25%</div>
+    </div>
+    <div class="score-row">
+      <div class="score-row-label">Website</div>
+      <div class="score-row-val" style="color:${scoreColor(wScore)}">${wScore}</div>
+      <div class="score-row-bar">${scoreBar(wScore, scoreColor(wScore))}</div>
+      <div class="weight-badge">20%</div>
+    </div>
+    <div class="score-row">
+      <div class="score-row-label">Reputation</div>
+      <div class="score-row-val" style="color:${scoreColor(rScore)}">${rScore}</div>
+      <div class="score-row-bar">${scoreBar(rScore, scoreColor(rScore))}</div>
+      <div class="weight-badge">20%</div>
+    </div>
 
-<!-- ── Next Steps ──────────────────────────────────────────────────── -->
-<div id="next-steps" class="section" style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:none">
-  <div class="section-header">
-    <h2 class="section-title" style="color:#5b21b6">Your Next Steps</h2>
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem">
-    ${[
-      ["📞", "Book a Free Strategy Call", "Get a 30-min walkthrough of your results with a KYP advisor."],
-      ["🔄", "Re-Scan in 30 Days", "After implementing fixes, run a new scan to measure improvement."],
-      ["📧", "Share This Report", "Forward this link to your team or marketing agency."],
-      ["📥", "Download PDF", "Check your email for the PDF attached to your purchase receipt."],
-    ].map(([icon, title, desc]) => `
-    <div style="background:#fff;border-radius:10px;padding:1.1rem;border:1px solid #ddd6fe">
-      <div style="font-size:1.3rem;margin-bottom:.4rem">${icon}</div>
-      <div style="font-weight:700;font-size:.9rem;margin-bottom:.3rem">${title}</div>
-      <div style="font-size:.83rem;color:var(--gray-600)">${desc}</div>
-    </div>`).join("")}
-  </div>
-</div>
+    <div class="card" style="margin-top:28px;background:var(--card-bg)">
+      <div class="card-label">Weighted Overall</div>
+      <div class="card-value" style="color:${ringColor};font-size:40px">${overall} <span style="font-size:20px;color:var(--muted)">${grade}</span></div>
+      <div class="card-sub" style="margin-top:8px;font-size:12px;line-height:1.6">
+        Formula: (Google × 0.35) + (Social × 0.25) + (Website × 0.20) + (Reputation × 0.20)
+      </div>
+    </div>
 
-</div><!-- /wrap -->
-</main>
+    ${scan && Object.keys(scan).length > 0 ? `
+    <div style="margin-top:24px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase">Scan Details</div>
+      <div class="card-grid">
+        ${Object.entries(scan).slice(0, 6).map(([k, v]) => `
+          <div class="card">
+            <div class="card-label">${esc(k.replace(/([A-Z])/g,' $1').trim())}</div>
+            <div class="card-value" style="font-size:16px;font-weight:600">${typeof v === 'object' ? (v && v.value !== undefined ? esc(String(v.value)) : '—') : esc(String(v ?? '—'))}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : ''}
+  </section>
 
-<!-- ═══ FOOTER ════════════════════════════════════════════════════════════ -->
-<footer class="report-footer">
-  <strong>Know Your Presence</strong> — Digital Presence Audit &nbsp;·&nbsp;
-  Report ID: ${esc(reportId)} &nbsp;·&nbsp; Generated ${esc(reportDate)}<br>
-  <span style="margin-top:.4rem;display:block">
-    This report is confidential and prepared exclusively for ${esc(businessName)}.
-    Powered by AI analysis, live data enrichment and professional scoring.
-  </span>
-</footer>
+  <!-- 02 OPPORTUNITIES -->
+  <section id="opportunities">
+    <div class="section-tag">02 — Opportunities</div>
+    <div class="section-title">Where to Win</div>
+    <div class="narrative" style="margin-bottom:28px">
+      ${renderTextBlock(getInsightText(ai.seoContent) || getInsightText(ai.narrative), 'Identifying key opportunities to improve your digital presence.')}
+    </div>
+    <div style="font-size:13px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Priority Opportunities</div>
+    <ul class="priority-list">
+      ${renderPriorityItems(getInsightText(ai.priorityPlan) || getInsightText(ai.narrative))}
+    </ul>
+  </section>
 
+  <!-- 03 AI VISIBILITY -->
+  <section id="ai">
+    <div class="section-tag">03 — AI Visibility</div>
+    <div class="section-title">AI &amp; Search Presence</div>
+    <div class="ai-badge">✦ Powered by All AI's</div>
+
+    <div style="margin-bottom:28px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">Narrative Analysis</div>
+      <div class="narrative">${renderTextBlock(getInsightText(ai.narrative), 'AI visibility analysis not available.')}</div>
+    </div>
+
+    ${getInsightText(ai.seoContent) ? `
+    <div style="margin-bottom:28px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">SEO &amp; Content Insights</div>
+      <div class="narrative">${renderTextBlock(getInsightText(ai.seoContent))}</div>
+    </div>` : ''}
+
+    ${getInsightText(ai.socialAudit) ? `
+    <div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">Social Media Audit</div>
+      <div class="narrative">${renderTextBlock(getInsightText(ai.socialAudit))}</div>
+    </div>` : ''}
+  </section>
+
+  <!-- 04 COMPETITOR -->
+  <section id="competitor">
+    <div class="section-tag">04 — Competitor Analysis</div>
+    <div class="section-title">Competitive Landscape</div>
+
+    ${getInsightText(ai.competitor) ? `
+    <div class="narrative" style="margin-bottom:28px">
+      ${renderTextBlock(getInsightText(ai.competitor))}
+    </div>` : ''}
+
+    ${comp && Object.keys(comp).length > 0 ? `
+    <table class="comp-table">
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>You (${esc(data.businessName)})</th>
+          <th>Competitor</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${(() => {
+          const rows = [];
+          const keys = ['name','rating','reviewCount','website','googleScore','socialScore'];
+          keys.forEach(k => {
+            const cv = comp[k];
+            if (cv !== undefined && cv !== null) {
+              const myVal = k === 'rating' ? (scan.rating || '—') : k === 'reviewCount' ? (reviewCount || '—') : k === 'name' ? data.businessName : '—';
+              rows.push(`<tr><td>${esc(k.replace(/([A-Z])/g,' $1').trim())}</td><td class="you">${esc(String(myVal))}</td><td>${esc(String(cv))}</td></tr>`);
+            }
+          });
+          if (rows.length === 0) {
+            rows.push(`<tr><td colspan="3" style="color:var(--muted);font-style:italic">Competitor data not available.</td></tr>`);
+          }
+          return rows.join('');
+        })()}
+      </tbody>
+    </table>` : `<div style="color:var(--muted);font-style:italic">Competitor data not available.</div>`}
+  </section>
+
+  <!-- 05 WEBSITE & REPUTATION -->
+  <section id="website">
+    <div class="section-tag">05 — Website &amp; Reputation</div>
+    <div class="section-title">Online Presence Quality</div>
+
+    <div class="card-grid" style="margin-bottom:28px">
+      <div class="card">
+        <div class="card-label">Website Score</div>
+        <div class="card-value" style="color:${scoreColor(wScore)}">${wScore}</div>
+        ${scoreBar(wScore, scoreColor(wScore))}
+      </div>
+      <div class="card">
+        <div class="card-label">Reputation Score</div>
+        <div class="card-value" style="color:${scoreColor(rScore)}">${rScore}</div>
+        ${scoreBar(rScore, scoreColor(rScore))}
+      </div>
+      ${reviewCount > 0 ? `
+      <div class="card">
+        <div class="card-label">Reviews Found</div>
+        <div class="card-value">${reviewCount}</div>
+        <div class="card-sub">from scan</div>
+      </div>` : ''}
+      ${urlscan && urlscan.score !== undefined ? `
+      <div class="card">
+        <div class="card-label">URL Scan Score</div>
+        <div class="card-value">${esc(String(urlscan.score))}</div>
+      </div>` : ''}
+    </div>
+
+    ${getInsightText(ai.reviewAnalysis) ? `
+    <div style="margin-bottom:28px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">Review Analysis</div>
+      <div class="narrative">${renderTextBlock(getInsightText(ai.reviewAnalysis))}</div>
+    </div>` : ''}
+
+    ${sampleReviews.length > 0 ? `
+    <div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:12px">Sample Reviews</div>
+      ${sampleReviews.map(r => `
+        <div class="review-card">
+          <div class="review-meta">
+            ${r.author ? `<strong>${esc(r.author)}</strong> · ` : ''}
+            ${r.rating ? `<span class="stars">${'★'.repeat(Math.min(5, Math.round(r.rating)))}</span> · ` : ''}
+            ${r.date ? esc(r.date) : ''}
+          </div>
+          <div class="review-text">${esc(r.text || r.review || r.body || '—')}</div>
+        </div>
+      `).join('')}
+    </div>` : ''}
+  </section>
+
+  <!-- 06 AD INTELLIGENCE -->
+  <section id="ads">
+    <div class="section-tag">06 — Ad Intelligence</div>
+    <div class="section-title">Advertising Presence</div>
+
+    ${metaAds && Object.keys(metaAds).length > 0 ? `
+    <div class="card-grid" style="margin-bottom:24px">
+      ${metaAds.isRunningAds !== undefined ? `
+      <div class="card">
+        <div class="card-label">Running Meta Ads</div>
+        <div class="card-value" style="font-size:18px;color:${metaAds.isRunningAds ? '#1f6b45' : '#dc2626'}">${metaAds.isRunningAds ? '✓ Yes' : '✗ No'}</div>
+      </div>` : ''}
+      ${metaAds.adCount !== undefined ? `
+      <div class="card">
+        <div class="card-label">Total Ads Found</div>
+        <div class="card-value">${esc(String(metaAds.adCount))}</div>
+      </div>` : ''}
+      ${metaAds.pageId !== undefined ? `
+      <div class="card">
+        <div class="card-label">Meta Page ID</div>
+        <div class="card-value" style="font-size:14px;word-break:break-all">${esc(String(metaAds.pageId))}</div>
+      </div>` : ''}
+    </div>
+    ${metaAds.summary ? `<div class="narrative">${renderTextBlock(esc(String(metaAds.summary)))}</div>` : ''}
+    ` : `
+    <div class="card" style="max-width:480px">
+      <div class="card-label">Status</div>
+      <div style="font-size:15px;color:var(--muted);margin-top:6px">No Meta Ads data was collected for this business.</div>
+    </div>`}
+  </section>
+
+  <!-- 07 90-DAY ROADMAP -->
+  <section id="roadmap">
+    <div class="section-tag">07 — 90-Day Roadmap</div>
+    <div class="section-title">Your Action Plan</div>
+    <div class="phase-grid">
+      <div class="phase-card">
+        <div class="phase-label">Phase 1</div>
+        <div class="phase-title">Days 1–30: Foundation</div>
+        <div class="phase-body">${renderTextBlock(phases.p1)}</div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-label">Phase 2</div>
+        <div class="phase-title">Days 31–60: Growth</div>
+        <div class="phase-body">${renderTextBlock(phases.p2)}</div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-label">Phase 3</div>
+        <div class="phase-title">Days 61–90: Scale</div>
+        <div class="phase-body">${renderTextBlock(phases.p3)}</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 08 BENCHMARKS -->
+  <section id="benchmarks">
+    <div class="section-tag">08 — Benchmarks</div>
+    <div class="section-title">Industry Context</div>
+    <div class="card-grid" style="margin-bottom:28px">
+      <div class="card">
+        <div class="card-label">Your Overall Score</div>
+        <div class="card-value" style="color:${ringColor}">${overall}</div>
+        <div class="card-sub">Grade: ${grade}</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Industry Average</div>
+        <div class="card-value" style="color:var(--muted)">52</div>
+        <div class="card-sub">Typical local business</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Top Performer</div>
+        <div class="card-value" style="color:#1f6b45">85+</div>
+        <div class="card-sub">Best-in-class benchmark</div>
+      </div>
+      <div class="card">
+        <div class="card-label">vs Industry Avg</div>
+        <div class="card-value" style="color:${overall >= 52 ? '#1f6b45' : '#dc2626'}">${overall >= 52 ? '+' : ''}${overall - 52}</div>
+        <div class="card-sub">${overall >= 52 ? 'Above average' : 'Below average'}</div>
+      </div>
+    </div>
+    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:20px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:12px">Score Interpretation</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+        <div style="display:flex;align-items:center;gap:10px"><span style="min-width:30px;font-weight:700;color:#1f6b45">A+</span><span>90–100 — Exceptional. Top 10% of all local businesses.</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="min-width:30px;font-weight:700;color:#1f6b45">A</span><span>80–89 — Excellent. Well above average.</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="min-width:30px;font-weight:700;color:#d97706">B</span><span>70–79 — Good. Above average with room to grow.</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="min-width:30px;font-weight:700;color:#d97706">C</span><span>60–69 — Average. Significant opportunities available.</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="min-width:30px;font-weight:700;color:#dc2626">D</span><span>Below 60 — Below average. Immediate action recommended.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 09 START HERE -->
+  <section id="start">
+    <div class="section-tag">09 — Start Here</div>
+    <div class="section-title">Top Priority Actions</div>
+    <ul class="priority-list" style="margin-bottom:32px">
+      ${renderPriorityItems(getInsightText(ai.priorityPlan) || getInsightText(ai.narrative))}
+    </ul>
+
+    <div class="export-bar">
+      <a href="/api/report/${esc(reportId)}/pdf" class="export-btn export-btn-primary">⬇ Download PDF</a>
+      <button class="export-btn export-btn-secondary" onclick="copyLink()">🔗 Copy Link</button>
+      <button class="export-btn export-btn-secondary" onclick="window.print()">⎙ Print</button>
+    </div>
+
+    <div class="refund-box">
+      <strong>Satisfaction Guarantee</strong><br/>
+      This report represents a thorough analysis of your business's digital presence at the time of scan. All data is collected from publicly available sources. If you believe any information is materially inaccurate, contact us within 7 days for a review.
+    </div>
+
+    <div class="footer" style="margin-top:40px">
+      <strong>Know Your Presence</strong><br/>
+      Report ID: ${esc(reportId)} · Generated: ${esc(data.reportDate)}<br/>
+      Business: ${esc(data.businessName)} · ${esc(data.city)}<br/><br/>
+      This report is for the exclusive use of the purchaser. All scores are based on publicly available data collected at the time of scan and are subject to change. © ${new Date().getFullYear()} Know Your Presence. All rights reserved.
+    </div>
+  </section>
+
+</div><!-- /main -->
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  // Dark mode auto-detect
+  if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+    document.documentElement.setAttribute('data-mode','dark');
+  }
+
+  // Toggle dark mode
+  window.toggleDark = function(){
+    var el = document.documentElement;
+    el.setAttribute('data-mode', el.getAttribute('data-mode') === 'dark' ? 'light' : 'dark');
+  };
+
+  // Sidebar toggle (mobile)
+  window.toggleSidebar = function(){
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('overlay').classList.toggle('show');
+  };
+
+  // Toast
+  function showToast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 2000);
+  }
+
+  // Copy link
+  window.copyLink = function(){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(window.location.href).then(function(){
+        showToast('✓ Link copied!');
+      }).catch(function(){
+        showToast('Copy failed — please copy the URL manually.');
+      });
+    } else {
+      showToast('Copy failed — please copy the URL manually.');
+    }
+  };
+
+  // Smooth scroll for nav
+  document.querySelectorAll('#sidebar .sb-nav a').forEach(function(a){
+    a.addEventListener('click', function(e){
+      var href = a.getAttribute('href');
+      if(href && href.startsWith('#')){
+        e.preventDefault();
+        var target = document.getElementById(href.slice(1));
+        if(target){
+          target.scrollIntoView({behavior:'smooth'});
+          // close mobile sidebar
+          document.getElementById('sidebar').classList.remove('open');
+          document.getElementById('overlay').classList.remove('show');
+        }
+      }
+    });
+  });
+
+  // IntersectionObserver: active nav link
+  var sections = document.querySelectorAll('section[id]');
+  var navLinks = document.querySelectorAll('#sidebar .sb-nav a');
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        var id = entry.target.id;
+        navLinks.forEach(function(link){
+          link.classList.remove('active');
+          if(link.getAttribute('href') === '#' + id){
+            link.classList.add('active');
+          }
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px', threshold: 0 });
+  sections.forEach(function(s){ observer.observe(s); });
+})();
+</script>
 </body>
 </html>`;
+
+  return html;
 }
 
 module.exports = { generateWebReport };
