@@ -931,6 +931,555 @@ help us do that. Hope to see you again soon. — The ${businessName} Team"
 `;
 
     archive.append(templates, { name: "KYP_Review_Response_Templates.txt" });
+
+    // ── FILE 3: 30-Day Social Media Content Calendar ──────────────────────────
+    const sc = getScores(reportData);
+    const socialCalendar = `KNOW YOUR PRESENCE — 30-DAY SOCIAL MEDIA CONTENT CALENDAR
+${businessName}  ·  ${reportData.city || ""}
+
+Social Score: ${sc.social}/100  |  Post this calendar to jump-start your presence.
+
+WEEK 1 — INTRODUCE YOURSELF
+Day 1  (Mon) | Behind-the-Scenes | "Ever wondered what goes on behind the scenes at ${businessName}? Here's your look 👀 #LocalBusiness #BehindTheScenes"
+Day 2  (Tue) | Team Spotlight    | "Meet the team that makes it all happen! [Tag a team member] #OurTeam #SmallBusiness"
+Day 3  (Wed) | Customer Story    | "One of our favourite moments this week was... [share a positive customer moment] #CustomerLove"
+Day 4  (Thu) | Product/Service   | "Did you know we offer [highlight one service]? Here's why our customers love it. #LocalFave"
+Day 5  (Fri) | Weekend CTA       | "Weekend plans? Come visit us at [address] — we'd love to see you! #Weekend #LocalBusiness"
+
+WEEK 2 — BUILD TRUST
+Day 8  (Mon) | Educational Tip   | "Pro tip for [your industry]: [share a useful tip your customers would value] #Tips #Expert"
+Day 9  (Tue) | Before & After    | "The transformation you didn't know you needed. [share a result or process] #Results"
+Day 10 (Wed) | Google Review Ask | "Loving what we do? Leave us a Google review — it takes 30 seconds and means the world to us 🙏"
+Day 11 (Thu) | FAQ               | "We get asked this ALL the time: [answer a common question] #FAQ #${businessName}"
+Day 12 (Fri) | Fun Fact          | "Here's something most people don't know about us... [share an interesting fact] #FunFact"
+
+WEEK 3 — ENGAGEMENT PUSH
+Day 15 (Mon) | Poll/Question     | "Quick poll for our community: [ask a relevant question] Comment below! #Community"
+Day 16 (Tue) | UGC Re-share     | "LOVE when our customers tag us! [re-share customer photo/story] Tag us @${businessName.replace(/\s+/g,'')}"
+Day 17 (Wed) | Milestone         | "We hit [milestone]! None of this would be possible without YOU. Thank you! #Grateful"
+Day 18 (Thu) | How-To            | "Step-by-step: How to get the most out of [product/service] 👇 #HowTo #Tips"
+Day 19 (Fri) | Weekend Special   | "This weekend only: [offer or highlight]. Tag a friend who needs this! #Weekend"
+
+WEEK 4 — AUTHORITY & CLOSE
+Day 22 (Mon) | Case Study        | "Here's how we helped [customer type] achieve [result]. [Tell the story] #Success"
+Day 23 (Tue) | Industry News     | "Big news in [industry]: [share relevant update + your take] #IndustryInsights"
+Day 24 (Wed) | Review Highlight  | "⭐⭐⭐⭐⭐ '[paste a real 5-star review]' — Thank you [reviewer name]! #CustomerLove"
+Day 25 (Thu) | Behind the Brand  | "Why we started ${businessName}: [share your origin story] #WhyWeDo #LocalBusiness"
+Day 26 (Fri) | Month Recap + CTA | "What a month! Here's what we've been up to + what's coming next. Follow us to stay in the loop 🔔"
+
+POSTING TIPS
+• Best times: Tue–Thu 9am–11am and 6pm–8pm local time
+• Use 5–10 hashtags on Instagram, 2–3 on Facebook/LinkedIn
+• Reply to ALL comments within 2 hours to boost reach
+• Re-scan Know Your Presence after 30 days to track improvement
+
+Support: support@knowyourpresence.com
+`;
+    archive.append(socialCalendar, { name: "KYP_30Day_Social_Calendar.txt" });
+
+    // ── FILE 4: Google Business Profile Optimisation Checklist ────────────────
+    const gbpChecklist = `KNOW YOUR PRESENCE — GOOGLE BUSINESS PROFILE OPTIMISATION GUIDE
+${businessName}
+
+Your Google score is one of the biggest factors in local search ranking.
+Work through this checklist to maximise visibility.
+
+SECTION 1 — BASIC INFORMATION (Do this today)
+□ Business name matches exactly what's on your signage/website
+□ Primary category is the most specific match for your business
+□ Add 2–3 secondary categories
+□ Phone number is correct and matches your website
+□ Website URL is correct and goes to a working page
+□ Address/service area is accurate and up to date
+□ Business hours are correct (including holidays)
+□ Business description: 750 characters, keyword-rich, no promotional language
+
+SECTION 2 — PHOTOS (Aim for 20+ photos)
+□ Cover photo — high quality, represents your brand
+□ Profile photo — your logo, clearly visible at small size
+□ Interior photos (minimum 5) — clean, well-lit
+□ Exterior photos (minimum 3) — street view, signage visible
+□ Team photos — builds trust
+□ Product/service photos — minimum 5
+□ Add new photos every 2–4 weeks to signal activity
+
+SECTION 3 — POSTS (2x per week minimum)
+□ "What's New" post — updates, announcements
+□ "Offer" post — promotions with clear expiry dates
+□ "Event" post — if you run events
+□ Include a clear call-to-action button on every post
+□ Use local keywords naturally in post text
+
+SECTION 4 — REVIEWS (Critical for ranking)
+□ Respond to 100% of reviews — positive AND negative
+□ Respond within 24 hours
+□ Use the customer's name in responses
+□ Thank positive reviewers specifically
+□ For negative reviews: acknowledge, apologise, offer to resolve offline
+□ Send review request link to happy customers via SMS/email
+□ Never offer incentives for reviews (violates Google policy)
+
+SECTION 5 — Q&A SECTION
+□ Check for existing customer questions — answer all of them
+□ Add your own FAQs proactively (you can ask AND answer)
+□ Include local keywords in answers
+
+SECTION 6 — ADVANCED
+□ Add products/services with descriptions and prices
+□ Set up messaging (if you can respond within 1 hour)
+□ Add booking link if applicable
+□ Check "Suggest an edit" to see if Google has wrong info
+□ Verify all information matches your website exactly (NAP consistency)
+
+TRACKING YOUR PROGRESS
+Go to: business.google.com → Your profile → See your performance
+Key metrics to watch: Search views, Map views, Website clicks, Direction requests
+
+Support: support@knowyourpresence.com
+`;
+    archive.append(gbpChecklist, { name: "KYP_Google_Business_Profile_Guide.txt" });
+
+    // ── FILE 5: 90-Day Growth Roadmap ─────────────────────────────────────────
+    const roadmap = `KNOW YOUR PRESENCE — 90-DAY GROWTH ROADMAP
+${businessName}  ·  Score: ${sc.overall}/100
+
+This roadmap turns your audit into a structured 90-day improvement plan.
+Each phase builds on the last. Stick to it and re-scan at day 90.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHASE 1: FOUNDATION (Days 1–30)
+Goal: Fix the basics. Stop bleeding visibility.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Week 1
+□ Respond to ALL unanswered Google & Yelp reviews
+□ Update Google Business Profile (hours, photos, description)
+□ Fix any broken links on your website
+□ Claim any unclaimed directory listings (Yelp, TripAdvisor, etc.)
+□ Post 3x on social media using the 30-Day Calendar
+
+Week 2
+□ Add 10 new photos to Google Business Profile
+□ Fix website mobile speed (use PageSpeed Insights: pagespeed.web.dev)
+□ Write and publish your first local SEO blog post
+□ Set up 2x Google Posts per week schedule
+□ Begin asking happy customers for Google reviews
+
+Week 3
+□ Add FAQ schema to your website homepage
+□ Check NAP consistency across all directories (name, address, phone)
+□ Start responding to every social media comment within 2 hours
+□ Submit your business to 5 new local directories
+
+Week 4
+□ Run first Google Posts offer
+□ Set up a review-request SMS or email template
+□ Audit all social profile bios — make them keyword-rich and current
+□ Review your top 3 local competitors and note what they do better
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHASE 2: MOMENTUM (Days 31–60)
+Goal: Build consistent visibility and engagement.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Week 5–6
+□ Reach 5 Google reviews (or increase existing count by 50%)
+□ Post 5x per week on your primary social channel
+□ Launch a UGC campaign ("Tag us for a chance to be featured")
+□ Publish 2 more local SEO blog posts
+□ Set up Google Business Profile Q&A section
+
+Week 7–8
+□ Run a paid social test ($5/day, 7 days, boost your best organic post)
+□ Create a highlight reel / portfolio on Instagram or Facebook
+□ Set up monthly email to your customer list (if you have one)
+□ Add products/services to Google Business Profile with prices
+□ Check review response rate — target 100%
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHASE 3: GROWTH (Days 61–90)
+Goal: Compound results and measure ROI.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Week 9–10
+□ Run a proper paid ad campaign with a dedicated landing page
+□ Publish a local press story or community partnership post
+□ Reach out to 3 local complementary businesses for cross-promotion
+□ Create a referral incentive for existing customers
+
+Week 11–12
+□ Audit all improvements made since Day 1
+□ Compile new review count vs. 90 days ago
+□ Check website traffic in Google Analytics or Search Console
+□ Re-scan on Know Your Presence — compare new score to ${sc.overall}/100
+□ Celebrate progress and plan the next 90 days!
+
+TARGET SCORE AT DAY 90: ${Math.min(sc.overall + 25, 95)}/100
+
+Support: support@knowyourpresence.com | knowyourpresence.com
+`;
+    archive.append(roadmap, { name: "KYP_90Day_Growth_Roadmap.txt" });
+
+    // ── FILE 6: Local SEO Quick-Start Guide ───────────────────────────────────
+    const seoGuide = `KNOW YOUR PRESENCE — LOCAL SEO QUICK-START GUIDE
+${businessName}
+
+Local SEO helps your business appear when people nearby search for what you offer.
+These steps are free and have the highest impact on local search ranking.
+
+STEP 1 — NAIL YOUR KEYWORDS
+Find 5–10 keywords your customers actually use.
+
+Starter keywords for ${businessName}:
+• "[your service] in ${reportData.city || 'your city'}"
+• "best [your service] near me"
+• "[your service] ${reportData.city || 'your city'} reviews"
+• "[your service] open now ${reportData.city || 'your city'}"
+
+Free keyword research tools:
+• Google Keyword Planner (ads.google.com/home/tools/keyword-planner)
+• Ubersuggest (ubersuggest.com)
+• AnswerThePublic (answerthepublic.com)
+
+STEP 2 — ON-PAGE SEO (Your Website)
+□ Include your primary keyword in the page <title> tag
+□ Include city + service in H1 heading on homepage
+□ Add your full address in the footer of every page
+□ Create a dedicated "Contact/Location" page with embedded Google Map
+□ Use your keywords naturally in page text (don't stuff them)
+□ Add alt text to all images (describe the image + include keyword)
+□ Ensure your site loads in under 3 seconds on mobile
+
+STEP 3 — SCHEMA MARKUP (Tell Google Exactly Who You Are)
+Add LocalBusiness schema to your homepage. Give this code to your web developer:
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "${businessName}",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "${reportData.city || 'Your City'}"
+  },
+  "telephone": "[Your Phone Number]",
+  "url": "[Your Website URL]"
+}
+</script>
+
+STEP 4 — DIRECTORY LISTINGS (Citations)
+List your business on these directories with IDENTICAL name, address, phone (NAP):
+□ Google Business Profile (business.google.com)
+□ Yelp (biz.yelp.com)
+□ Bing Places (bingplaces.com)
+□ Apple Maps (mapsconnect.apple.com)
+□ Facebook Business
+□ TripAdvisor (if hospitality/restaurant)
+□ Yellow Pages (yellowpages.com)
+□ Better Business Bureau (bbb.org)
+
+STEP 5 — CONTENT STRATEGY
+• Write 1 blog post per month targeting a local keyword
+• Post titles: "Best [service] in ${reportData.city || 'Your City'}: What to Look For"
+• Include your city name naturally in the first 100 words
+• Add internal links between blog posts and your services pages
+
+STEP 6 — TRACK YOUR RESULTS
+□ Set up Google Search Console (search.google.com/search-console)
+□ Set up Google Analytics 4
+□ Check Google Business Profile Insights monthly
+□ Re-scan Know Your Presence every 90 days
+
+Support: support@knowyourpresence.com
+`;
+    archive.append(seoGuide, { name: "KYP_Local_SEO_Guide.txt" });
+
+    // ── FILE 7: Social Media Bio & Profile Templates ───────────────────────────
+    const bioTemplates = `KNOW YOUR PRESENCE — SOCIAL MEDIA BIO & PROFILE TEMPLATES
+${businessName}
+
+Copy, customise, and paste these bios into each platform.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INSTAGRAM BIO (150 characters max)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Template A (Service-focused):
+[What you do] in ${reportData.city || 'Your City'} 📍
+[Key benefit or unique value]
+[Social proof, e.g. "500+ happy customers" or "Est. 2015"]
+👇 Book / Shop / Learn more
+[Link in bio URL]
+
+Template B (Brand-focused):
+We help [target customer] [achieve outcome] ✨
+📍 ${reportData.city || 'Your City'} | [Country/State]
+DM us or tap the link below 👇
+[Link in bio URL]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FACEBOOK PAGE "About" (255 characters max)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${businessName} is [what you do] based in ${reportData.city || 'Your City'}.
+We specialise in [key service/product] and are known for [differentiator].
+Contact us at [email] or [phone] — we'd love to help!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GOOGLE BUSINESS PROFILE DESCRIPTION (750 characters max)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${businessName} is a [type of business] located in ${reportData.city || 'Your City'}.
+We offer [list 3–5 core services/products].
+[Unique selling point — what makes you different].
+[Social proof — years in business, number of customers served, awards].
+Visit us at [address], call [phone], or visit [website] to learn more.
+We proudly serve [City] and surrounding areas.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LINKEDIN COMPANY PAGE (2,000 characters max — use 300–500)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[Opening hook: bold statement or question relevant to your industry]
+
+${businessName} helps [target audience] [achieve specific result] through [your approach/method].
+
+Founded in [year] and based in ${reportData.city || 'Your City'}, we've [key milestone or achievement].
+
+Our core services include:
+• [Service 1]
+• [Service 2]
+• [Service 3]
+
+[One sentence on your values or approach]
+
+Ready to [outcome your customers want]? Visit [website] or connect with us today.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HASHTAG SETS (copy & paste)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Local set: #${(reportData.city||'YourCity').replace(/\s+/g,'')} #${(reportData.city||'YourCity').replace(/\s+/g,'')}Business #LocalBusiness #ShopLocal #SupportSmallBusiness
+
+Industry set: #[YourIndustry] #[YourService] #[YourProductType] (customise these)
+
+Engagement set: #SmallBusiness #Entrepreneur #LocalLove #Community #MadeLocal
+
+Support: support@knowyourpresence.com
+`;
+    archive.append(bioTemplates, { name: "KYP_Social_Bio_Templates.txt" });
+
+    // ── FILE 8: Customer Review Request Scripts ────────────────────────────────
+    const reviewScripts = `KNOW YOUR PRESENCE — CUSTOMER REVIEW REQUEST SCRIPTS
+${businessName}
+
+Reviews are the #1 trust signal for local businesses.
+Use these scripts to ask for reviews at the right moment.
+
+YOUR GOOGLE REVIEW LINK
+Go to: business.google.com → Get more reviews → Copy your review link
+Short link format: g.page/[yourbusiness]/review
+Include this link in all review request messages below.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SMS SCRIPTS (keep under 160 characters)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After purchase/visit:
+"Hi [Name]! Thanks for visiting ${businessName} today. If you enjoyed your experience, we'd love a Google review: [YOUR LINK]. Takes 30 seconds! 🙏"
+
+Follow-up (3 days later, if no review):
+"Hi [Name], just checking in from ${businessName}! Hope everything was great. A Google review would mean the world to us: [YOUR LINK]"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EMAIL SCRIPTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Subject: Quick favour, [Name]? ⭐
+
+Hi [Name],
+
+Thank you so much for [visiting us / choosing ${businessName}] — we really appreciate your business.
+
+If you had a great experience, would you mind leaving us a quick Google review? It takes less than a minute and genuinely helps other local people find us.
+
+[PASTE YOUR GOOGLE REVIEW LINK HERE]
+
+No pressure at all, and thank you either way!
+
+Warm regards,
+The ${businessName} Team
+
+---
+
+Subject: How was your experience at ${businessName}?
+
+Hi [Name],
+
+We hope everything went well! Your feedback is incredibly valuable to us.
+
+If you're happy with your experience, we'd love it if you could share a quick review on Google:
+[PASTE YOUR GOOGLE REVIEW LINK HERE]
+
+If anything wasn't right, please reply to this email — we want to make it right for you.
+
+Thank you for supporting a local business!
+
+The ${businessName} Team
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IN-PERSON SCRIPT (For staff to use)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After a positive interaction:
+"I'm really glad you had a great experience! If you have a moment, a Google review would really help us out — I can text you the link right now if you'd like?"
+
+On receipts/cards: Add "Love us? Review us on Google: [short link]"
+
+BEST PRACTICES
+• Ask within 24 hours of a positive experience — while it's fresh
+• Never offer discounts or gifts for reviews (Google policy violation)
+• Respond to every review — positive and negative
+• Aim for 1–2 new reviews per week
+• Respond to negative reviews within 24 hours, calmly and professionally
+
+Support: support@knowyourpresence.com
+`;
+    archive.append(reviewScripts, { name: "KYP_Review_Request_Scripts.txt" });
+
+    // ── FILE 9: Website Quick-Win Checklist ───────────────────────────────────
+    const websiteChecklist = `KNOW YOUR PRESENCE — WEBSITE QUICK-WIN CHECKLIST
+${businessName}  ·  Website Score: ${sc.website}/100
+
+Your website is often the first impression. Use this checklist to fix
+the most impactful issues in order of priority.
+
+PRIORITY 1 — SPEED & MOBILE (Biggest ranking factor)
+□ Test your site: pagespeed.web.dev — target 90+ on mobile
+□ Compress all images (use squoosh.app — free, no upload limit)
+□ Enable browser caching (ask your web host or developer)
+□ Use a CDN (Cloudflare free plan is excellent: cloudflare.com)
+□ Remove unused plugins or scripts
+□ Enable GZIP compression on your server
+
+PRIORITY 2 — TRUST SIGNALS (Converts visitors to customers)
+□ Display your phone number prominently in the header
+□ Add your physical address with a Google Map embed
+□ Show real customer reviews/testimonials (with photos if possible)
+□ Display any awards, certifications, or press mentions
+□ Add an SSL certificate (https://) — your host usually provides free via Let's Encrypt
+□ Show a clear refund/satisfaction guarantee
+□ Professional headshots or team photos
+
+PRIORITY 3 — LOCAL SEO ON-PAGE
+□ H1 heading includes your primary keyword + city: "Best [Service] in ${reportData.city || 'Your City'}"
+□ Page title tag: "[Primary Keyword] | ${businessName} | ${reportData.city || 'City'}"
+□ Meta description (155 chars): "Looking for [service] in ${reportData.city || 'Your City'}? ${businessName} offers [benefit]. Call [phone] or book online today."
+□ Footer includes: business name, address, phone, hours
+□ Contact page has an embedded Google Map
+□ Add LocalBusiness schema markup (see Local SEO Guide)
+
+PRIORITY 4 — CONVERSION OPTIMISATION
+□ One clear "Call to Action" on every page (Book Now / Call Us / Get a Quote)
+□ CTA button is visible without scrolling on mobile
+□ Contact form works and sends to a monitored email
+□ Phone number is click-to-call on mobile
+□ Loading spinner or confirmation message after form submit
+□ "What happens next" — set expectations after someone contacts you
+
+PRIORITY 5 — CONTENT & FRESHNESS
+□ Blog/news section updated at least monthly
+□ Services page lists all services with clear descriptions and prices (or price range)
+□ FAQ page answering your 10 most common customer questions
+□ About page with real story, real photos, real people
+□ Gallery of your work (before/after, products, events)
+
+FREE TOOLS TO HELP
+• PageSpeed: pagespeed.web.dev
+• Mobile-friendly test: search.google.com/test/mobile-friendly
+• Schema validator: validator.schema.org
+• Image compression: squoosh.app
+• Broken link checker: deadlinkchecker.com
+
+Support: support@knowyourpresence.com
+`;
+    archive.append(websiteChecklist, { name: "KYP_Website_Quick_Win_Checklist.txt" });
+
+    // ── FILE 10: Competitor Intelligence Worksheet ────────────────────────────
+    const competitorSheet = `KNOW YOUR PRESENCE — COMPETITOR INTELLIGENCE WORKSHEET
+${businessName}  ·  ${reportData.city || ""}
+
+Use this worksheet to analyse your top 3 local competitors and find gaps you can win.
+
+HOW TO FIND YOUR COMPETITORS
+1. Google: "[your service] in ${reportData.city || 'your city'}" — note the top 3 map pack results
+2. Yelp: search your category + city
+3. These are the businesses you need to beat online.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPETITOR 1
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Business Name: ___________________________
+Google Rating: ______ / Review Count: ______
+Website Speed (pagespeed.web.dev): ______/100 mobile
+Social Following: IG ______ | FB ______ | TikTok ______
+Posting Frequency: ______x per week
+What they do WELL: ________________________
+What they do POORLY: ______________________
+GAP I can exploit: ________________________
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPETITOR 2
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Business Name: ___________________________
+Google Rating: ______ / Review Count: ______
+Website Speed: ______/100 mobile
+Social Following: IG ______ | FB ______ | TikTok ______
+Posting Frequency: ______x per week
+What they do WELL: ________________________
+What they do POORLY: ______________________
+GAP I can exploit: ________________________
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPETITOR 3
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Business Name: ___________________________
+Google Rating: ______ / Review Count: ______
+Website Speed: ______/100 mobile
+Social Following: IG ______ | FB ______ | TikTok ______
+Posting Frequency: ______x per week
+What they do WELL: ________________________
+What they do POORLY: ______________________
+GAP I can exploit: ________________________
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+YOUR COMPETITIVE ADVANTAGE SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Areas where ${businessName} already wins:
+1. ________________________________________
+2. ________________________________________
+
+Areas to improve to overtake competitors:
+1. ________________________________________
+2. ________________________________________
+3. ________________________________________
+
+Quick wins identified from competitor gaps:
+1. ________________________________________
+2. ________________________________________
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MONTHLY COMPETITOR TRACKING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Check these monthly and note changes:
+□ Their Google review count (are they growing faster than you?)
+□ New content or campaigns they launched
+□ Any new services or pricing changes
+□ Their social media follower growth
+
+Set a monthly calendar reminder: "Competitor check — 30 minutes"
+
+Re-scan Know Your Presence every 90 days to track your score vs. theirs.
+knowyourpresence.com | support@knowyourpresence.com
+`;
+    archive.append(competitorSheet, { name: "KYP_Competitor_Intelligence_Worksheet.txt" });
+
     archive.finalize();
   });
 }
