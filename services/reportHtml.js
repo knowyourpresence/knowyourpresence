@@ -710,7 +710,7 @@ section:last-child{border-bottom:none}
 
     <div class="refund-box">
       <strong>Satisfaction Guarantee</strong><br/>
-      This report represents a thorough analysis of your business's digital presence at the time of scan. All data is collected from publicly available sources. If you believe any information is materially inaccurate, contact us within 7 days for a review.
+      This report represents a thorough analysis of your business's digital presence at the time of scan. All data is collected from publicly available sources.
     </div>
 
     <div class="footer" style="margin-top:40px">
