@@ -1,5 +1,5 @@
 // services/email.js
-// Sends the KYP confirmation email with the PDF report attached.
+// Sends customer report email + owner sale notification.
 // Uses Resend API — set RESEND_API_KEY in Render environment variables.
 
 const { Resend } = require("resend");
@@ -7,19 +7,10 @@ const fs = require("fs");
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-/**
- * sendReportEmail
- * @param {object} opts
- * @param {string} opts.to            - Customer email address
- * @param {string} opts.businessName  - e.g. "Intelligentsia Coffee"
- * @param {string} opts.city          - e.g. "Chicago"
- * @param {string} opts.score         - e.g. "74"
- * @param {string} opts.grade         - e.g. "B"
- * @param {string} opts.reportId      - e.g. "KYP-024E3760F584"
- * @param {string} opts.pdfPath       - Absolute local path to the generated PDF file
- */
+const OWNER_EMAIL = process.env.OWNER_EMAIL || "support@knowyourpresence.com";
+
+// ── 1. Customer email with PDF attached ───────────────────────────────────────
 async function sendReportEmail({ to, businessName, city, score, grade, reportId, pdfPath }) {
-  // Read PDF and encode as base64 for attachment
   const pdfBuffer = fs.readFileSync(pdfPath);
   const pdfBase64 = pdfBuffer.toString("base64");
   const fileName  = `KYP_Report_${businessName.replace(/\s+/g, "_")}_${reportId}.pdf`;
@@ -99,14 +90,8 @@ async function sendReportEmail({ to, businessName, city, score, grade, reportId,
     </td></tr>
   </table>
 </body>
-</html>
-    `,
-    attachments: [
-      {
-        filename: fileName,
-        content:  pdfBase64,
-      },
-    ],
+</html>`,
+    attachments: [{ filename: fileName, content: pdfBase64 }],
   });
 
   if (error) {
@@ -118,4 +103,104 @@ async function sendReportEmail({ to, businessName, city, score, grade, reportId,
   return data;
 }
 
-module.exports = { sendReportEmail };
+// ── 2. Owner sale notification ────────────────────────────────────────────────
+async function sendOwnerNotification({ customerEmail, businessName, city, score, grade, reportId, amount }) {
+  const { data, error } = await resend.emails.send({
+    from:    "Know Your Presence <reports@knowyourpresence.com>",
+    to:      [OWNER_EMAIL],
+    subject: `💰 New sale — ${businessName} (${grade} · ${score}/100)`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#f5f2ec;font-family:'Inter',system-ui,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ec;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:10px;overflow:hidden;border:1px solid #e5e2da;">
+
+        <!-- Header -->
+        <tr><td style="background:#152030;padding:20px 32px;">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#4ade80;margin-bottom:4px;">Know Your Presence — Owner Alert</div>
+          <div style="font-size:18px;font-weight:700;color:#fff;">New report sold 🎉</div>
+        </td></tr>
+
+        <!-- Details -->
+        <tr><td style="padding:24px 32px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ec;border-radius:8px;border:1px solid #e5e2da;margin-bottom:20px;">
+            <tr>
+              <td style="padding:14px 18px;border-right:1px solid #e5e2da;">
+                <div style="font-size:9px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#9ca3af;margin-bottom:3px;">Business</div>
+                <div style="font-size:15px;font-weight:700;color:#1a2332;">${businessName}</div>
+                <div style="font-size:12px;color:#6b7280;">${city || "—"}</div>
+              </td>
+              <td style="padding:14px 18px;border-right:1px solid #e5e2da;text-align:center;">
+                <div style="font-size:9px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#9ca3af;margin-bottom:3px;">Score</div>
+                <div style="font-size:32px;font-weight:700;color:#1a2332;line-height:1;">${score}</div>
+                <div style="font-size:11px;color:#6b7280;">/ 100</div>
+              </td>
+              <td style="padding:14px 18px;border-right:1px solid #e5e2da;text-align:center;">
+                <div style="font-size:9px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#9ca3af;margin-bottom:3px;">Grade</div>
+                <div style="font-size:32px;font-weight:700;color:#1f6b45;line-height:1;">${grade}</div>
+              </td>
+              <td style="padding:14px 18px;text-align:center;">
+                <div style="font-size:9px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:#9ca3af;margin-bottom:3px;">Amount</div>
+                <div style="font-size:20px;font-weight:700;color:#1f6b45;line-height:1;">${amount || "—"}</div>
+              </td>
+            </tr>
+          </table>
+
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding:6px 0;font-size:13px;color:#6b7280;"><strong style="color:#1a2332;">Customer:</strong> ${customerEmail}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;font-size:13px;color:#6b7280;"><strong style="color:#1a2332;">Report ID:</strong> ${reportId}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;font-size:13px;color:#6b7280;"><strong style="color:#1a2332;">Time:</strong> ${new Date().toLocaleString("en-GB", { timeZone: "UTC" })} UTC</td>
+            </tr>
+          </table>
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="padding:16px 32px 24px;border-top:1px solid #e5e2da;">
+          <p style="font-size:11px;color:#9ca3af;margin:0;">PDF report sent to customer automatically. Check Resend dashboard for delivery status.</p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+  });
+
+  if (error) {
+    console.error("Owner notification error:", error);
+    // Don't throw — owner email failure shouldn't break customer flow
+  } else {
+    console.log(`Owner notification sent — id: ${data.id}`);
+  }
+}
+
+// ── 3. Customer confirmation (alias used by server.js) ────────────────────────
+async function sendCustomerConfirmation(order, reportUrl, toolkitUrl) {
+  const sc = order.scores || {};
+  const rep  = Math.round(sc.reputation ?? sc.rep ?? 60);
+  const gb   = Math.round(sc.google    ?? 60);
+  const web  = Math.round(sc.website   ?? 60);
+  const soc  = Math.round(sc.social    ?? 60);
+  const overall = Math.round((rep*0.20)+(gb*0.35)+(web*0.20)+(soc*0.25));
+  const grade = overall>=90?"A+":overall>=80?"A":overall>=70?"B":overall>=60?"C":"D";
+
+  return sendReportEmail({
+    to:           order.customerEmail || order.email,
+    businessName: order.businessName,
+    city:         order.city,
+    score:        overall,
+    grade,
+    reportId:     order.reportId,
+    pdfPath:      order.pdfPath,
+  });
+}
+
+module.exports = { sendReportEmail, sendOwnerNotification, sendCustomerConfirmation };
