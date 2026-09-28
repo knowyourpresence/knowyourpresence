@@ -28,6 +28,8 @@ const { pushScanRecord, pushLeadRecord } = require("./services/coupler");
 const { runAdIntelligence } = require("./services/metaAds");
 const { generateAllInsights } = require("./services/aiInsights"); // ← AI Insights (6 modules)
 const { startFollowUpJob } = require("./services/followUpJob");   // ← 24h upsell follow-up
+const { logOrderToSheet } = require("./services/googleSheets");   // ← Google Sheets CRM
+const { addBrevoContact } = require("./services/brevo");          // ← 90-day drip sequence
 
 const app = express();
 // Required when running behind a proxy (Render, Railway, Heroku, nginx etc.)
@@ -530,6 +532,29 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
       currency: order.currency,
       paymentId: order.paymentId,
     }).catch(() => {});
+
+    // Log to Google Sheets CRM (non-blocking)
+    logOrderToSheet({
+      reportId,
+      businessName: reportData.businessName,
+      city: reportData.city,
+      email,
+      scores: reportData.scores,
+      grade: overallGrade,
+      amount: order.amount,
+      currency: order.currency,
+      paymentId: order.paymentId,
+    }).catch((e) => console.error("Google Sheets log failed:", e.message));
+
+    // Add to Brevo + trigger 90-day drip sequence (non-blocking)
+    addBrevoContact({
+      email,
+      businessName: reportData.businessName,
+      city: reportData.city,
+      scores: reportData.scores,
+      reportId,
+      grade: overallGrade,
+    }).catch((e) => console.error("Brevo contact add failed:", e.message));
 
     console.log(`[webhook] Fulfilment complete for ${email} — report ${reportId}`);
   } catch (err) {
