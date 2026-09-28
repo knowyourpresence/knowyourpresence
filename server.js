@@ -671,6 +671,16 @@ app.get("/api/report/:reportId", (req, res) => {
   res.sendFile(filePath);
 });
 
+// PDF download — alias used by report HTML download buttons
+app.get("/api/report/:reportId/pdf", (req, res) => {
+  const filePath = path.join(REPORTS_DIR, `${req.params.reportId}.pdf`);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send("PDF not found. It may still be generating — please check your email for the attached copy.");
+  }
+  res.setHeader("Content-Disposition", `attachment; filename="KYP_Report_${req.params.reportId}.pdf"`);
+  res.sendFile(filePath);
+});
+
 // Toolkit ZIP download - same ID as the report, different file extension.
 app.get("/api/toolkit/:reportId", (req, res) => {
   const filePath = path.join(REPORTS_DIR, `${req.params.reportId}-toolkit.zip`);
