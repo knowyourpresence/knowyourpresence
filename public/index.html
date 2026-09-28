@@ -1011,17 +1011,34 @@ window.onMapsLoaded = function() {
 
   function searchPlaces(query) {
     const cityVal = document.getElementById('cityInput').value.trim();
+    const countryVal = document.getElementById('countryInput').value || 'US';
+
+    // Require city for chain businesses — avoids global Starbucks/McDonald's flood
+    if (!cityVal) {
+      dropdown.innerHTML = '<div class="biz-searching">💡 Enter your city first for accurate results</div>';
+      dropdown.classList.add('open');
+      return;
+    }
+
     dropdown.innerHTML = '<div class="biz-searching">Searching…</div>';
     dropdown.classList.add('open');
-    autocompleteService.getPlacePredictions({
-      input: query + (cityVal ? ' ' + cityVal : ''),
+
+    // Country code → ISO 3166-1 alpha-2 for componentRestrictions
+    const countryMap = { US:'us', GB:'gb', CA:'ca', AU:'au', NZ:'nz', IN:'in' };
+    const cc = countryMap[countryVal] || null;
+
+    const reqObj = {
+      input: query + ' ' + cityVal,
       types: ['establishment'],
-    }, (predictions, status) => {
+    };
+    if (cc) reqObj.componentRestrictions = { country: cc };
+
+    autocompleteService.getPlacePredictions(reqObj, (predictions, status) => {
       if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
         dropdown.classList.remove('open'); return;
       }
       dropdown.innerHTML = '';
-      predictions.slice(0, 5).forEach((p, i) => {
+      predictions.slice(0, 6).forEach((p) => {
         const main = p.structured_formatting.main_text;
         const secondary = p.structured_formatting.secondary_text || '';
         const div = document.createElement('div');
@@ -1030,7 +1047,7 @@ window.onMapsLoaded = function() {
         div.addEventListener('mousedown', () => {
           bizInput.value = main;
           selectedPlaceId = p.place_id;
-          // Auto-fill city from address
+          // Auto-fill city from address if not already set
           const parts = secondary.split(',');
           if (parts.length >= 1 && !document.getElementById('cityInput').value.trim()) {
             document.getElementById('cityInput').value = parts[0].trim();
