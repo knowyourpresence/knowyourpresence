@@ -441,10 +441,12 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
     let reportUrl = "";
     let webReportUrl = "";
     let toolkitUrl = "";
+    let pdfPath = "";
     try {
       // Run PDF + toolkit in parallel; also save web report HTML
       await Promise.all([
-        generateReportPdf(reportData).then(() => {
+        generateReportPdf(reportData).then((savedPdfPath) => {
+          pdfPath = savedPdfPath;
           reportUrl = `${process.env.PUBLIC_BASE_URL || ""}/api/report/${reportId}`;
         }),
         generateToolkitZip(reportData).then(() => {
@@ -465,9 +467,24 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
 
     // Email sends only the PDF — the web report is shown immediately after
     // payment via the /report-ready loading page, not linked in the email.
-    const orderWithScores = { ...order, scores: reportData.scores, grade: scanDetails?.grade };
-    sendCustomerConfirmation(orderWithScores, reportUrl, toolkitUrl, null, null).catch((e) => console.error("Customer email failed:", e.message));
-    sendOwnerNotification(order).catch((e) => console.error("Owner notification failed:", e.message));
+    const orderWithScores = {
+      ...order,
+      reportId,
+      city: reportData.city,
+      scores: reportData.scores,
+      grade: scanDetails?.grade,
+      pdfPath,
+    };
+    sendCustomerConfirmation(orderWithScores, reportUrl, toolkitUrl).catch((e) => console.error("Customer email failed:", e.message));
+    sendOwnerNotification({
+      customerEmail: email,
+      businessName: reportData.businessName,
+      city: reportData.city,
+      score: (() => { const s = reportData.scores; return Math.round((s.reputation||0)*0.20+(s.google||0)*0.35+(s.website||0)*0.20+(s.social||0)*0.25); })(),
+      grade: scanDetails?.grade || "",
+      reportId,
+      amount: order.amount ? `$${order.amount}` : "—",
+    }).catch((e) => console.error("Owner notification failed:", e.message));
 
     // FIX: use reportData.scores for overall grade — scoreResult is from /api/scan scope, not here
     const overallGrade = scores
