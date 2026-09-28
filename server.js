@@ -229,6 +229,13 @@ app.get("/api/pricing", (req, res) => {
   res.json(getPrice());
 });
 
+// Public config — exposes only safe, public-facing keys
+app.get("/api/config", (req, res) => {
+  res.json({
+    googleMapsKey: process.env.GOOGLE_MAPS_PUBLIC_KEY || "",
+  });
+});
+
 // --- CHECKOUT: creates a Dodo Payments checkout session and returns the
 // hosted checkout URL for the browser to redirect to.
 //
