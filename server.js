@@ -133,7 +133,7 @@ app.post("/api/scan", scanRateLimit, async (req, res) => {
       urlscanResult,
     ] = await Promise.all([
       fetchGoogleBusinessData(resolvedPlaceId),
-      calculateSocialScore({ youtubeChannelId, instagramUserId, facebookPageId }),
+      calculateSocialScore({ youtubeChannelId, businessName, city }),
       fetchWebsiteHealth(resolvedWebsiteUrl),
       fetchYelpData(businessName, city),
       runTechnicalChecks(websiteUrl),
@@ -160,7 +160,18 @@ app.post("/api/scan", scanRateLimit, async (req, res) => {
       google: googleResult.score,
       social: socialResult.score,
       website: websiteResult.score,
-      reputation: reputationScore != null ? Number(reputationScore) : 60, // fallback until wired up
+      reputation: (() => {
+        // Derive from Google rating if available, else fallback
+        const rating = googleResult?.raw?.rating;
+        const reviews = googleResult?.raw?.reviewCount ?? googleResult?.raw?.user_ratings_total ?? 0;
+        if (rating && rating > 0) {
+          // rating 1-5 → score 0-100, boosted by review volume (up to +15)
+          const base = Math.round(((rating - 1) / 4) * 85);
+          const boost = Math.min(15, Math.round(Math.log10(reviews + 1) * 5));
+          return Math.min(100, base + boost);
+        }
+        return reputationScore != null ? Number(reputationScore) : 60;
+      })(),
       competitive: null, // wire up a second scan of a competitor and pass its overall score here
     };
 
