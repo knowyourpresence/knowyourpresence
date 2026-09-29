@@ -16,12 +16,50 @@ const REPORTS_DIR = process.env.REPORTS_DIR || path.join(__dirname, "../reports"
 if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR, { recursive: true });
 
 // ── Browser launcher — works on Render's ephemeral free tier ─────────────────
-// Playwright browsers are installed into the PROJECT directory at build time so
-// they survive Render's build→runtime container handoff.
-// We must set PLAYWRIGHT_BROWSERS_PATH BEFORE requiring playwright.
-if (!process.env.PLAYWRIGHT_BROWSERS_PATH) {
-  process.env.PLAYWRIGHT_BROWSERS_PATH =
-    "/opt/render/project/src/.playwright-browsers";
+// Render free tier: build and runtime are SEPARATE containers.
+// We can't rely on Playwright's managed browser install surviving that handoff.
+// Strategy: find any working Chromium/Chrome binary on the system.
+
+const { execSync } = require("child_process");
+
+function findChromiumPath() {
+  // 1. Explicit override via env var
+  if (process.env.CHROMIUM_PATH) return process.env.CHROMIUM_PATH;
+
+  // 2. Common system paths (Render's Ubuntu image has chromium-browser)
+  const candidates = [
+    "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",
+    "/usr/bin/google-chrome",
+    "/usr/bin/google-chrome-stable",
+    "/usr/local/bin/chromium",
+  ];
+  for (const p of candidates) {
+    try {
+      fs.accessSync(p, fs.constants.X_OK);
+      return p;
+    } catch (_) {}
+  }
+
+  // 3. Try `which chromium-browser` or `which chromium`
+  for (const cmd of ["chromium-browser", "chromium", "google-chrome"]) {
+    try {
+      const found = execSync(`which ${cmd} 2>/dev/null`).toString().trim();
+      if (found) return found;
+    } catch (_) {}
+  }
+
+  // 4. Playwright build-time install in project dir
+  const pwPath = "/opt/render/project/src/.playwright-browsers";
+  if (fs.existsSync(pwPath)) {
+    // Find the chrome-headless-shell binary anywhere under that dir
+    try {
+      const found = execSync(`find ${pwPath} -name "chrome-headless-shell" -o -name "chromium" 2>/dev/null | head -1`).toString().trim();
+      if (found) return found;
+    } catch (_) {}
+  }
+
+  return null; // Let Playwright use its default (will fail if not installed)
 }
 
 async function launchBrowser() {
@@ -38,12 +76,12 @@ async function launchBrowser() {
 
   const launchOpts = { args, timeout: 120000 };
 
-  // Allow explicit override via env var (e.g. system Chrome on a paid plan)
-  if (process.env.CHROMIUM_PATH) {
-    launchOpts.executablePath = process.env.CHROMIUM_PATH;
-    console.log("[pdf] Launching Playwright with CHROMIUM_PATH:", process.env.CHROMIUM_PATH);
+  const executablePath = findChromiumPath();
+  if (executablePath) {
+    launchOpts.executablePath = executablePath;
+    console.log("[pdf] Launching Playwright with Chromium at:", executablePath);
   } else {
-    console.log("[pdf] Launching Playwright chromium (build-time install)");
+    console.log("[pdf] No system Chromium found — using Playwright default (may fail)");
   }
 
   return chromium.launch(launchOpts);
