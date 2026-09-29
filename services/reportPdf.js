@@ -16,10 +16,14 @@ const REPORTS_DIR = process.env.REPORTS_DIR || path.join(__dirname, "../reports"
 if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR, { recursive: true });
 
 // ── Browser launcher — works on Render's ephemeral free tier ─────────────────
-// Strategy:
-//   1. Playwright chromium (installed at build time via `npx playwright install chromium`)
-//      Playwright manages its own CDP timeouts more gracefully than puppeteer-core.
-//   2. If CHROMIUM_PATH env var is set, use that binary with Playwright instead.
+// Playwright browsers are installed into the PROJECT directory at build time so
+// they survive Render's build→runtime container handoff.
+// We must set PLAYWRIGHT_BROWSERS_PATH BEFORE requiring playwright.
+if (!process.env.PLAYWRIGHT_BROWSERS_PATH) {
+  process.env.PLAYWRIGHT_BROWSERS_PATH =
+    "/opt/render/project/src/.playwright-browsers";
+}
+
 async function launchBrowser() {
   const { chromium } = require("playwright");
 
