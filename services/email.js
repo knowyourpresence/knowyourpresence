@@ -79,22 +79,35 @@ async function sendReportEmail({ to, businessName, city, score, grade, reportId,
           </p>
           <p style="font-size:14px;color:#6b7280;line-height:1.65;margin:0 0 20px;">
             ${hasPdf
-              ? `Your PDF is attached to this email. We recommend starting with <strong>Section 09 — Start Here</strong> for the seven actions that move the needle fastest.`
-              : `View your full interactive report below. We recommend starting with <strong>Section 09 — Start Here</strong> for the seven actions that move the needle fastest.`
+              ? `Your PDF report is attached. We recommend starting with <strong>Section 09 — Start Here</strong> for the seven actions that move the needle fastest.`
+              : `Your full interactive report is live and ready to view right now — click below. We recommend starting with <strong>Section 09 — Start Here</strong> for the seven actions that move the needle fastest.`
             }
           </p>
-          <table cellpadding="0" cellspacing="0" style="margin-bottom:12px;"><tr>
+
+          <!-- Primary CTA -->
+          <table cellpadding="0" cellspacing="0" style="margin-bottom:20px;"><tr>
             <td style="background:#152030;border-radius:6px;padding-right:10px;">
-              <a href="${webReportUrl}" style="display:block;padding:12px 28px;font-size:13px;font-weight:600;color:#fff;text-decoration:none;letter-spacing:.3px;">
+              <a href="${webReportUrl}" style="display:block;padding:14px 32px;font-size:14px;font-weight:700;color:#fff;text-decoration:none;letter-spacing:.3px;">
                 View Your Full Report →
               </a>
             </td>
             ${toolkitUrl ? `<td style="background:#1f6b45;border-radius:6px;">
-              <a href="${toolkitUrl}" style="display:block;padding:12px 28px;font-size:13px;font-weight:600;color:#fff;text-decoration:none;letter-spacing:.3px;">
+              <a href="${toolkitUrl}" style="display:block;padding:14px 28px;font-size:14px;font-weight:700;color:#fff;text-decoration:none;letter-spacing:.3px;">
                 Download Toolkit →
               </a>
             </td>` : ""}
           </tr></table>
+
+          ${!hasPdf ? `
+          <!-- PDF notice -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+            <tr><td style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px 18px;">
+              <p style="margin:0;font-size:13px;color:#166534;line-height:1.6;">
+                <strong>📄 PDF copy:</strong> A PDF version of your report will be emailed to you separately within a few hours.
+                If you need it urgently, reply to this email and we'll send it manually.
+              </p>
+            </td></tr>
+          </table>` : ""}
         </td></tr>
 
         <!-- Divider -->
