@@ -3,7 +3,7 @@ services:
     name: know-your-presence
     env: node
     plan: free
-    buildCommand: npm install && (apt-get install -y chromium-browser 2>/dev/null || true) && PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/src/.playwright-browsers npx playwright install chromium 2>/dev/null || true
+    buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /health
     envVars:
@@ -31,5 +31,3 @@ services:
         sync: false
       - key: DODO_WEBHOOK_SECRET
         sync: false
-      - key: PLAYWRIGHT_BROWSERS_PATH
-        value: /opt/render/project/src/.playwright-browsers

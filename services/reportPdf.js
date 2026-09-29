@@ -15,76 +15,25 @@ const archiver = require("archiver");
 const REPORTS_DIR = process.env.REPORTS_DIR || path.join(__dirname, "../reports");
 if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR, { recursive: true });
 
-// ── Browser launcher — works on Render's ephemeral free tier ─────────────────
-// Render free tier: build and runtime are SEPARATE containers.
-// We can't rely on Playwright's managed browser install surviving that handoff.
-// Strategy: find any working Chromium/Chrome binary on the system.
-
-const { execSync } = require("child_process");
-
-function findChromiumPath() {
-  // 1. Explicit override via env var
-  if (process.env.CHROMIUM_PATH) return process.env.CHROMIUM_PATH;
-
-  // 2. Common system paths (Render's Ubuntu image has chromium-browser)
-  const candidates = [
-    "/usr/bin/chromium",
-    "/usr/bin/chromium-browser",
-    "/usr/bin/google-chrome",
-    "/usr/bin/google-chrome-stable",
-    "/usr/local/bin/chromium",
-  ];
-  for (const p of candidates) {
-    try {
-      fs.accessSync(p, fs.constants.X_OK);
-      return p;
-    } catch (_) {}
-  }
-
-  // 3. Try `which chromium-browser` or `which chromium`
-  for (const cmd of ["chromium-browser", "chromium", "google-chrome"]) {
-    try {
-      const found = execSync(`which ${cmd} 2>/dev/null`).toString().trim();
-      if (found) return found;
-    } catch (_) {}
-  }
-
-  // 4. Playwright build-time install in project dir
-  const pwPath = "/opt/render/project/src/.playwright-browsers";
-  if (fs.existsSync(pwPath)) {
-    // Find the chrome-headless-shell binary anywhere under that dir
-    try {
-      const found = execSync(`find ${pwPath} -name "chrome-headless-shell" -o -name "chromium" 2>/dev/null | head -1`).toString().trim();
-      if (found) return found;
-    } catch (_) {}
-  }
-
-  return null; // Let Playwright use its default (will fail if not installed)
-}
+// ── Browser launcher ──────────────────────────────────────────────────────────
+// Uses puppeteer (full package) which downloads its own Chromium during
+// `npm install` at build time — stays in node_modules, works on Render free tier.
 
 async function launchBrowser() {
-  const { chromium } = require("playwright");
+  const puppeteer = require("puppeteer");
 
   const args = [
     "--no-sandbox",
     "--disable-setuid-sandbox",
     "--disable-dev-shm-usage",
     "--disable-gpu",
-    "--single-process",          // critical for Render free tier (low memory)
+    "--single-process",
     "--no-zygote",
   ];
 
-  const launchOpts = { args, timeout: 120000 };
-
-  const executablePath = findChromiumPath();
-  if (executablePath) {
-    launchOpts.executablePath = executablePath;
-    console.log("[pdf] Launching Playwright with Chromium at:", executablePath);
-  } else {
-    console.log("[pdf] No system Chromium found — using Playwright default (may fail)");
-  }
-
-  return chromium.launch(launchOpts);
+  console.log("[pdf] Launching puppeteer bundled Chromium...");
+  const browser = await puppeteer.launch({ args, timeout: 120000, headless: "new" });
+  return browser;
 }
 
 // ── Unique report ID ──────────────────────────────────────────────────────────
@@ -905,9 +854,9 @@ async function generateReportPdf(reportData) {
 
   const browser = await launchBrowser();
   const page = await browser.newPage();
-  await page.setViewportSize({ width: 900, height: 1200 });
-  await page.goto(`file://${tmpHtml}`, { waitUntil: "networkidle", timeout: 120000 });
-  await page.waitForTimeout(2500); // Google Fonts
+  await page.setViewport({ width: 900, height: 1200 });
+  await page.goto(`file://${tmpHtml}`, { waitUntil: "networkidle0", timeout: 120000 });
+  await new Promise(r => setTimeout(r, 2500)); // Google Fonts
 
   await page.pdf({
     path: pdfPath,
