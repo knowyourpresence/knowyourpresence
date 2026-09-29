@@ -3,7 +3,7 @@ services:
     name: know-your-presence
     env: node
     plan: free
-    buildCommand: npm install && npx playwright install chromium --with-deps
+    buildCommand: npm install && npx playwright install --with-deps chromium
     startCommand: npm start
     healthCheckPath: /health
     envVars:

@@ -21,10 +21,26 @@ if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR, { recursive: true });
 // so Playwright finds its own bundled Chromium without executablePath.
 // On local dev (Claude container), we fall back to the pre-installed path.
 const CHROMIUM_PATH = process.env.CHROMIUM_PATH || (() => {
-  // Local dev fallback only — check the Claude container pre-installed path
-  const localPath = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
-  if (require("fs").existsSync(localPath)) return localPath;
-  // Let Playwright use its own bundled Chromium (production / CI)
+  // Scan for any Playwright chromium executable under the cache dir
+  const cacheDir = process.env.PLAYWRIGHT_BROWSERS_PATH ||
+    path.join(require("os").homedir(), ".cache", "ms-playwright");
+  const renderCache = "/opt/render/.cache/ms-playwright";
+  for (const base of [cacheDir, renderCache, "/opt/pw-browsers"]) {
+    if (!require("fs").existsSync(base)) continue;
+    // Walk one level deep looking for a chrome executable
+    try {
+      const { execSync } = require("child_process");
+      const found = execSync(
+        `find "${base}" -type f \\( -name "chrome" -o -name "chrome-headless-shell" -o -name "chromium" \\) 2>/dev/null | head -1`,
+        { encoding: "utf8", timeout: 5000 }
+      ).trim();
+      if (found) return found;
+    } catch (e) {}
+  }
+  // System Chrome fallbacks
+  for (const p of ["/usr/bin/google-chrome-stable", "/usr/bin/chromium-browser", "/usr/bin/chromium"]) {
+    if (require("fs").existsSync(p)) return p;
+  }
   return null;
 })();
 
