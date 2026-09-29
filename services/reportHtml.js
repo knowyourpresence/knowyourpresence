@@ -863,8 +863,8 @@ function resendPdf(btn) {
     .then(function(r){ return r.json(); })
     .then(function(d){
       if (d.ok) {
-        btn.textContent = '✅ PDF sent to your email!';
-        setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 5000);
+        btn.textContent = '✅ Check your email in ~2 minutes';
+        setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 8000);
       } else {
         btn.textContent = '⚠ ' + (d.error || 'Failed — try again');
         setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 4000);

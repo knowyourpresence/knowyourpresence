@@ -746,72 +746,72 @@ app.post("/api/report/:reportId/resend-pdf", async (req, res) => {
     return res.status(404).json({ ok: false, error: "Report not found." });
   }
 
-  // Look up customer email from the order record (reportId now stored since this fix)
+  // Respond immediately so the browser doesn't time out — PDF generation
+  // takes 60–90s on Render free tier. Process in background and email when done.
+  res.json({ ok: true, message: "PDF is being generated and will arrive in your email within 2 minutes." });
+
   const order = getOrderByReportId(reportId);
   const customerEmail = order?.email || null;
 
-  try {
-    // Regenerate PDF from stored HTML using the shared launchBrowser() helper
-    // (handles @sparticuz/chromium → puppeteer-core → playwright fallback chain)
-    const { launchBrowser } = require("./services/reportPdf");
-    const browser = await launchBrowser();
-    const isPlaywright = typeof browser.contexts === "function";
-    const page = await browser.newPage();
-    const htmlFileUrl = `file://${htmlPath}`;
+  // Background generation — don't await
+  (async () => {
+    try {
+      const { launchBrowser } = require("./services/reportPdf");
+      const browser = await launchBrowser();
+      const isPlaywright = typeof browser.contexts === "function";
+      const page = await browser.newPage();
+      const htmlFileUrl = `file://${htmlPath}`;
 
-    let pdfBuffer;
-    if (isPlaywright) {
-      await page.goto(htmlFileUrl, { waitUntil: "networkidle", timeout: 60000 });
-      await page.waitForTimeout(2000);
-      pdfBuffer = await page.pdf({
-        format: "A4", printBackground: true,
-        margin: { top: "12mm", bottom: "12mm", left: "12mm", right: "12mm" },
+      let pdfBuffer;
+      if (isPlaywright) {
+        await page.goto(htmlFileUrl, { waitUntil: "networkidle", timeout: 120000 });
+        await page.waitForTimeout(2000);
+        pdfBuffer = await page.pdf({
+          format: "A4", printBackground: true,
+          margin: { top: "12mm", bottom: "12mm", left: "12mm", right: "12mm" },
+        });
+      } else {
+        await page.goto(htmlFileUrl, { waitUntil: "networkidle0", timeout: 120000 });
+        await new Promise(r => setTimeout(r, 2000));
+        pdfBuffer = await page.pdf({
+          format: "A4", printBackground: true,
+          margin: { top: "12mm", bottom: "12mm", left: "12mm", right: "12mm" },
+        });
+      }
+      await browser.close();
+      fs.writeFileSync(pdfPath, pdfBuffer);
+      console.log(`[resend-pdf] Regenerated PDF: ${pdfPath}`);
+
+      const { Resend } = require("resend");
+      const resendClient = new Resend(process.env.RESEND_API_KEY);
+      const pdfBase64 = pdfBuffer.toString("base64");
+      const fileName = `KYP_Report_${reportId}.pdf`;
+      const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || "https://knowyourpresence.com";
+      const webReportUrl = `${PUBLIC_BASE_URL}/api/report/${reportId}/view`;
+
+      const emailBody = `<p>Your Business Presence Report PDF is attached.</p>
+        <p><a href="${webReportUrl}">View report online →</a></p>
+        <p style="color:#888;font-size:12px">Report ID: ${reportId}</p>`;
+
+      const recipients = [];
+      if (customerEmail) recipients.push(customerEmail);
+      const ownerEmail = process.env.OWNER_EMAIL || "support@knowyourpresence.com";
+      if (!recipients.includes(ownerEmail)) recipients.push(ownerEmail);
+
+      const businessName = order?.businessName || reportId;
+      await resendClient.emails.send({
+        from: "Know Your Presence <reports@knowyourpresence.com>",
+        to: recipients,
+        subject: `Your Presence Report PDF — ${businessName}`,
+        html: emailBody,
+        attachments: [{ filename: fileName, content: pdfBase64 }],
       });
-    } else {
-      await page.goto(htmlFileUrl, { waitUntil: "networkidle0", timeout: 60000 });
-      await new Promise(r => setTimeout(r, 2000));
-      pdfBuffer = await page.pdf({
-        format: "A4", printBackground: true,
-        margin: { top: "12mm", bottom: "12mm", left: "12mm", right: "12mm" },
-      });
+
+      console.log(`[resend-pdf] PDF emailed to: ${recipients.join(", ")}`);
+    } catch (err) {
+      console.error("[resend-pdf] Background generation failed:", err.message);
     }
-    await browser.close();
-    fs.writeFileSync(pdfPath, pdfBuffer);
-    console.log(`[resend-pdf] Regenerated PDF: ${pdfPath}`);
-
-    // Send to owner always; customer email if we can find it
-    const { Resend } = require("resend");
-    const resendClient = new Resend(process.env.RESEND_API_KEY);
-    const pdfBase64 = pdfBuffer.toString("base64");
-    const fileName = `KYP_Report_${reportId}.pdf`;
-    const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || "https://knowyourpresence.com";
-    const webReportUrl = `${PUBLIC_BASE_URL}/api/report/${reportId}/view`;
-
-    const emailBody = `<p>Your Business Presence Report PDF is attached.</p>
-      <p><a href="${webReportUrl}">View report online →</a></p>
-      <p style="color:#888;font-size:12px">Report ID: ${reportId}</p>`;
-
-    // Send to customer + owner
-    const recipients = [];
-    if (customerEmail) recipients.push(customerEmail);
-    const ownerEmail = process.env.OWNER_EMAIL || "support@knowyourpresence.com";
-    if (!recipients.includes(ownerEmail)) recipients.push(ownerEmail);
-
-    const businessName = order?.businessName || reportId;
-    await resendClient.emails.send({
-      from: "Know Your Presence <reports@knowyourpresence.com>",
-      to: recipients,
-      subject: `Your Presence Report PDF — ${businessName}`,
-      html: emailBody,
-      attachments: [{ filename: fileName, content: pdfBase64 }],
-    });
-
-    console.log(`[resend-pdf] PDF emailed to: ${recipients.join(", ")}`);
-    res.json({ ok: true, message: "PDF regenerated and sent to email." });
-  } catch (err) {
-    console.error("[resend-pdf] Failed:", err.message, err.stack);
-    res.status(500).json({ ok: false, error: "PDF generation failed. Please contact support@knowyourpresence.com with ID " + reportId });
-  }
+  })();
 });
 
 // Toolkit ZIP download - same ID as the report, different file extension.

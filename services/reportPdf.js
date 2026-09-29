@@ -29,6 +29,8 @@ async function launchBrowser() {
       executablePath: process.env.CHROMIUM_PATH,
       args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
       headless: true,
+      protocolTimeout: 120000,
+      timeout: 120000,
     });
   }
 
@@ -46,6 +48,8 @@ async function launchBrowser() {
       args: chromium.args,
       headless: chromium.headless,
       defaultViewport: chromium.defaultViewport,
+      protocolTimeout: 120000, // 2 min — Render free tier is slow to init
+      timeout: 120000,
     });
   } catch (e) {
     console.warn("[pdf] @sparticuz/chromium unavailable:", e.message);
