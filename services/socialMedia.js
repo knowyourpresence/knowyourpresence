@@ -100,7 +100,7 @@ async function fetchFacebookData(businessName, city) {
     }
   }
 
-  return { platform: "Facebook", score: 0, real: true, raw: { note: "no page found after all queries" } };
+  return { platform: "Facebook", score: 0, real: true, raw: { note: "no page found after all queries" }, reason: "no_page" };
 }
 
 // ── YouTube public channel ────────────────────────────────────────────────────
@@ -446,32 +446,56 @@ async function calculateSocialScore(handles = {}) {
 
   const realResults = [fb, yt, ig].filter(r => r.real && r.score > 0);
 
+  // Detect specific problem cases for report context
+  const noFacebook = fb.reason === "no_page" || (!fb.real && fb.score === 0);
+  const noInstagram = ig.score === 0 && !ig.real;
+  const hasNoActivity = fb.real && fb.score > 0 && fb.raw?.daysSincePost > 180;
+  const ghostAccount = fb.real && fb.raw?.followers > 0 && fb.raw?.avgEngagement === 0;
+
   let score;
+  let finding = null; // key finding to surface in the report
+
   if (realResults.length > 0) {
     // Weight: Instagram (40%) + Facebook (40%) + YouTube (20%) when all present
-    // Otherwise average what we have
     if (ig.score > 0 && fb.score > 0) {
-      score = Math.round(
-        ig.score * 0.40 +
-        fb.score * 0.40 +
-        (yt.score || 0) * 0.20
-      );
+      score = Math.round(ig.score * 0.40 + fb.score * 0.40 + (yt.score || 0) * 0.20);
     } else {
       score = Math.round(realResults.reduce((s, r) => s + r.score, 0) / realResults.length);
     }
+
+    // Apply penalties for specific problems and set finding for report
+    if (ghostAccount) {
+      score = Math.max(10, score - 15);
+      finding = "ghost_account"; // has followers but zero engagement
+    } else if (hasNoActivity) {
+      score = Math.max(10, score - 10);
+      finding = "inactive"; // hasn't posted in 6+ months
+    } else if (noFacebook && ig.score > 0) {
+      finding = "no_facebook"; // on Instagram but missing Facebook
+    } else if (noInstagram && fb.score > 0) {
+      finding = "no_instagram"; // on Facebook but missing Instagram
+    }
+
   } else {
-    // No real data (token missing or business not found on any platform).
-    // Use a realistic industry-average baseline (35) rather than 0, which
-    // would make reports look broken. We flag hasRealData=false so callers
-    // know this is estimated, not measured.
-    score = 35;
-    console.warn("[socialMedia] No real social data — using baseline estimate of 35");
+    // No social presence found at all
+    if (noFacebook && noInstagram) {
+      score = 10; // genuinely missing from social — this is a real problem
+      finding = "no_social_presence";
+      console.warn("[socialMedia] Business has no detectable social presence");
+    } else {
+      // Data fetch failed (API limits etc) — use baseline
+      score = 35;
+      console.warn("[socialMedia] No real social data — using baseline estimate of 35");
+    }
   }
+
+  console.log(`[socialMedia] Final score: ${score}, finding: ${finding || "none"}`);
 
   return {
     score,
     platforms: [fb, yt, ig],
     hasRealData: realResults.length > 0,
+    finding, // null | "no_social_presence" | "no_facebook" | "no_instagram" | "inactive" | "ghost_account"
   };
 }
 
