@@ -877,6 +877,19 @@ app.get("/api/debug/env", (req, res) => {
   res.json(status);
 });
 
+// Quick Ads Library test
+app.get("/api/debug/ads", async (req, res) => {
+  const { name } = req.query;
+  if (!name) return res.status(400).json({ error: "?name=... required" });
+  try {
+    const { searchAdsLibrary } = require("./services/metaAds");
+    const result = await searchAdsLibrary(name, { limit: 5, countryCode: "US" });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Quick social score test for a business name
 app.get("/api/debug/social", async (req, res) => {
   const { name, city, facebookUrl, instagramHandle } = req.query;
