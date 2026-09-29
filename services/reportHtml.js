@@ -336,9 +336,12 @@ section:last-child{border-bottom:none}
   .phase-grid{grid-template-columns:1fr}
 }
 @media print{
-  #sidebar,#topbar,#hamburger,#overlay,.export-bar,.sb-bottom{display:none!important}
-  #main{margin-left:0}
-  section{page-break-inside:avoid}
+  #sidebar,#topbar,#hamburger,#overlay,.export-bar,.sb-bottom,button{display:none!important}
+  #main{margin-left:0!important;padding:0!important}
+  body{background:#fff!important}
+  section{page-break-inside:avoid;break-inside:avoid}
+  .section-card{box-shadow:none!important;border:1px solid #e5e2da!important}
+  @page{margin:15mm 12mm}
 }
 </style>
 </head>
@@ -389,7 +392,7 @@ section:last-child{border-bottom:none}
     <a href="#start"             ><span class="nav-num">09</span>Start Here</a>
   </div>
   <div class="sb-bottom">
-    <button class="sb-btn sb-btn-primary" onclick="resendPdf(this)">⬇ Send PDF to Email</button>
+    <button class="sb-btn sb-btn-primary" onclick="resendPdf(this)">⬇ Download PDF</button>
     <button class="sb-btn sb-btn-secondary" onclick="toggleDark()">◐ Toggle Dark Mode</button>
     <button class="sb-btn sb-btn-secondary" onclick="window.print()">⎙ Print</button>
   </div>
@@ -424,7 +427,7 @@ section:last-child{border-bottom:none}
     </div>
 
     <div class="export-bar">
-      <button class="export-btn export-btn-primary" onclick="resendPdf(this)">⬇ Send PDF to Email</button>
+      <button class="export-btn export-btn-primary" onclick="resendPdf(this)">⬇ Download PDF</button>
       <button class="export-btn export-btn-secondary" onclick="copyLink()">🔗 Copy Link</button>
       <button class="export-btn export-btn-secondary" onclick="window.print()">⎙ Print</button>
     </div>
@@ -754,7 +757,7 @@ section:last-child{border-bottom:none}
     </ul>
 
     <div class="export-bar">
-      <button class="export-btn export-btn-primary" onclick="resendPdf(this)">⬇ Send PDF to Email</button>
+      <button class="export-btn export-btn-primary" onclick="resendPdf(this)">⬇ Download PDF</button>
       <button class="export-btn export-btn-secondary" onclick="copyLink()">🔗 Copy Link</button>
       <button class="export-btn export-btn-secondary" onclick="window.print()">⎙ Print</button>
     </div>
@@ -852,28 +855,10 @@ section:last-child{border-bottom:none}
   sections.forEach(function(s){ observer.observe(s); });
 })();
 
-// "Send PDF to Email" button — regenerates the styled PDF server-side
-// and emails it to the address on the order. No browser print needed.
+// "Download PDF" — uses the browser's built-in print-to-PDF.
+// Instant, works for every customer, zero server dependency.
 function resendPdf(btn) {
-  const reportId = ${JSON.stringify(reportId)};
-  const orig = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = '⏳ Sending…';
-  fetch('/api/report/' + reportId + '/resend-pdf', { method: 'POST' })
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if (d.ok) {
-        btn.textContent = '✅ Check your email in ~2 minutes';
-        setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 8000);
-      } else {
-        btn.textContent = '⚠ ' + (d.error || 'Failed — try again');
-        setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 4000);
-      }
-    })
-    .catch(function(){
-      btn.textContent = '⚠ Network error — try again';
-      setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 4000);
-    });
+  window.print();
 }
 </script>
 </body>

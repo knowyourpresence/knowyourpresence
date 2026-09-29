@@ -99,12 +99,11 @@ async function sendReportEmail({ to, businessName, city, score, grade, reportId,
           </tr></table>
 
           ${!hasPdf ? `
-          <!-- PDF notice -->
+          <!-- PDF tip -->
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
             <tr><td style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px 18px;">
               <p style="margin:0;font-size:13px;color:#166534;line-height:1.6;">
-                <strong>📄 PDF copy:</strong> A PDF version of your report will be emailed to you separately within a few hours.
-                If you need it urgently, reply to this email and we'll send it manually.
+                <strong>📄 Need a PDF?</strong> Open your report and click <strong>"Download PDF"</strong> — it saves instantly from your browser. Works on any device.
               </p>
             </td></tr>
           </table>` : ""}
