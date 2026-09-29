@@ -758,26 +758,13 @@ app.post("/api/report/:reportId/resend-pdf", async (req, res) => {
     try {
       const { launchBrowser } = require("./services/reportPdf");
       const browser = await launchBrowser();
-      const isPlaywright = typeof browser.contexts === "function";
       const page = await browser.newPage();
-      const htmlFileUrl = `file://${htmlPath}`;
-
-      let pdfBuffer;
-      if (isPlaywright) {
-        await page.goto(htmlFileUrl, { waitUntil: "networkidle", timeout: 120000 });
-        await page.waitForTimeout(2000);
-        pdfBuffer = await page.pdf({
-          format: "A4", printBackground: true,
-          margin: { top: "12mm", bottom: "12mm", left: "12mm", right: "12mm" },
-        });
-      } else {
-        await page.goto(htmlFileUrl, { waitUntil: "networkidle0", timeout: 120000 });
-        await new Promise(r => setTimeout(r, 2000));
-        pdfBuffer = await page.pdf({
-          format: "A4", printBackground: true,
-          margin: { top: "12mm", bottom: "12mm", left: "12mm", right: "12mm" },
-        });
-      }
+      await page.goto(`file://${htmlPath}`, { waitUntil: "networkidle", timeout: 120000 });
+      await page.waitForTimeout(2000);
+      const pdfBuffer = await page.pdf({
+        format: "A4", printBackground: true,
+        margin: { top: "12mm", bottom: "12mm", left: "12mm", right: "12mm" },
+      });
       await browser.close();
       fs.writeFileSync(pdfPath, pdfBuffer);
       console.log(`[resend-pdf] Regenerated PDF: ${pdfPath}`);

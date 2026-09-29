@@ -17,50 +17,32 @@ if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR, { recursive: true });
 
 // ── Browser launcher — works on Render's ephemeral free tier ─────────────────
 // Strategy:
-//   1. If CHROMIUM_PATH env var is set, use puppeteer-core with that path
-//   2. Try @sparticuz/chromium (downloads a compressed binary from S3, caches in /tmp)
-//   3. Fall back to Playwright's chromium (works if `playwright install chromium` ran at build)
+//   1. Playwright chromium (installed at build time via `npx playwright install chromium`)
+//      Playwright manages its own CDP timeouts more gracefully than puppeteer-core.
+//   2. If CHROMIUM_PATH env var is set, use that binary with Playwright instead.
 async function launchBrowser() {
-  // 1. Explicit path override
-  if (process.env.CHROMIUM_PATH) {
-    const puppeteer = require("puppeteer-core");
-    console.log("[pdf] Launching puppeteer-core with CHROMIUM_PATH:", process.env.CHROMIUM_PATH);
-    return puppeteer.launch({
-      executablePath: process.env.CHROMIUM_PATH,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-      headless: true,
-      protocolTimeout: 120000,
-      timeout: 120000,
-    });
-  }
-
-  // 2. @sparticuz/chromium — downloads/caches its own binary, ideal for Render
-  try {
-    const chromium = require("@sparticuz/chromium");
-    const puppeteer = require("puppeteer-core");
-    // Allow it to download if not cached yet
-    chromium.setHeadlessMode = true;
-    chromium.setGraphicsMode = false;
-    const executablePath = await chromium.executablePath();
-    console.log("[pdf] Launching via @sparticuz/chromium at:", executablePath);
-    return puppeteer.launch({
-      executablePath,
-      args: chromium.args,
-      headless: chromium.headless,
-      defaultViewport: chromium.defaultViewport,
-      protocolTimeout: 120000, // 2 min — Render free tier is slow to init
-      timeout: 120000,
-    });
-  } catch (e) {
-    console.warn("[pdf] @sparticuz/chromium unavailable:", e.message);
-  }
-
-  // 3. Playwright fallback
-  console.log("[pdf] Falling back to Playwright chromium");
   const { chromium } = require("playwright");
-  return chromium.launch({
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-  });
+
+  const args = [
+    "--no-sandbox",
+    "--disable-setuid-sandbox",
+    "--disable-dev-shm-usage",
+    "--disable-gpu",
+    "--single-process",          // critical for Render free tier (low memory)
+    "--no-zygote",
+  ];
+
+  const launchOpts = { args, timeout: 120000 };
+
+  // Allow explicit override via env var (e.g. system Chrome on a paid plan)
+  if (process.env.CHROMIUM_PATH) {
+    launchOpts.executablePath = process.env.CHROMIUM_PATH;
+    console.log("[pdf] Launching Playwright with CHROMIUM_PATH:", process.env.CHROMIUM_PATH);
+  } else {
+    console.log("[pdf] Launching Playwright chromium (build-time install)");
+  }
+
+  return chromium.launch(launchOpts);
 }
 
 // ── Unique report ID ──────────────────────────────────────────────────────────
@@ -880,38 +862,18 @@ async function generateReportPdf(reportData) {
   fs.writeFileSync(tmpHtml, buildPrintHtml(reportData), "utf8");
 
   const browser = await launchBrowser();
+  const page = await browser.newPage();
+  await page.setViewportSize({ width: 900, height: 1200 });
+  await page.goto(`file://${tmpHtml}`, { waitUntil: "networkidle", timeout: 120000 });
+  await page.waitForTimeout(2500); // Google Fonts
 
-  // Detect whether we got a Playwright or Puppeteer browser instance
-  const isPlaywright = typeof browser.newPage === "function" && typeof browser.contexts === "function";
-
-  let page;
-  if (isPlaywright) {
-    // Playwright API
-    page = await browser.newPage();
-    await page.setViewportSize({ width: 900, height: 1200 });
-    await page.goto(`file://${tmpHtml}`, { waitUntil: "networkidle" });
-    await page.waitForTimeout(2500);
-    await page.pdf({
-      path: pdfPath,
-      format: "A4",
-      printBackground: true,
-      margin: { top: "0", bottom: "0", left: "0", right: "0" },
-      displayHeaderFooter: false,
-    });
-  } else {
-    // Puppeteer API
-    page = await browser.newPage();
-    await page.setViewport({ width: 900, height: 1200 });
-    await page.goto(`file://${tmpHtml}`, { waitUntil: "networkidle0" });
-    await new Promise(r => setTimeout(r, 2500)); // Google Fonts
-    await page.pdf({
-      path: pdfPath,
-      format: "A4",
-      printBackground: true,
-      margin: { top: "0", bottom: "0", left: "0", right: "0" },
-      displayHeaderFooter: false,
-    });
-  }
+  await page.pdf({
+    path: pdfPath,
+    format: "A4",
+    printBackground: true,
+    margin: { top: "0", bottom: "0", left: "0", right: "0" },
+    displayHeaderFooter: false,
+  });
 
   await browser.close();
   try { fs.unlinkSync(tmpHtml); } catch (_) {}
