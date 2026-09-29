@@ -645,30 +645,43 @@ section:last-child{border-bottom:none}
     <div class="section-tag">06 — Ad Intelligence</div>
     <div class="section-title">Advertising Presence</div>
 
-    ${metaAds && Object.keys(metaAds).length > 0 ? `
-    <div class="card-grid" style="margin-bottom:24px">
-      ${metaAds.isRunningAds !== undefined ? `
-      <div class="card">
-        <div class="card-label">Running Meta Ads</div>
-        <div class="card-value" style="font-size:18px;color:${metaAds.isRunningAds ? '#1f6b45' : '#dc2626'}">${metaAds.isRunningAds ? '✓ Yes' : '✗ No'}</div>
-      </div>` : ''}
-      ${metaAds.adCount !== undefined ? `
-      <div class="card">
-        <div class="card-label">Total Ads Found</div>
-        <div class="card-value">${esc(String(metaAds.adCount))}</div>
-      </div>` : ''}
-      ${metaAds.pageId !== undefined ? `
-      <div class="card">
-        <div class="card-label">Meta Page ID</div>
-        <div class="card-value" style="font-size:14px;word-break:break-all">${esc(String(metaAds.pageId))}</div>
-      </div>` : ''}
-    </div>
-    ${metaAds.summary ? `<div class="narrative">${renderTextBlock(esc(String(metaAds.summary)))}</div>` : ''}
-    ` : `
+    ${(() => {
+      const biz  = metaAds?.business  || {};
+      const comp = metaAds?.competitor || {};
+      const hasData = biz.checked;
+      if (!hasData) return `
     <div class="card" style="max-width:480px">
       <div class="card-label">Status</div>
       <div style="font-size:15px;color:var(--muted);margin-top:6px">No Meta Ads data was collected for this business.</div>
-    </div>`}
+    </div>`;
+      const isRunning = biz.found && biz.adCount > 0;
+      const compRunning = comp.found && comp.adCount > 0;
+      return `
+    <div class="card-grid" style="margin-bottom:24px">
+      <div class="card">
+        <div class="card-label">Running Meta Ads</div>
+        <div class="card-value" style="font-size:18px;color:${isRunning ? '#1f6b45' : '#dc2626'}">${isRunning ? '✓ Yes' : '✗ No'}</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Active Ads Found</div>
+        <div class="card-value">${biz.adCount || 0}</div>
+      </div>
+      ${biz.adCount > 0 ? `
+      <div class="card">
+        <div class="card-label">Longest Running</div>
+        <div class="card-value">${biz.longestRunningDays || 0} days</div>
+      </div>` : ''}
+      ${comp.checked ? `
+      <div class="card">
+        <div class="card-label">Competitor Ads</div>
+        <div class="card-value" style="color:${compRunning ? '#dc2626' : '#1f6b45'}">${comp.adCount || 0}</div>
+      </div>` : ''}
+    </div>
+    ${!isRunning && compRunning ? `<div class="narrative">⚠️ Your competitor is running ${comp.adCount} active ad${comp.adCount !== 1 ? 's' : ''} on Facebook/Instagram — and you have none. This is a gap that can be closed quickly with even a small ad budget.</div>` : ''}
+    ${isRunning ? `<div class="narrative">✅ You are actively advertising on Meta platforms with ${biz.adCount} active ad${biz.adCount !== 1 ? 's' : ''}${biz.longestRunningDays > 30 ? `, including ads running for ${biz.longestRunningDays}+ days` : ''}.</div>` : ''}
+    ${!isRunning && !compRunning ? `<div class="narrative">No active Facebook or Instagram ads were found for your business. Running even a small awareness campaign ($5–$10/day) can significantly increase local visibility.</div>` : ''}
+    `;
+    })()}
   </section>
 
   <!-- 07 90-DAY ROADMAP -->
