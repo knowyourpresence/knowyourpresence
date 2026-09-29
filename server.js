@@ -711,6 +711,32 @@ app.get("/api/report/:reportId/view", (req, res) => {
     );
   }
 
+  // ── Patch 4: always inject latest print CSS + fix button labels ───────────
+  const printCss = `<style id="kyp-print-patch">
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  #sidebar,#topbar,#hamburger,#overlay,.export-bar,.sb-bottom,button{display:none!important}
+  body{background:#f5f2ec!important;display:block!important}
+  #main{margin-left:0!important;padding:0!important;display:block!important}
+  @page{margin:12mm 14mm;size:A4}
+  section{padding:32px 24px;page-break-inside:avoid;break-inside:avoid}
+  .hero{margin:-32px -24px 24px!important;padding:32px 24px!important;background:#152030!important;color:#fff!important}
+  .card,.phase-card,.priority-list li,.review-card,.refund-box{background:#fff!important;border:1px solid #e2ddd6!important;page-break-inside:avoid;break-inside:avoid}
+  .section-title{font-size:24px}
+  .hero-score{font-size:56px}
+  .hero-name{font-size:30px}
+  #print-header{display:flex!important}
+}
+#print-header{display:none}
+</style>`;
+  // Remove any existing print patch to avoid duplicates
+  html = html.replace(/<style id="kyp-print-patch">[\s\S]*?<\/style>/g, '');
+  html = html.replace('</head>', printCss + '</head>');
+
+  // ── Patch 5: fix old "Send PDF to Email" button labels → "Download PDF" ──
+  html = html.replace(/⬇ Send PDF to Email/g, '⬇ Download PDF');
+  html = html.replace(/onclick="resendPdf\(this\)"/g, 'onclick="window.print()"');
+
   res.send(html);
 });
 
