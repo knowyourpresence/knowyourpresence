@@ -667,13 +667,44 @@ app.get("/report-ready", (req, res) => {
 });
 
 // --- Serves a generated report HTML web view.
+// Also patches old reports that still have the broken PDF download banner/link.
 app.get("/api/report/:reportId/view", (req, res) => {
-  const htmlPath = path.join(REPORTS_DIR, `${req.params.reportId}.html`);
+  const reportId = req.params.reportId;
+  const htmlPath = path.join(REPORTS_DIR, `${reportId}.html`);
   if (!fs.existsSync(htmlPath)) {
     return res.status(404).send("Report not found.");
   }
   res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.sendFile(htmlPath);
+
+  let html = fs.readFileSync(htmlPath, "utf8");
+
+  // ── Patch 1: remove old "PDF generation failed" error banners ────────────
+  html = html.replace(
+    /<[^>]*>[^<]*PDF generation failed[^<]*<\/[^>]*>/gi,
+    ""
+  );
+  // Also remove any alert/warning divs containing that text (multi-line)
+  html = html.replace(
+    /<div[^>]*>[^<]*PDF generation failed[\s\S]*?<\/div>/gi,
+    ""
+  );
+
+  // ── Patch 2: replace old /pdf download links with resend button ──────────
+  // Old anchor tags: <a href="...pdf"...>...Download PDF...</a>
+  html = html.replace(
+    /<a\s[^>]*href="[^"]*\/pdf"[^>]*>[\s\S]*?<\/a>/gi,
+    `<button class="export-btn export-btn-primary" onclick="(function(btn){btn.disabled=true;btn.textContent='⏳ Sending…';fetch('/api/report/${reportId}/resend-pdf',{method:'POST'}).then(r=>r.json()).then(d=>{btn.textContent=d.ok?'✅ PDF sent to your email!':'⚠ '+(d.error||'Failed');setTimeout(()=>{btn.textContent='⬇ Send PDF to Email';btn.disabled=false;},5000);}).catch(()=>{btn.textContent='⚠ Network error';setTimeout(()=>{btn.textContent='⬇ Send PDF to Email';btn.disabled=false;},4000);});})(this)" style="cursor:pointer">⬇ Send PDF to Email</button>`
+  );
+
+  // ── Patch 3: inject resendPdf function if not already present ────────────
+  if (!html.includes('resendPdf') && !html.includes('resend-pdf')) {
+    html = html.replace(
+      '</script>\n</body>',
+      `function resendPdf(btn){var id=${JSON.stringify(reportId)};btn.disabled=true;btn.textContent='⏳ Sending…';fetch('/api/report/'+id+'/resend-pdf',{method:'POST'}).then(r=>r.json()).then(d=>{btn.textContent=d.ok?'✅ PDF sent to your email!':'⚠ '+(d.error||'Failed');setTimeout(function(){btn.textContent='⬇ Send PDF to Email';btn.disabled=false;},5000);}).catch(function(){btn.textContent='⚠ Network error';setTimeout(function(){btn.textContent='⬇ Send PDF to Email';btn.disabled=false;},4000);});}\n</script>\n</body>`
+    );
+  }
+
+  res.send(html);
 });
 
 app.get("/api/report/:reportId", (req, res) => {
