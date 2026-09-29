@@ -860,6 +860,9 @@ app.get("/api/debug/env", (req, res) => {
     "DODO_WEBHOOK_SECRET",
     "OPENAI_API_KEY",
     "OWNER_EMAIL",
+    "META_ADS_ACCESS_TOKEN",
+    "APIFY_API_TOKEN",
+    "BREVO_API_KEY",
   ];
   const status = {};
   for (const k of keys) {
