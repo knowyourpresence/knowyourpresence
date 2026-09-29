@@ -39,7 +39,7 @@ async function fetchFacebookData(businessName, city) {
         params: {
           q: query,
           type: "page",
-          fields: "id,name,fan_count,followers_count,posts.limit(5){created_time}",
+          fields: "id,name,fan_count,followers_count,posts.limit(5){created_time,likes.summary(true),comments.summary(true)}",
           access_token: token,
           limit: 5,
         },
@@ -56,7 +56,7 @@ async function fetchFacebookData(businessName, city) {
 
       const followers = page.followers_count || page.fan_count || 0;
 
-      // Check post recency — did they post in the last 90 days?
+      // Check post recency + engagement
       const posts = page.posts?.data || [];
       const recentPost = posts[0]?.created_time;
       const daysSincePost = recentPost
@@ -64,18 +64,36 @@ async function fetchFacebookData(businessName, city) {
         : 999;
       const isActive = daysSincePost <= 90;
 
-      // Score: follower volume (up to 60 pts) + activity (up to 40 pts)
-      let score = 0;
-      score += Math.min(60, Math.log10(followers + 1) * 18); // 1k followers ≈ 54pts
-      score += isActive ? 40 : daysSincePost <= 180 ? 20 : 0;
+      // Engagement rate: avg likes+comments per post ÷ followers
+      const totalEngagement = posts.reduce((sum, p) => {
+        const likes = p.likes?.summary?.total_count || 0;
+        const comments = p.comments?.summary?.total_count || 0;
+        return sum + likes + comments;
+      }, 0);
+      const avgEngagement = posts.length > 0 ? totalEngagement / posts.length : 0;
+      const engagementRate = followers > 0 ? (avgEngagement / followers) * 100 : 0;
+      // Industry avg FB engagement rate ~0.5-1% — score generously
+      const engagementScore = Math.min(20,
+        engagementRate >= 3 ? 20 :
+        engagementRate >= 1 ? 15 :
+        engagementRate >= 0.5 ? 10 :
+        engagementRate > 0 ? 5 : 0
+      );
 
-      console.log(`[socialMedia] Facebook matched: "${page.name}" (query: "${query}") — followers: ${followers}`);
+      // Score: followers (40pts) + activity/recency (30pts) + engagement (20pts) + posting frequency (10pts)
+      let score = 0;
+      score += Math.min(40, Math.log10(followers + 1) * 12); // followers up to 40pts
+      score += isActive ? 30 : daysSincePost <= 180 ? 15 : 0; // recency up to 30pts
+      score += engagementScore; // engagement rate up to 20pts
+      score += posts.length >= 4 ? 10 : posts.length >= 2 ? 5 : 0; // posting frequency up to 10pts
+
+      console.log(`[socialMedia] Facebook matched: "${page.name}" (query: "${query}") — followers: ${followers}, engRate: ${engagementRate.toFixed(2)}%, engScore: ${engagementScore}`);
 
       return {
         platform: "Facebook",
         score: Math.round(Math.min(100, score)),
         real: true,
-        raw: { followers, daysSincePost, isActive, pageName: page.name, matchedQuery: query },
+        raw: { followers, daysSincePost, isActive, engagementRate: +engagementRate.toFixed(2), avgEngagement: Math.round(avgEngagement), pageName: page.name, matchedQuery: query },
       };
     } catch (err) {
       console.error(`Facebook search failed for query "${query}":`, err.message);
@@ -170,9 +188,14 @@ async function fetchInstagramData(businessName, city) {
         const followers = ig.followers_count || 0;
         const posts = ig.media_count || 0;
 
+        // Score: followers (40pts) + content volume/consistency (35pts) + engagement proxy (25pts)
+        // IG avg engagement rate ~1-3% for small business — use post count as consistency signal
         let score = 0;
-        score += Math.min(60, Math.log10(followers + 1) * 18);
-        score += posts >= 12 ? 40 : posts >= 6 ? 25 : posts > 0 ? 15 : 0;
+        score += Math.min(40, Math.log10(followers + 1) * 12); // followers up to 40pts
+        score += posts >= 50 ? 35 : posts >= 20 ? 25 : posts >= 9 ? 18 : posts >= 3 ? 10 : posts > 0 ? 5 : 0;
+        // Engagement proxy: if they have followers AND posts, assume decent engagement
+        const engProxy = (followers > 100 && posts >= 9) ? 25 : (followers > 0 && posts > 0) ? 15 : 0;
+        score += engProxy;
 
         console.log(`[socialMedia] Instagram found via FB page: followers=${followers}, posts=${posts}`);
         return {
@@ -255,7 +278,7 @@ async function fetchFacebookByUrl(fbUrl) {
   try {
     const res = await axios.get(`https://graph.facebook.com/v19.0/${pageSlug}`, {
       params: {
-        fields: "id,name,fan_count,followers_count,posts.limit(5){created_time}",
+        fields: "id,name,fan_count,followers_count,posts.limit(5){created_time,likes.summary(true),comments.summary(true)}",
         access_token: token,
       },
       timeout: 10000,
@@ -269,16 +292,27 @@ async function fetchFacebookByUrl(fbUrl) {
       : 999;
     const isActive = daysSincePost <= 90;
 
-    let score = 0;
-    score += Math.min(60, Math.log10(followers + 1) * 18);
-    score += isActive ? 40 : daysSincePost <= 180 ? 20 : 0;
+    const totalEngagement = posts.reduce((sum, p) => {
+      return sum + (p.likes?.summary?.total_count || 0) + (p.comments?.summary?.total_count || 0);
+    }, 0);
+    const avgEngagement = posts.length > 0 ? totalEngagement / posts.length : 0;
+    const engagementRate = followers > 0 ? (avgEngagement / followers) * 100 : 0;
+    const engagementScore = Math.min(20,
+      engagementRate >= 3 ? 20 : engagementRate >= 1 ? 15 : engagementRate >= 0.5 ? 10 : engagementRate > 0 ? 5 : 0
+    );
 
-    console.log(`[socialMedia] Facebook direct URL: "${page.name}" — followers: ${followers}`);
+    let score = 0;
+    score += Math.min(40, Math.log10(followers + 1) * 12);
+    score += isActive ? 30 : daysSincePost <= 180 ? 15 : 0;
+    score += engagementScore;
+    score += posts.length >= 4 ? 10 : posts.length >= 2 ? 5 : 0;
+
+    console.log(`[socialMedia] Facebook direct URL: "${page.name}" — followers: ${followers}, engRate: ${engagementRate.toFixed(2)}%`);
     return {
       platform: "Facebook",
       score: Math.round(Math.min(100, score)),
       real: true,
-      raw: { followers, daysSincePost, isActive, pageName: page.name },
+      raw: { followers, daysSincePost, isActive, engagementRate: +engagementRate.toFixed(2), avgEngagement: Math.round(avgEngagement), pageName: page.name },
     };
   } catch (err) {
     console.error(`Facebook direct URL fetch failed for "${pageSlug}":`, err.message);
