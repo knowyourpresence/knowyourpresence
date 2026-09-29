@@ -800,6 +800,16 @@ section:last-child{border-bottom:none}
   }, { rootMargin: '-20% 0px -70% 0px', threshold: 0 });
   sections.forEach(function(s){ observer.observe(s); });
 })();
+
+// Auto-print when redirected from the PDF download route (?print=1)
+// The user saves it as PDF from their browser's print dialog.
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('print') === '1') {
+    // Small delay so fonts and layout fully render first
+    setTimeout(function(){ window.print(); }, 1200);
+  }
+})();
 </script>
 </body>
 </html>`;

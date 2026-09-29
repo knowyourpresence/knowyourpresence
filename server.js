@@ -684,9 +684,13 @@ app.get("/api/report/:reportId", (req, res) => {
 });
 
 // PDF download — alias used by report HTML download buttons.
-// If the PDF was lost (Render ephemeral disk restart), regenerate it on-the-fly
-// by re-rendering the stored HTML report through Playwright.
-app.get("/api/report/:reportId/pdf", async (req, res) => {
+// Strategy:
+//   1. If the PDF file exists on disk → serve it directly (best case).
+//   2. If only the HTML exists (Render restarted and wiped the PDF) →
+//      redirect to the web report with ?print=1, which auto-opens the
+//      browser print dialog so the user saves it as PDF themselves.
+//      This is more reliable than server-side Playwright on a free tier.
+app.get("/api/report/:reportId/pdf", (req, res) => {
   const reportId = req.params.reportId;
   const pdfPath  = path.join(REPORTS_DIR, `${reportId}.pdf`);
   const htmlPath = path.join(REPORTS_DIR, `${reportId}.html`);
@@ -697,62 +701,12 @@ app.get("/api/report/:reportId/pdf", async (req, res) => {
     return res.sendFile(pdfPath);
   }
 
-  // HTML exists — regenerate PDF from it using the same Playwright helper
-  // that generated it originally (handles post-restart Render disk wipes)
+  // HTML exists — redirect to print view (user saves as PDF from browser)
   if (fs.existsSync(htmlPath)) {
-    try {
-      console.log(`[pdf] Regenerating PDF for ${reportId} from stored HTML…`);
-      // Re-use the same generateReportPdf path resolution + Playwright setup
-      // by passing a minimal reportData with a pre-built htmlOverride path
-      const { chromium } = require("playwright");
-      const playwrightChromium = require("./services/reportPdf").__chromiumPath ||
-        (() => {
-          try {
-            const { execSync } = require("child_process");
-            const p = execSync(
-              "node -e \"try{console.log(require('playwright').chromium.executablePath())}catch(e){}\"",
-              { timeout: 8000, env: { ...process.env } }
-            ).toString().trim();
-            if (p && fs.existsSync(p)) return p;
-          } catch (_) {}
-          return process.env.CHROMIUM_PATH || null;
-        })();
-
-      const launchOpts = {
-        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-      };
-      // Only set executablePath if we found one — otherwise let Playwright
-      // use its own bundled Chromium (installed via `playwright install chromium`)
-      if (playwrightChromium) launchOpts.executablePath = playwrightChromium;
-
-      const browser = await chromium.launch(launchOpts);
-      const page = await browser.newPage();
-      await page.setViewportSize({ width: 900, height: 1200 });
-      await page.goto(`file://${htmlPath}`, { waitUntil: "networkidle" });
-      await page.waitForTimeout(2500);
-      await page.pdf({
-        path: pdfPath,
-        format: "A4",
-        printBackground: true,
-        margin: { top: "0", bottom: "0", left: "0", right: "0" },
-        displayHeaderFooter: false,
-      });
-      await browser.close();
-      console.log(`[pdf] Regenerated PDF saved: ${pdfPath}`);
-
-      res.setHeader("Content-Disposition", `attachment; filename="KYP_Report_${reportId}.pdf"`);
-      return res.sendFile(pdfPath);
-    } catch (err) {
-      console.error(`[pdf] Regeneration failed for ${reportId}:`, err.message, err.stack);
-      // Fall through to email link fallback
-      return res.status(500).send(
-        `PDF generation failed. Your report is available online at /api/report/${reportId}/view — ` +
-        `or email support@knowyourpresence.com with ID ${reportId} and we'll send it manually.`
-      );
-    }
+    return res.redirect(`/api/report/${reportId}/view?print=1`);
   }
 
-  // Neither file exists — unknown report ID
+  // Neither exists — unknown report ID
   return res.status(404).send(
     `Report not found. Check your email for the PDF, or contact support@knowyourpresence.com with ID ${reportId}.`
   );
