@@ -92,15 +92,53 @@ function generateWebReport(data) {
   }
   const phases = splitPhases(priorityPlanRaw);
 
+  // Minimal markdown → HTML: bold, italic, headings, bullets, numbered lists
+  function mdToHtml(raw) {
+    if (!raw) return '';
+    const lines = raw.split('\n');
+    const out = [];
+    let inUl = false, inOl = false;
+    const closeList = () => {
+      if (inUl) { out.push('</ul>'); inUl = false; }
+      if (inOl) { out.push('</ol>'); inOl = false; }
+    };
+    const inline = s => esc(s)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/`(.+?)`/g, '<code>$1</code>');
+    for (const raw of lines) {
+      const l = raw.trimEnd();
+      if (!l.trim()) { closeList(); continue; }
+      // Headings
+      const h = l.match(/^(#{1,3})\s+(.+)/);
+      if (h) { closeList(); const tag = 'h' + (parseInt(h[1].length) + 2); out.push(`<${tag} style="margin:14px 0 4px;font-size:${h[1].length===1?'1.05rem':'0.95rem'};font-weight:700">${inline(h[2])}</${tag}>`); continue; }
+      // Bullet list
+      const ul = l.match(/^[\-\*]\s+(.+)/);
+      if (ul) { if (!inUl) { closeList(); out.push('<ul style="margin:6px 0 6px 18px;padding:0">'); inUl = true; } out.push(`<li style="margin-bottom:4px">${inline(ul[1])}</li>`); continue; }
+      // Numbered list
+      const ol = l.match(/^\d+[\.\)]\s+(.+)/);
+      if (ol) { if (!inOl) { closeList(); out.push('<ol style="margin:6px 0 6px 18px;padding:0">'); inOl = true; } out.push(`<li style="margin-bottom:4px">${inline(ol[1])}</li>`); continue; }
+      // Paragraph
+      closeList();
+      out.push(`<p style="margin:0 0 10px;line-height:1.65">${inline(l)}</p>`);
+    }
+    closeList();
+    return out.join('');
+  }
+
   function renderTextBlock(text, fallback) {
     const t = text || fallback || 'Data not available.';
-    return t.split('\n').filter(l => l.trim()).map(l => `<p>${esc(l)}</p>`).join('');
+    return mdToHtml(t);
   }
 
   function renderPriorityItems(text) {
     if (!text) return '<li>Data not available.</li>';
     const lines = text.split('\n').filter(l => l.trim()).slice(0, 7);
-    return lines.map((l, i) => `<li><span class="num">${String(i+1).padStart(2,'0')}</span>${esc(l.replace(/^[\d\.\-\*]+\s*/, ''))}</li>`).join('');
+    return lines.map((l, i) => {
+      // Strip leading markdown list markers and bold markers for clean display
+      const clean = l.replace(/^[\d\.\-\*#]+\s*/, '').replace(/\*\*(.+?)\*\*/g, '$1');
+      return `<li><span class="num">${String(i+1).padStart(2,'0')}</span>${esc(clean)}</li>`;
+    }).join('');
   }
 
   const html = `<!DOCTYPE html>
