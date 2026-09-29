@@ -713,21 +713,72 @@ app.get("/api/report/:reportId/view", (req, res) => {
 
   // ── Patch 4: always inject latest print CSS + fix button labels ───────────
   const printCss = `<style id="kyp-print-patch">
+#print-header{display:none}
 @media print{
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+
+  /* Hide all UI chrome */
   #sidebar,#topbar,#hamburger,#overlay,.export-bar,.sb-bottom,button{display:none!important}
-  body{background:#f5f2ec!important;display:block!important}
-  #main{margin-left:0!important;padding:0!important;display:block!important}
-  @page{margin:12mm 14mm;size:A4}
-  section{padding:32px 24px;page-break-inside:avoid;break-inside:avoid}
-  .hero{margin:-32px -24px 24px!important;padding:32px 24px!important;background:#152030!important;color:#fff!important}
-  .card,.phase-card,.priority-list li,.review-card,.refund-box{background:#fff!important;border:1px solid #e2ddd6!important;page-break-inside:avoid;break-inside:avoid}
-  .section-title{font-size:24px}
-  .hero-score{font-size:56px}
-  .hero-name{font-size:30px}
-  #print-header{display:flex!important}
+
+  /* Reset layout — remove sidebar offset */
+  html,body{margin:0!important;padding:0!important;background:#f5f2ec!important;display:block!important;width:100%!important}
+  #main{margin-left:0!important;margin:0!important;padding:0!important;display:block!important;width:100%!important;min-height:unset!important}
+
+  /* Page */
+  @page{margin:0;size:A4}
+
+  /* Sections — allow natural flow, no forced breaks */
+  section{padding:24px 28px!important;border-bottom:1px solid #e2ddd6!important;page-break-inside:auto;break-inside:auto;display:block!important}
+
+  /* Hero — full dark background */
+  .hero{background:#152030!important;color:#fff!important;margin:0!important;padding:28px!important;display:block!important}
+  .hero-tag{color:#1f6b45!important}
+  .hero-name{color:#fff!important;font-size:28px!important}
+  .hero-city{color:rgba(255,255,255,0.6)!important}
+  .hero-score{color:#fff!important;font-size:52px!important}
+  .hero-grade{color:rgba(255,255,255,0.6)!important}
+  .hero-date{color:rgba(255,255,255,0.4)!important}
+
+  /* Cards */
+  .card{background:#fff!important;border:1px solid #e2ddd6!important;border-radius:8px!important;page-break-inside:avoid;break-inside:avoid}
+  .card-grid{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:12px!important}
+
+  /* Score bars keep color */
+  .bar-fill{display:block!important}
+  .bar-wrap{background:#e2ddd6!important;display:block!important}
+
+  /* Priority list */
+  .priority-list{display:block!important}
+  .priority-list li{display:flex!important;background:#fff!important;border:1px solid #e2ddd6!important;margin-bottom:8px!important;page-break-inside:avoid;break-inside:avoid}
+
+  /* Phase cards */
+  .phase-grid{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:12px!important}
+  .phase-card{background:#fff!important;border:1px solid #e2ddd6!important;page-break-inside:avoid;break-inside:avoid}
+
+  /* Review cards */
+  .review-card{background:#fff!important;border:1px solid #e2ddd6!important;page-break-inside:avoid;break-inside:avoid}
+
+  /* Section headings */
+  .section-tag{color:#1f6b45!important}
+  .section-title{font-size:22px!important}
+
+  /* Weight badges */
+  .weight-badge{background:rgba(31,107,69,0.12)!important;color:#1f6b45!important}
+
+  /* Comparison table */
+  .comp-table th,.comp-table td{border-bottom:1px solid #e2ddd6!important}
+  .comp-table .you{color:#1f6b45!important}
+
+  /* Print header */
+  #print-header{display:flex!important;background:#152030!important;color:#fff!important;padding:10px 28px!important;align-items:center!important;justify-content:space-between!important}
+
+  /* Refund box */
+  .refund-box{background:#fff!important;border:1px solid #e2ddd6!important;border-left:4px solid #1f6b45!important}
+  .refund-box strong{color:#1f6b45!important}
+
+  /* AI badge */
+  .ai-badge{background:linear-gradient(135deg,#1f6b45,#152030)!important;color:#fff!important}
 }
-#print-header{display:none}
 </style>`;
   // Remove any existing print patch to avoid duplicates
   html = html.replace(/<style id="kyp-print-patch">[\s\S]*?<\/style>/g, '');
