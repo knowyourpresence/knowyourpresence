@@ -46,6 +46,7 @@ function saveOrder(order) {
     amount: order.amount,
     currency: order.currency,
     paymentId: order.paymentId || null,
+    reportId: order.reportId || null,
     createdAt: new Date().toISOString(),
   };
   orders.push(record);
@@ -57,6 +58,10 @@ function getAllOrders() {
   return readOrders();
 }
 
+function getOrderByReportId(reportId) {
+  return readOrders().find(o => o.reportId === reportId) || null;
+}
+
 function getOrdersByCountry() {
   const orders = readOrders();
   const counts = {};
@@ -66,4 +71,4 @@ function getOrdersByCountry() {
   return counts;
 }
 
-module.exports = { saveOrder, getAllOrders, getOrdersByCountry };
+module.exports = { saveOrder, getAllOrders, getOrderByReportId, getOrdersByCountry };

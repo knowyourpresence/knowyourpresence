@@ -16,7 +16,7 @@ const { calculateOverallScore, projectPotentialScore } = require("./services/sco
 const { generateActionPlan } = require("./services/actionPlan");
 const { getPrice, REPORT_PRICE_USD, REPORT_CURRENCY } = require("./services/pricing");
 const { createCheckoutSession, verifyWebhookSignature } = require("./services/dodo");
-const { saveOrder, getAllOrders, getOrdersByCountry } = require("./services/orders");
+const { saveOrder, getAllOrders, getOrderByReportId, getOrdersByCountry } = require("./services/orders");
 const { sendCustomerConfirmation, sendOwnerNotification } = require("./services/email");
 const { generateReportPdf, generateToolkitZip, makeReportId, REPORTS_DIR } = require("./services/reportPdf");
 const { generateWebReport } = require("./services/reportHtml");
@@ -360,6 +360,7 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
       amount: payload.total_amount ? payload.total_amount / 100 : REPORT_PRICE_USD,
       currency: payload.currency || REPORT_CURRENCY,
       paymentId: payload.payment_id || payload.id || null,
+      reportId: meta.reportId || null,
     });
 
     try { markConverted(email); } catch (e) { console.error("markConverted failed:", e.message); }
@@ -683,33 +684,90 @@ app.get("/api/report/:reportId", (req, res) => {
   res.sendFile(filePath);
 });
 
-// PDF download — alias used by report HTML download buttons.
-// Strategy:
-//   1. If the PDF file exists on disk → serve it directly (best case).
-//   2. If only the HTML exists (Render restarted and wiped the PDF) →
-//      redirect to the web report with ?print=1, which auto-opens the
-//      browser print dialog so the user saves it as PDF themselves.
-//      This is more reliable than server-side Playwright on a free tier.
+// PDF download — serve from disk if available.
 app.get("/api/report/:reportId/pdf", (req, res) => {
   const reportId = req.params.reportId;
   const pdfPath  = path.join(REPORTS_DIR, `${reportId}.pdf`);
-  const htmlPath = path.join(REPORTS_DIR, `${reportId}.html`);
-
-  // Happy path — PDF already on disk
   if (fs.existsSync(pdfPath)) {
     res.setHeader("Content-Disposition", `attachment; filename="KYP_Report_${reportId}.pdf"`);
     return res.sendFile(pdfPath);
   }
+  return res.status(404).json({ error: "PDF not on disk — use the resend endpoint." });
+});
 
-  // HTML exists — redirect to print view (user saves as PDF from browser)
-  if (fs.existsSync(htmlPath)) {
-    return res.redirect(`/api/report/${reportId}/view?print=1`);
+// "Send PDF to Email" — regenerates the PDF from the stored HTML using
+// Playwright (the same method used at fulfillment time), then emails it
+// to the customer AND the owner. Called by the Download button in the
+// web report. No browser print dialog needed — fully styled PDF.
+app.post("/api/report/:reportId/resend-pdf", async (req, res) => {
+  const reportId = req.params.reportId;
+  const htmlPath = path.join(REPORTS_DIR, `${reportId}.html`);
+  const pdfPath  = path.join(REPORTS_DIR, `${reportId}.pdf`);
+
+  if (!fs.existsSync(htmlPath)) {
+    return res.status(404).json({ ok: false, error: "Report not found." });
   }
 
-  // Neither exists — unknown report ID
-  return res.status(404).send(
-    `Report not found. Check your email for the PDF, or contact support@knowyourpresence.com with ID ${reportId}.`
-  );
+  // Look up customer email from the order record (reportId now stored since this fix)
+  const order = getOrderByReportId(reportId);
+  const customerEmail = order?.email || null;
+
+  try {
+    // Regenerate PDF from stored HTML using Playwright
+    const { chromium } = require("playwright");
+    const launchOpts = {
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+    };
+    const { __chromiumPath } = require("./services/reportPdf");
+    if (__chromiumPath) launchOpts.executablePath = __chromiumPath;
+
+    const browser = await chromium.launch(launchOpts);
+    const page = await browser.newPage();
+    const htmlFileUrl = `file://${htmlPath}`;
+    await page.goto(htmlFileUrl, { waitUntil: "networkidle", timeout: 60000 });
+    await page.waitForTimeout(2000); // let fonts/charts render
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      margin: { top: "12mm", bottom: "12mm", left: "12mm", right: "12mm" },
+    });
+    await browser.close();
+    fs.writeFileSync(pdfPath, pdfBuffer);
+    console.log(`[resend-pdf] Regenerated PDF: ${pdfPath}`);
+
+    // Send to owner always; customer email if we can find it
+    const { Resend } = require("resend");
+    const resendClient = new Resend(process.env.RESEND_API_KEY);
+    const pdfBase64 = pdfBuffer.toString("base64");
+    const fileName = `KYP_Report_${reportId}.pdf`;
+    const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || "https://knowyourpresence.com";
+    const webReportUrl = `${PUBLIC_BASE_URL}/api/report/${reportId}/view`;
+
+    const emailBody = `<p>Your Business Presence Report PDF is attached.</p>
+      <p><a href="${webReportUrl}">View report online →</a></p>
+      <p style="color:#888;font-size:12px">Report ID: ${reportId}</p>`;
+
+    // Send to customer + owner
+    const recipients = [];
+    if (customerEmail) recipients.push(customerEmail);
+    const ownerEmail = process.env.OWNER_EMAIL || "support@knowyourpresence.com";
+    if (!recipients.includes(ownerEmail)) recipients.push(ownerEmail);
+
+    const businessName = order?.businessName || reportId;
+    await resendClient.emails.send({
+      from: "Know Your Presence <reports@knowyourpresence.com>",
+      to: recipients,
+      subject: `Your Presence Report PDF — ${businessName}`,
+      html: emailBody,
+      attachments: [{ filename: fileName, content: pdfBase64 }],
+    });
+
+    console.log(`[resend-pdf] PDF emailed to: ${recipients.join(", ")}`);
+    res.json({ ok: true, message: "PDF regenerated and sent to email." });
+  } catch (err) {
+    console.error("[resend-pdf] Failed:", err.message, err.stack);
+    res.status(500).json({ ok: false, error: "PDF generation failed. Please contact support@knowyourpresence.com with ID " + reportId });
+  }
 });
 
 // Toolkit ZIP download - same ID as the report, different file extension.

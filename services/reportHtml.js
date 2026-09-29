@@ -351,7 +351,7 @@ section:last-child{border-bottom:none}
     <a href="#start"             ><span class="nav-num">09</span>Start Here</a>
   </div>
   <div class="sb-bottom">
-    <a href="/api/report/${esc(reportId)}/pdf" class="sb-btn sb-btn-primary">⬇ Download PDF</a>
+    <button class="sb-btn sb-btn-primary" onclick="resendPdf(this)">⬇ Send PDF to Email</button>
     <button class="sb-btn sb-btn-secondary" onclick="toggleDark()">◐ Toggle Dark Mode</button>
     <button class="sb-btn sb-btn-secondary" onclick="window.print()">⎙ Print</button>
   </div>
@@ -386,7 +386,7 @@ section:last-child{border-bottom:none}
     </div>
 
     <div class="export-bar">
-      <a href="/api/report/${esc(reportId)}/pdf" class="export-btn export-btn-primary">⬇ Download PDF</a>
+      <button class="export-btn export-btn-primary" onclick="resendPdf(this)">⬇ Send PDF to Email</button>
       <button class="export-btn export-btn-secondary" onclick="copyLink()">🔗 Copy Link</button>
       <button class="export-btn export-btn-secondary" onclick="window.print()">⎙ Print</button>
     </div>
@@ -703,7 +703,7 @@ section:last-child{border-bottom:none}
     </ul>
 
     <div class="export-bar">
-      <a href="/api/report/${esc(reportId)}/pdf" class="export-btn export-btn-primary">⬇ Download PDF</a>
+      <button class="export-btn export-btn-primary" onclick="resendPdf(this)">⬇ Send PDF to Email</button>
       <button class="export-btn export-btn-secondary" onclick="copyLink()">🔗 Copy Link</button>
       <button class="export-btn export-btn-secondary" onclick="window.print()">⎙ Print</button>
     </div>
@@ -801,15 +801,29 @@ section:last-child{border-bottom:none}
   sections.forEach(function(s){ observer.observe(s); });
 })();
 
-// Auto-print when redirected from the PDF download route (?print=1)
-// The user saves it as PDF from their browser's print dialog.
-(function(){
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('print') === '1') {
-    // Small delay so fonts and layout fully render first
-    setTimeout(function(){ window.print(); }, 1200);
-  }
-})();
+// "Send PDF to Email" button — regenerates the styled PDF server-side
+// and emails it to the address on the order. No browser print needed.
+function resendPdf(btn) {
+  const reportId = ${JSON.stringify(reportId)};
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Sending…';
+  fetch('/api/report/' + reportId + '/resend-pdf', { method: 'POST' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.ok) {
+        btn.textContent = '✅ PDF sent to your email!';
+        setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 5000);
+      } else {
+        btn.textContent = '⚠ ' + (d.error || 'Failed — try again');
+        setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 4000);
+      }
+    })
+    .catch(function(){
+      btn.textContent = '⚠ Network error — try again';
+      setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 4000);
+    });
+}
 </script>
 </body>
 </html>`;
