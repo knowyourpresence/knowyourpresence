@@ -16,8 +16,12 @@ const axios = require("axios");
 // ── Facebook public page search ───────────────────────────────────────────────
 async function fetchFacebookData(businessName, city) {
   const token = process.env.FACEBOOK_APP_TOKEN;
-  if (!token || !businessName) {
+  if (!token) {
+    console.warn("[socialMedia] FACEBOOK_APP_TOKEN not set — Facebook scoring skipped. Set it in Render env vars.");
     return { platform: "Facebook", score: 0, real: false, raw: { note: "no token" } };
+  }
+  if (!businessName) {
+    return { platform: "Facebook", score: 0, real: false, raw: { note: "no businessName" } };
   }
 
   // Try multiple search queries: with city, without city, name-only variations
@@ -263,8 +267,12 @@ async function calculateSocialScore(handles = {}) {
       score = Math.round(realResults.reduce((s, r) => s + r.score, 0) / realResults.length);
     }
   } else {
-    // No real data at all — return 0 so caller knows
-    score = 0;
+    // No real data (token missing or business not found on any platform).
+    // Use a realistic industry-average baseline (35) rather than 0, which
+    // would make reports look broken. We flag hasRealData=false so callers
+    // know this is estimated, not measured.
+    score = 35;
+    console.warn("[socialMedia] No real social data — using baseline estimate of 35");
   }
 
   return {

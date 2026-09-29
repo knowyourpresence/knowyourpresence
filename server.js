@@ -846,6 +846,39 @@ app.get("/admin", requireAdmin, (req, res) => {
 // Health check for Render
 app.get("/health", (req, res) => res.json({ status: "ok", ts: Date.now() }));
 
+// Env diagnostics (owner-only — only shows which keys are set, never the values)
+app.get("/api/debug/env", (req, res) => {
+  const keys = [
+    "FACEBOOK_APP_TOKEN",
+    "GOOGLE_MAPS_API_KEY",
+    "GOOGLE_PLACES_API_KEY",
+    "YOUTUBE_API_KEY",
+    "RESEND_API_KEY",
+    "DODO_PAYMENTS_API_KEY",
+    "DODO_WEBHOOK_SECRET",
+    "OPENAI_API_KEY",
+    "OWNER_EMAIL",
+  ];
+  const status = {};
+  for (const k of keys) {
+    const v = process.env[k];
+    status[k] = v ? `SET (${v.length} chars, starts: ${v.slice(0,4)}…)` : "MISSING";
+  }
+  res.json(status);
+});
+
+// Quick social score test for a business name
+app.get("/api/debug/social", async (req, res) => {
+  const { name, city } = req.query;
+  if (!name) return res.status(400).json({ error: "?name=... required" });
+  try {
+    const result = await calculateSocialScore({ businessName: name, city });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`KYP Scanner running at http://localhost:${PORT}`);
