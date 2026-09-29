@@ -6,66 +6,58 @@
 //   makeReportId()                 → returns a unique ID string
 //   REPORTS_DIR                    → the directory where reports are saved
 
-const { chromium } = require("playwright");
 const fs   = require("fs");
 const path = require("path");
 const os   = require("os");
-const archiver = require("archiver"); // already in your package.json
+const archiver = require("archiver");
 
 // ── Paths ─────────────────────────────────────────────────────────────────────
 const REPORTS_DIR = process.env.REPORTS_DIR || path.join(__dirname, "../reports");
 if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR, { recursive: true });
 
-// CHROMIUM_PATH: set this env var on Render only if auto-detection fails.
-// In production (Render), `playwright install chromium` runs at build time,
-// so Playwright finds its own bundled Chromium without executablePath.
-// On local dev (Claude container), we fall back to the pre-installed path.
-const CHROMIUM_PATH = process.env.CHROMIUM_PATH || (() => {
-  // Walk the Playwright cache recursively to find whatever chrome binary was installed
-  function findChrome(dir, depth = 0) {
-    if (depth > 4) return null;
-    try {
-      const entries = require("fs").readdirSync(dir, { withFileTypes: true });
-      for (const e of entries) {
-        const full = path.join(dir, e.name);
-        if (e.isFile() && (e.name === "chrome" || e.name === "chrome-headless-shell" || e.name === "chromium")) {
-          return full;
-        }
-        if (e.isDirectory()) {
-          const found = findChrome(full, depth + 1);
-          if (found) return found;
-        }
-      }
-    } catch (e) {}
-    return null;
+// ── Browser launcher — works on Render's ephemeral free tier ─────────────────
+// Strategy:
+//   1. If CHROMIUM_PATH env var is set, use puppeteer-core with that path
+//   2. Try @sparticuz/chromium (downloads a compressed binary from S3, caches in /tmp)
+//   3. Fall back to Playwright's chromium (works if `playwright install chromium` ran at build)
+async function launchBrowser() {
+  // 1. Explicit path override
+  if (process.env.CHROMIUM_PATH) {
+    const puppeteer = require("puppeteer-core");
+    console.log("[pdf] Launching puppeteer-core with CHROMIUM_PATH:", process.env.CHROMIUM_PATH);
+    return puppeteer.launch({
+      executablePath: process.env.CHROMIUM_PATH,
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+      headless: true,
+    });
   }
 
-  const cacheDirs = [
-    process.env.PLAYWRIGHT_BROWSERS_PATH,
-    "/opt/render/.cache/ms-playwright",
-    path.join(require("os").homedir(), ".cache", "ms-playwright"),
-    "/opt/pw-browsers",
-  ].filter(Boolean);
-
-  for (const base of cacheDirs) {
-    const found = findChrome(base);
-    if (found) {
-      console.log("[chromium] Found at:", found);
-      return found;
-    }
+  // 2. @sparticuz/chromium — downloads/caches its own binary, ideal for Render
+  try {
+    const chromium = require("@sparticuz/chromium");
+    const puppeteer = require("puppeteer-core");
+    // Allow it to download if not cached yet
+    chromium.setHeadlessMode = true;
+    chromium.setGraphicsMode = false;
+    const executablePath = await chromium.executablePath();
+    console.log("[pdf] Launching via @sparticuz/chromium at:", executablePath);
+    return puppeteer.launch({
+      executablePath,
+      args: chromium.args,
+      headless: chromium.headless,
+      defaultViewport: chromium.defaultViewport,
+    });
+  } catch (e) {
+    console.warn("[pdf] @sparticuz/chromium unavailable:", e.message);
   }
 
-  // System Chrome fallbacks
-  for (const p of ["/usr/bin/google-chrome-stable", "/usr/bin/chromium-browser", "/usr/bin/chromium"]) {
-    if (require("fs").existsSync(p)) return p;
-  }
-
-  console.warn("[chromium] No executable found — Playwright will try auto-detect");
-  return null;
-})();
-
-// Export for reuse in server.js PDF regeneration route
-module.exports.__chromiumPath = CHROMIUM_PATH;
+  // 3. Playwright fallback
+  console.log("[pdf] Falling back to Playwright chromium");
+  const { chromium } = require("playwright");
+  return chromium.launch({
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+  });
+}
 
 // ── Unique report ID ──────────────────────────────────────────────────────────
 function makeReportId() {
@@ -883,21 +875,39 @@ async function generateReportPdf(reportData) {
 
   fs.writeFileSync(tmpHtml, buildPrintHtml(reportData), "utf8");
 
-  const launchOpts = { args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"] };
-  if (CHROMIUM_PATH) launchOpts.executablePath = CHROMIUM_PATH;
-  const browser = await chromium.launch(launchOpts);
-  const page = await browser.newPage();
-  await page.setViewportSize({ width: 900, height: 1200 });
-  await page.goto(`file://${tmpHtml}`, { waitUntil: "networkidle" });
-  await page.waitForTimeout(2500); // Google Fonts
+  const browser = await launchBrowser();
 
-  await page.pdf({
-    path: pdfPath,
-    format: "A4",
-    printBackground: true,
-    margin: { top: "0", bottom: "0", left: "0", right: "0" },
-    displayHeaderFooter: false,
-  });
+  // Detect whether we got a Playwright or Puppeteer browser instance
+  const isPlaywright = typeof browser.newPage === "function" && typeof browser.contexts === "function";
+
+  let page;
+  if (isPlaywright) {
+    // Playwright API
+    page = await browser.newPage();
+    await page.setViewportSize({ width: 900, height: 1200 });
+    await page.goto(`file://${tmpHtml}`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(2500);
+    await page.pdf({
+      path: pdfPath,
+      format: "A4",
+      printBackground: true,
+      margin: { top: "0", bottom: "0", left: "0", right: "0" },
+      displayHeaderFooter: false,
+    });
+  } else {
+    // Puppeteer API
+    page = await browser.newPage();
+    await page.setViewport({ width: 900, height: 1200 });
+    await page.goto(`file://${tmpHtml}`, { waitUntil: "networkidle0" });
+    await new Promise(r => setTimeout(r, 2500)); // Google Fonts
+    await page.pdf({
+      path: pdfPath,
+      format: "A4",
+      printBackground: true,
+      margin: { top: "0", bottom: "0", left: "0", right: "0" },
+      displayHeaderFooter: false,
+    });
+  }
 
   await browser.close();
   try { fs.unlinkSync(tmpHtml); } catch (_) {}
