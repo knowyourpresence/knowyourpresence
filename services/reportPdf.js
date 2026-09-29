@@ -1530,5 +1530,5 @@ knowyourpresence.com | support@knowyourpresence.com
   });
 }
 
-module.exports = { generateReportPdf, generateToolkitZip, makeReportId, REPORTS_DIR };
+module.exports = { generateReportPdf, generateToolkitZip, makeReportId, REPORTS_DIR, launchBrowser };
 // Note: generateToolkitZip is re-exported from ./toolkitDocx (10 styled DOCX files)

@@ -751,24 +751,30 @@ app.post("/api/report/:reportId/resend-pdf", async (req, res) => {
   const customerEmail = order?.email || null;
 
   try {
-    // Regenerate PDF from stored HTML using Playwright
-    const { chromium } = require("playwright");
-    const launchOpts = {
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-    };
-    const { __chromiumPath } = require("./services/reportPdf");
-    if (__chromiumPath) launchOpts.executablePath = __chromiumPath;
-
-    const browser = await chromium.launch(launchOpts);
+    // Regenerate PDF from stored HTML using the shared launchBrowser() helper
+    // (handles @sparticuz/chromium → puppeteer-core → playwright fallback chain)
+    const { launchBrowser } = require("./services/reportPdf");
+    const browser = await launchBrowser();
+    const isPlaywright = typeof browser.contexts === "function";
     const page = await browser.newPage();
     const htmlFileUrl = `file://${htmlPath}`;
-    await page.goto(htmlFileUrl, { waitUntil: "networkidle", timeout: 60000 });
-    await page.waitForTimeout(2000); // let fonts/charts render
-    const pdfBuffer = await page.pdf({
-      format: "A4",
-      printBackground: true,
-      margin: { top: "12mm", bottom: "12mm", left: "12mm", right: "12mm" },
-    });
+
+    let pdfBuffer;
+    if (isPlaywright) {
+      await page.goto(htmlFileUrl, { waitUntil: "networkidle", timeout: 60000 });
+      await page.waitForTimeout(2000);
+      pdfBuffer = await page.pdf({
+        format: "A4", printBackground: true,
+        margin: { top: "12mm", bottom: "12mm", left: "12mm", right: "12mm" },
+      });
+    } else {
+      await page.goto(htmlFileUrl, { waitUntil: "networkidle0", timeout: 60000 });
+      await new Promise(r => setTimeout(r, 2000));
+      pdfBuffer = await page.pdf({
+        format: "A4", printBackground: true,
+        margin: { top: "12mm", bottom: "12mm", left: "12mm", right: "12mm" },
+      });
+    }
     await browser.close();
     fs.writeFileSync(pdfPath, pdfBuffer);
     console.log(`[resend-pdf] Regenerated PDF: ${pdfPath}`);
