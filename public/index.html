@@ -195,6 +195,23 @@ section{padding:100px 0}
 .upgrade-box p{font-size:0.8rem;color:var(--ink3);margin-bottom:14px;line-height:1.5}
 .upgrade-cta{display:inline-flex;align-items:center;gap:6px;background:var(--blue);color:#fff;font-weight:700;font-size:0.85rem;padding:10px 22px;border-radius:8px;transition:background .15s}
 .upgrade-cta:hover{background:var(--blue-dim)}
+/* ── Pain section — blurred findings ─────────────────────────── */
+.pain-section{margin:18px 0 16px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden}
+.pain-header{background:#fafafa;padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #e5e7eb}
+.pain-header-icon{font-size:14px}
+.pain-header-text{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#374151}
+.pain-header-badge{margin-left:auto;background:#ef4444;color:#fff;font-size:9px;font-weight:700;letter-spacing:.04em;padding:2px 7px;border-radius:20px;text-transform:uppercase}
+.pain-items{display:flex;flex-direction:column;gap:0}
+.pain-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:1px solid #f3f4f6;position:relative}
+.pain-item:last-child{border-bottom:none}
+.pain-item-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.pain-item-body{flex:1;min-width:0}
+.pain-item-label{font-size:11.5px;font-weight:600;color:#111827;margin-bottom:2px}
+.pain-item-detail{font-size:11px;color:#6b7280;line-height:1.45}
+.pain-blur{filter:blur(4px);user-select:none;pointer-events:none}
+.pain-lock{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.55);cursor:pointer}
+.pain-lock-badge{background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:3px 9px;font-size:10px;font-weight:700;color:#374151;display:flex;align-items:center;gap:4px;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+.pain-divider{height:1px;background:linear-gradient(to right,#e5e7eb,#f9fafb);margin:0 14px}
 
 /* ── 9 CHECKS / FEATURES ── */
 .checks-layout{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start;margin-bottom:56px}
@@ -600,9 +617,22 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
             </div>
           </div>
           <div class="result-bars" id="rBars"></div>
+
+          <!-- Pain section: blurred findings to drive upgrade -->
+          <div class="pain-section" id="painSection">
+            <div class="pain-header">
+              <span class="pain-header-icon">🔍</span>
+              <span class="pain-header-text">What we found — hidden in your full report</span>
+              <span class="pain-header-badge" id="painBadge">3 issues</span>
+            </div>
+            <div class="pain-items" id="painItems">
+              <!-- Injected by showResults() -->
+            </div>
+          </div>
+
           <div class="upgrade-box">
-            <h4>Get your full executive report</h4>
-            <p>10 pages · competitor intelligence · 90-day roadmap · 6 AI insight modules · toolkit files. Delivered instantly.</p>
+            <h4>🔓 Unlock your full report</h4>
+            <p id="upgradeDesc">See every finding, fix, and your 90-day roadmap — competitor intelligence, 6 AI insight modules, and a toolkit to act immediately.</p>
             <a href="#" class="upgrade-cta" id="upgradeBtn">Get full report — $129 →</a>
           </div>
         </div>
@@ -1152,6 +1182,95 @@ function showResults(data,bizName){
       <div class="r-bar-track"><div class="r-bar-fill" style="width:${c.score}%;background:${c.color}"></div></div>
       <span class="r-bar-val">${c.score}</span>
     </div>`).join('');
+
+  // ── Pain section: real findings, blurred to drive upgrade ─────────────
+  (function(){
+    const gScore=getScore(data,'google');
+    const sScore=getScore(data,'social');
+    const wScore=getScore(data,'website');
+    const rScore=getScore(data,'reputation');
+    const det=data.details||{};
+    const painItems=[];
+
+    // 1. Google Business — missing / weak
+    if(gScore<60){
+      const reviewCount=det.google?.reviewCount??det.google?.user_ratings_total??0;
+      const rating=det.google?.rating??0;
+      if(!rating||rating===0){
+        painItems.push({icon:'📍',label:'Google Business Profile not found',detail:'Your business doesn\'t appear in local searches. You\'re invisible to customers looking right now.',blur:'Estimated monthly traffic loss: ██ visitors. Fix priority: Critical. Action: ████████████████'});
+      } else if(reviewCount<10){
+        painItems.push({icon:'⭐',label:`Only ${reviewCount} Google reviews detected`,detail:`Businesses with <10 reviews lose 60% of clicks to competitors. You're at ${rating}★.`,blur:`Missing revenue estimate: $████/mo. Top competitor in your area has ██ reviews. Quick-win script: ████████`});
+      }
+    }
+
+    // 2. Social — low or missing
+    if(sScore<50){
+      painItems.push({icon:'📱',label:'Social media presence is weak or not found',detail:'Instagram and Facebook searches returned low or no engagement signals for your business.',blur:'Your competitor is reaching ████ people/week on social. Your estimated reach: near zero. Fix: ████████████'});
+    }
+
+    // 3. Website — slow / no SSL / missing
+    if(wScore<55){
+      const noSite=!data.details?.website?.url&&!data.details?.website?.domain;
+      if(noSite||wScore<30){
+        painItems.push({icon:'🌐',label:'No website or unresponsive site detected',detail:'Customers searching you online find nothing. You\'re sending them straight to your competitors.',blur:'Lost leads per month: ████. Cost of inaction over 90 days: $████. Recommended fix: ████████████'});
+      } else {
+        painItems.push({icon:'⚡',label:'Website performance issues found',detail:'Slow load time or missing mobile optimisation detected — costing you search ranking and conversions.',blur:'Page speed score: ██/100. Mobile issues: ██ found. SEO impact: ████████. Fixes included in report.'});
+      }
+    }
+
+    // 4. Reputation — poor rating
+    if(rScore<55&&det.google?.rating>0){
+      painItems.push({icon:'💬',label:`${det.google.rating}★ rating is pulling you down`,detail:'Ratings below 4.2★ actively deter customers. Competitors with higher ratings win the click every time.',blur:'Estimated click loss vs 4.5★ competitor: ██%. AI-written review response templates: ████████████'});
+    }
+
+    // 5. Competitor is running ads — always show if we have the signal
+    if(det.metaAds?.business?.isRunningAds===false){
+      painItems.push({icon:'📢',label:'You\'re not running any ads — your competitors might be',detail:'Businesses in your category are actively buying visibility. You\'re fighting with one hand tied behind your back.',blur:'Competitor ad spend estimate: $████/mo. Recommended budget to compete: $████. Ad angles: ████████'});
+    }
+
+    // Always add a locked "AI insight preview" row at the end
+    painItems.push({icon:'🤖',label:'AI Insight: 90-day growth roadmap generated',detail:'Claude analysed your scores and generated a custom action plan — highest-ROI fixes, week by week.',blur:'Week 1: ████████████. Week 2: ████████. Week 4: ████████████. Full 90-day plan: locked.',isAi:true});
+
+    // Cap at 4 visible items
+    const visible=painItems.slice(0,4);
+    document.getElementById('painBadge').textContent=`${visible.length} findings`;
+    document.getElementById('painItems').innerHTML=visible.map((item,i)=>{
+      const blurRow=`
+        <div class="pain-item" style="background:${item.isAi?'#f5f3ff':'#fff'}">
+          <span class="pain-item-icon">${item.icon}</span>
+          <div class="pain-item-body">
+            <div class="pain-item-label">${item.label}</div>
+            <div class="pain-item-detail pain-blur">${item.detail} ${item.blur}</div>
+          </div>
+          <div class="pain-lock" onclick="document.getElementById('upgradeBtn').click()">
+            <span class="pain-lock-badge">🔒 Unlock</span>
+          </div>
+        </div>`;
+      // First item shows the real detail unblurred, rest blurred
+      if(i===0){
+        return `
+        <div class="pain-item" style="background:${item.isAi?'#f5f3ff':'#fff'}">
+          <span class="pain-item-icon">${item.icon}</span>
+          <div class="pain-item-body">
+            <div class="pain-item-label">${item.label}</div>
+            <div class="pain-item-detail">${item.detail}</div>
+            <div class="pain-item-detail pain-blur" style="margin-top:4px">${item.blur}</div>
+          </div>
+          <div class="pain-lock" onclick="document.getElementById('upgradeBtn').click()">
+            <span class="pain-lock-badge">🔒 Unlock fix</span>
+          </div>
+        </div>`;
+      }
+      return blurRow;
+    }).join('');
+
+    // Personalise upgrade CTA copy based on worst score
+    const worst=Math.min(gScore,sScore,wScore,rScore);
+    const upgradeDesc=document.getElementById('upgradeDesc');
+    if(worst<40) upgradeDesc.textContent=`You have ${visible.length} critical gaps that are costing you customers right now. Your full report includes the exact fixes, a competitor breakdown, and a 90-day action plan.`;
+    else if(worst<60) upgradeDesc.textContent=`${visible.length} improvement areas found. Your full report shows exactly what to fix first, with AI-written action steps tailored to ${bizName}.`;
+  })();
+
   // Store scan data on the button so checkout can use it
   const btn = document.getElementById('upgradeBtn');
   btn.dataset.scanData = JSON.stringify({
