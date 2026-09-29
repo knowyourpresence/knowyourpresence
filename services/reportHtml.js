@@ -336,12 +336,44 @@ section:last-child{border-bottom:none}
   .phase-grid{grid-template-columns:1fr}
 }
 @media print{
+  /* Force all background colors and images to print */
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+
+  /* Hide interactive chrome */
   #sidebar,#topbar,#hamburger,#overlay,.export-bar,.sb-bottom,button{display:none!important}
-  #main{margin-left:0!important;padding:0!important}
-  body{background:#fff!important}
-  section{page-break-inside:avoid;break-inside:avoid}
-  .section-card{box-shadow:none!important;border:1px solid #e5e2da!important}
-  @page{margin:15mm 12mm}
+
+  /* Layout */
+  body{background:var(--bg)!important;display:block!important}
+  #main{margin-left:0!important;padding:0!important;display:block!important}
+
+  /* Page settings */
+  @page{margin:12mm 14mm;size:A4}
+
+  /* Sections */
+  section{padding:32px 24px;page-break-inside:avoid;break-inside:avoid}
+  .hero{margin:-32px -24px 24px;padding:32px 24px}
+
+  /* Cards keep colors */
+  .card,.phase-card,.priority-list li,.review-card,.refund-box{
+    background:var(--card-bg)!important;
+    border:1px solid var(--border)!important;
+    page-break-inside:avoid;break-inside:avoid
+  }
+
+  /* Score bars keep color */
+  .bar-fill{print-color-adjust:exact!important}
+
+  /* Hero navy background must print */
+  .hero{background:#152030!important;color:#fff!important}
+
+  /* Fonts stay crisp */
+  body{font-size:13px}
+  .section-title{font-size:24px}
+  .hero-score{font-size:56px}
+  .hero-name{font-size:30px}
+
+  /* Print header on each page */
+  #print-header{display:flex!important}
 }
 </style>
 </head>
@@ -399,6 +431,12 @@ section:last-child{border-bottom:none}
 </nav>
 
 <!-- MAIN -->
+<!-- Print-only header — hidden on screen, shows on every printed page -->
+<div id="print-header" style="display:none;align-items:center;justify-content:space-between;padding:10px 24px 10px;background:#152030;color:#fff;margin-bottom:0;">
+  <div style="font-family:'EB Garamond',serif;font-size:20px;font-weight:700;color:#1f6b45;letter-spacing:-.3px;">Know Your Presence</div>
+  <div style="font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.5px;">${esc(data.businessName)} · ${esc(data.city || '')} · ${esc(reportId)}</div>
+</div>
+
 <div id="main">
 
   <!-- TOPBAR -->
