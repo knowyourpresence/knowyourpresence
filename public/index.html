@@ -591,6 +591,16 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
               <label>Competitor to benchmark <span style="font-size:10px;color:var(--ink3);font-weight:400">optional</span></label>
               <input class="scan-input" type="text" id="competitorInput" placeholder="e.g. a stronger competitor in your market"/>
             </div>
+            <div class="scan-grid-2">
+              <div class="scan-field">
+                <label>Facebook page URL <span style="font-size:10px;color:var(--ink3);font-weight:400">optional — improves score</span></label>
+                <input class="scan-input" type="text" id="facebookInput" placeholder="facebook.com/yourbusiness"/>
+              </div>
+              <div class="scan-field">
+                <label>Instagram handle <span style="font-size:10px;color:var(--ink3);font-weight:400">optional — improves score</span></label>
+                <input class="scan-input" type="text" id="instagramInput" placeholder="@yourbusiness"/>
+              </div>
+            </div>
             <div id="scanErr" class="scan-error" hidden></div>
             <button type="button" class="scan-btn" id="runBtn">Run my FREE scan →</button>
             <div class="scan-privacy">🔒 Your details stay private. No spam, no subscriptions.</div>
@@ -1124,7 +1134,7 @@ document.getElementById('runBtn').addEventListener('click',async()=>{
   btn.disabled=true;btn.textContent='Scanning…';
   try{
     const res=await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({businessName:biz,email,city,countryCode:country||'US',websiteUrl:document.getElementById('urlInput').value.trim(),competitorName:document.getElementById('competitorInput').value.trim(),placeId:selectedPlaceId||undefined})});
+      body:JSON.stringify({businessName:biz,email,city,countryCode:country||'US',websiteUrl:document.getElementById('urlInput').value.trim(),competitorName:document.getElementById('competitorInput').value.trim(),placeId:selectedPlaceId||undefined,facebookUrl:document.getElementById('facebookInput').value.trim()||undefined,instagramHandle:document.getElementById('instagramInput').value.trim().replace(/^@/,'')||undefined})});
     const data=await res.json();
     if(res.status===429){
       err.hidden=false;

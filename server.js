@@ -57,6 +57,8 @@ app.post("/api/scan", scanRateLimit, async (req, res) => {
       youtubeChannelId,
       instagramUserId,
       facebookPageId,
+      facebookUrl,       // optional: customer-provided FB page URL
+      instagramHandle,   // optional: customer-provided IG handle (without @)
       city, // used to match the right business on Yelp - same city ambiguity problem Google Places solves via placeId
       email, // captured before the scan - this is the email gate
       countryCode,
@@ -147,7 +149,7 @@ app.post("/api/scan", scanRateLimit, async (req, res) => {
       urlscanResult,
     ] = await Promise.all([
       fetchGoogleBusinessData(resolvedPlaceId),
-      calculateSocialScore({ youtubeChannelId, businessName, city }),
+      calculateSocialScore({ youtubeChannelId, businessName, city, facebookUrl, instagramHandle }),
       fetchWebsiteHealth(resolvedWebsiteUrl),
       fetchYelpData(businessName, city),
       runTechnicalChecks(websiteUrl),

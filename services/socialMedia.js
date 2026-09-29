@@ -235,6 +235,123 @@ async function fetchInstagramData(businessName, city) {
   return { platform: "Instagram", score: 0, real: false, raw: { note: "not found" } };
 }
 
+// ── Facebook by direct page URL ───────────────────────────────────────────────
+// When customer provides their FB page URL, extract the page username/ID and
+// fetch it directly instead of searching by business name.
+async function fetchFacebookByUrl(fbUrl) {
+  const token = process.env.FACEBOOK_APP_TOKEN;
+  if (!token || !fbUrl) return fetchFacebookData(null, null);
+
+  // Extract page username from URL: facebook.com/PageName or fb.com/PageName
+  const match = fbUrl.match(/(?:facebook\.com|fb\.com)\/([^/?#\s]+)/i);
+  if (!match) return { platform: "Facebook", score: 0, real: false, raw: { note: "invalid FB URL" } };
+
+  const pageSlug = match[1];
+  if (["pages", "groups", "profile.php", "events"].includes(pageSlug)) {
+    return { platform: "Facebook", score: 0, real: false, raw: { note: "unsupported FB URL type" } };
+  }
+
+  try {
+    const res = await axios.get(`https://graph.facebook.com/v19.0/${pageSlug}`, {
+      params: {
+        fields: "id,name,fan_count,followers_count,posts.limit(5){created_time}",
+        access_token: token,
+      },
+      timeout: 10000,
+    });
+    const page = res.data;
+    const followers = page.followers_count || page.fan_count || 0;
+    const posts = page.posts?.data || [];
+    const recentPost = posts[0]?.created_time;
+    const daysSincePost = recentPost
+      ? Math.floor((Date.now() - new Date(recentPost).getTime()) / 86400000)
+      : 999;
+    const isActive = daysSincePost <= 90;
+
+    let score = 0;
+    score += Math.min(60, Math.log10(followers + 1) * 18);
+    score += isActive ? 40 : daysSincePost <= 180 ? 20 : 0;
+
+    console.log(`[socialMedia] Facebook direct URL: "${page.name}" — followers: ${followers}`);
+    return {
+      platform: "Facebook",
+      score: Math.round(Math.min(100, score)),
+      real: true,
+      raw: { followers, daysSincePost, isActive, pageName: page.name },
+    };
+  } catch (err) {
+    console.error(`Facebook direct URL fetch failed for "${pageSlug}":`, err.message);
+    return { platform: "Facebook", score: 0, real: false, raw: { note: err.message } };
+  }
+}
+
+// ── Instagram by direct handle ────────────────────────────────────────────────
+async function fetchInstagramByHandle(handle) {
+  if (!handle) return fetchInstagramData(null, null);
+
+  const token = process.env.FACEBOOK_APP_TOKEN;
+  const cleanHandle = handle.replace(/^@/, "").trim();
+
+  // Try Graph API first via FB page search with the handle
+  if (token) {
+    try {
+      const searchRes = await axios.get("https://graph.facebook.com/v19.0/search", {
+        params: {
+          q: cleanHandle,
+          type: "page",
+          fields: "id,name,instagram_business_account",
+          access_token: token,
+          limit: 3,
+        },
+        timeout: 10000,
+      });
+      const pages = searchRes.data?.data || [];
+      const pageWithIg = pages.find(p => p.instagram_business_account?.id);
+      if (pageWithIg) {
+        const igId = pageWithIg.instagram_business_account.id;
+        const igRes = await axios.get(`https://graph.facebook.com/v19.0/${igId}`, {
+          params: { fields: "followers_count,media_count", access_token: token },
+          timeout: 10000,
+        });
+        const ig = igRes.data;
+        const followers = ig.followers_count || 0;
+        const posts = ig.media_count || 0;
+        let score = Math.min(60, Math.log10(followers + 1) * 18);
+        score += posts >= 12 ? 40 : posts >= 6 ? 25 : posts > 0 ? 15 : 0;
+        console.log(`[socialMedia] Instagram direct handle @${cleanHandle}: followers=${followers}`);
+        return { platform: "Instagram", score: Math.round(Math.min(100, score)), real: true, raw: { followers, posts, handle: cleanHandle } };
+      }
+    } catch (err) {
+      console.error(`Instagram direct handle Graph failed for @${cleanHandle}:`, err.message);
+    }
+  }
+
+  // Fallback: public web fetch
+  try {
+    const res = await axios.get(`https://www.instagram.com/${cleanHandle}/`, {
+      timeout: 8000,
+      headers: { "User-Agent": "Mozilla/5.0" },
+    });
+    if (res.status === 200 && !res.data.includes("Sorry, this page isn't available")) {
+      const match = res.data.match(/"edge_followed_by":\{"count":(\d+)/);
+      const followers = match ? parseInt(match[1], 10) : 0;
+      const postsMatch = res.data.match(/"edge_owner_to_timeline_media":\{"count":(\d+)/);
+      const posts = postsMatch ? parseInt(postsMatch[1], 10) : 0;
+      let score = Math.min(60, Math.log10(followers + 1) * 18);
+      score += posts >= 12 ? 40 : posts >= 6 ? 25 : posts > 0 ? 15 : 0;
+      if (followers === 0 && posts === 0) {
+        // Account exists but can't read metrics
+        return { platform: "Instagram", score: 35, real: true, raw: { handle: cleanHandle, note: "exists, metrics not exposed" } };
+      }
+      return { platform: "Instagram", score: Math.round(Math.min(100, score)), real: true, raw: { followers, posts, handle: cleanHandle } };
+    }
+  } catch (err) {
+    console.error(`Instagram web fetch failed for @${cleanHandle}:`, err.message);
+  }
+
+  return { platform: "Instagram", score: 0, real: false, raw: { note: "not found", handle: cleanHandle } };
+}
+
 // ── Combined social score ─────────────────────────────────────────────────────
 /**
  * Returns a single social sub-score (0–100) from real public platform data.
@@ -246,9 +363,13 @@ async function fetchInstagramData(businessName, city) {
  */
 async function calculateSocialScore(handles = {}) {
   const [fb, yt, ig] = await Promise.all([
-    fetchFacebookData(handles.businessName, handles.city),
+    handles.facebookUrl
+      ? fetchFacebookByUrl(handles.facebookUrl)
+      : fetchFacebookData(handles.businessName, handles.city),
     fetchYouTubeData(handles.youtubeChannelId),
-    fetchInstagramData(handles.businessName, handles.city),
+    handles.instagramHandle
+      ? fetchInstagramByHandle(handles.instagramHandle)
+      : fetchInstagramData(handles.businessName, handles.city),
   ]);
 
   const realResults = [fb, yt, ig].filter(r => r.real && r.score > 0);
