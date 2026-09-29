@@ -21,26 +21,46 @@ if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR, { recursive: true });
 // so Playwright finds its own bundled Chromium without executablePath.
 // On local dev (Claude container), we fall back to the pre-installed path.
 const CHROMIUM_PATH = process.env.CHROMIUM_PATH || (() => {
-  // Scan for any Playwright chromium executable under the cache dir
-  const cacheDir = process.env.PLAYWRIGHT_BROWSERS_PATH ||
-    path.join(require("os").homedir(), ".cache", "ms-playwright");
-  const renderCache = "/opt/render/.cache/ms-playwright";
-  for (const base of [cacheDir, renderCache, "/opt/pw-browsers"]) {
-    if (!require("fs").existsSync(base)) continue;
-    // Walk one level deep looking for a chrome executable
+  // Walk the Playwright cache recursively to find whatever chrome binary was installed
+  function findChrome(dir, depth = 0) {
+    if (depth > 4) return null;
     try {
-      const { execSync } = require("child_process");
-      const found = execSync(
-        `find "${base}" -type f \\( -name "chrome" -o -name "chrome-headless-shell" -o -name "chromium" \\) 2>/dev/null | head -1`,
-        { encoding: "utf8", timeout: 5000 }
-      ).trim();
-      if (found) return found;
+      const entries = require("fs").readdirSync(dir, { withFileTypes: true });
+      for (const e of entries) {
+        const full = path.join(dir, e.name);
+        if (e.isFile() && (e.name === "chrome" || e.name === "chrome-headless-shell" || e.name === "chromium")) {
+          return full;
+        }
+        if (e.isDirectory()) {
+          const found = findChrome(full, depth + 1);
+          if (found) return found;
+        }
+      }
     } catch (e) {}
+    return null;
   }
+
+  const cacheDirs = [
+    process.env.PLAYWRIGHT_BROWSERS_PATH,
+    "/opt/render/.cache/ms-playwright",
+    path.join(require("os").homedir(), ".cache", "ms-playwright"),
+    "/opt/pw-browsers",
+  ].filter(Boolean);
+
+  for (const base of cacheDirs) {
+    const found = findChrome(base);
+    if (found) {
+      console.log("[chromium] Found at:", found);
+      return found;
+    }
+  }
+
   // System Chrome fallbacks
   for (const p of ["/usr/bin/google-chrome-stable", "/usr/bin/chromium-browser", "/usr/bin/chromium"]) {
     if (require("fs").existsSync(p)) return p;
   }
+
+  console.warn("[chromium] No executable found — Playwright will try auto-detect");
   return null;
 })();
 
