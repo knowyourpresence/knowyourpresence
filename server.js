@@ -48,6 +48,11 @@ app.use((req, res, next) => {
 });
 app.use(express.static(path.join(__dirname, "public")));
 
+// Legal pages
+app.get("/privacy", (req, res) => res.sendFile(path.join(__dirname, "public", "privacy.html")));
+app.get("/terms", (req, res) => res.sendFile(path.join(__dirname, "public", "terms.html")));
+app.get("/refund", (req, res) => res.sendFile(path.join(__dirname, "public", "refund.html")));
+
 app.post("/api/scan", scanRateLimit, async (req, res) => {
   try {
     const {
