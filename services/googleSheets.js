@@ -152,6 +152,111 @@ async function logOrderToSheet(p) {
   await appendRow(row);
 }
 
+// ── Full report data backup (separate tab "OrderData") ───────────────────────
+// Stores the complete reportData JSON so resend-pdf can regenerate HTML
+// after a Render restart wipes the ephemeral disk.
+
+async function getAccessTokenCached() {
+  const saJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  if (!saJson) return null;
+  let sa;
+  try { sa = JSON.parse(saJson); } catch { return null; }
+  return getAccessToken(sa);
+}
+
+async function readSheetRows(tab) {
+  const token = await getAccessTokenCached();
+  if (!token) return [];
+  const rangePath = `/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(tab)}`;
+  return new Promise((resolve) => {
+    const req = https.request({
+      hostname: "sheets.googleapis.com",
+      path: rangePath,
+      method: "GET",
+      headers: { "Authorization": `Bearer ${token}` },
+    }, (res) => {
+      let data = "";
+      res.on("data", (c) => (data += c));
+      res.on("end", () => {
+        try {
+          const json = JSON.parse(data);
+          resolve(json.values || []);
+        } catch { resolve([]); }
+      });
+    });
+    req.on("error", () => resolve([]));
+    req.end();
+  });
+}
+
+async function appendToTab(tab, values) {
+  const token = await getAccessTokenCached();
+  if (!token) return;
+  const body = JSON.stringify({ values: [values] });
+  const p = `/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(tab + "!A1")}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: "sheets.googleapis.com",
+      path: p,
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(body),
+      },
+    }, (res) => {
+      let data = "";
+      res.on("data", (c) => (data += c));
+      res.on("end", () => resolve());
+    });
+    req.on("error", reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+/**
+ * Saves full reportData JSON to the OrderData tab.
+ * Called after report generation so data survives Render restarts.
+ */
+async function saveReportDataToSheet(reportId, email, reportData) {
+  try {
+    await appendToTab("OrderData", [
+      new Date().toISOString(),
+      reportId,
+      email || "",
+      JSON.stringify(reportData),
+    ]);
+    console.log(`googleSheets: reportData saved for ${reportId}`);
+  } catch (e) {
+    console.error("googleSheets: saveReportDataToSheet failed (non-blocking):", e.message);
+  }
+}
+
+/**
+ * Looks up a report's full data from the OrderData tab by reportId.
+ * Used by resend-pdf when local orders.json is gone after a Render restart.
+ * Returns { email, reportData } or null.
+ */
+async function getReportDataFromSheet(reportId) {
+  try {
+    const rows = await readSheetRows("OrderData");
+    // rows: [ [timestamp, reportId, email, reportDataJson], ... ]
+    for (const row of rows) {
+      if (row[1] === reportId) {
+        return {
+          email: row[2] || null,
+          reportData: JSON.parse(row[3] || "null"),
+        };
+      }
+    }
+    return null;
+  } catch (e) {
+    console.error("googleSheets: getReportDataFromSheet failed:", e.message);
+    return null;
+  }
+}
+
 // ── Header row (call once to set up the sheet) ────────────────────────────────
 async function initSheetHeaders() {
   await appendRow([
@@ -161,4 +266,4 @@ async function initSheetHeaders() {
   ]);
 }
 
-module.exports = { logOrderToSheet, initSheetHeaders };
+module.exports = { logOrderToSheet, initSheetHeaders, saveReportDataToSheet, getReportDataFromSheet };

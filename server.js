@@ -28,7 +28,7 @@ const { pushScanRecord, pushLeadRecord } = require("./services/coupler");
 const { runAdIntelligence } = require("./services/metaAds");
 const { generateAllInsights } = require("./services/aiInsights"); // ← AI Insights (6 modules)
 const { startFollowUpJob } = require("./services/followUpJob");   // ← 24h upsell follow-up
-const { logOrderToSheet } = require("./services/googleSheets");   // ← Google Sheets CRM
+const { logOrderToSheet, saveReportDataToSheet, getReportDataFromSheet } = require("./services/googleSheets");   // ← Google Sheets CRM
 const { addBrevoContact } = require("./services/brevo");          // ← 90-day drip sequence
 
 const app = express();
@@ -530,6 +530,10 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
       console.error("[webhook] updateOrderByReportId failed (non-blocking):", e.message);
     }
 
+    // Also save to Google Sheets OrderData tab — survives Render restarts
+    // permanently (unlike orders.json which is on ephemeral disk).
+    saveReportDataToSheet(reportId, email, reportData).catch(() => {});
+
     // Email sends only the PDF — the web report is shown immediately after
     // payment via the /report-ready loading page, not linked in the email.
     const orderWithScores = {
@@ -875,16 +879,41 @@ app.post("/api/report/:reportId/resend-pdf", async (req, res) => {
   const customerEmail = order?.email || null;
   const businessName = order?.businessName || reportId;
 
-  // If HTML missing from disk (Render restart wiped it), regenerate it from order data
+  // If HTML missing from disk (Render restart wiped it), regenerate it from order data.
+  // Fallback chain: 1) local orders.json  2) Google Sheets OrderData tab
   if (!fs.existsSync(htmlPath)) {
-    if (!order) {
+    let reportDataForRegen = order?.reportData || null;
+    let emailForRegen = order?.email || null;
+
+    // Fallback to Google Sheets if local order missing or has no reportData
+    if (!reportDataForRegen) {
+      console.log(`[resend-pdf] Local order missing/incomplete for ${reportId} — checking Google Sheets...`);
+      try {
+        const sheetRecord = await getReportDataFromSheet(reportId);
+        if (sheetRecord?.reportData) {
+          reportDataForRegen = sheetRecord.reportData;
+          emailForRegen = emailForRegen || sheetRecord.email;
+          console.log(`[resend-pdf] Found reportData in Google Sheets for ${reportId}`);
+        }
+      } catch (e) {
+        console.error(`[resend-pdf] Google Sheets lookup failed:`, e.message);
+      }
+    }
+
+    if (!reportDataForRegen) {
       return res.status(404).json({ ok: false, error: "Report not found. Please contact support@knowyourpresence.com with your Report ID." });
     }
+
     try {
       const { buildReportHtml } = require("./services/reportHtml");
-      const html = buildReportHtml(order.reportData || order);
+      const html = buildReportHtml(reportDataForRegen);
       fs.writeFileSync(htmlPath, html);
-      console.log(`[resend-pdf] Regenerated HTML from order data for ${reportId}`);
+      console.log(`[resend-pdf] Regenerated HTML from stored data for ${reportId}`);
+      // Also update local order email if we got it from Sheets
+      if (!order && emailForRegen) {
+        // patch customerEmail used later in this handler
+        Object.assign(order || {}, { email: emailForRegen });
+      }
     } catch (e) {
       console.error(`[resend-pdf] Could not regenerate HTML:`, e.message);
       return res.status(500).json({ ok: false, error: "Could not regenerate report. Please contact support@knowyourpresence.com" });
