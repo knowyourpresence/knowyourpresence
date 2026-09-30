@@ -536,6 +536,7 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
       grade: scanDetails?.grade || "",
       reportId,
       amount: order.amount ? `$${order.amount}` : "—",
+      reportViewUrl: webReportUrl,
     }).catch((e) => console.error("Owner notification failed:", e.message));
 
     // FIX: use reportData.scores for overall grade — scoreResult is from /api/scan scope, not here

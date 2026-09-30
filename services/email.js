@@ -138,7 +138,7 @@ async function sendReportEmail({ to, businessName, city, score, grade, reportId,
 }
 
 // ── 2. Owner sale notification ────────────────────────────────────────────────
-async function sendOwnerNotification({ customerEmail, businessName, city, score, grade, reportId, amount }) {
+async function sendOwnerNotification({ customerEmail, businessName, city, score, grade, reportId, amount, reportViewUrl }) {
   const { data, error } = await resend.emails.send({
     from:    "Know Your Presence <reports@knowyourpresence.com>",
     to:      [OWNER_EMAIL],
@@ -193,6 +193,13 @@ async function sendOwnerNotification({ customerEmail, businessName, city, score,
             <tr>
               <td style="padding:6px 0;font-size:13px;color:#6b7280;"><strong style="color:#1a2332;">Time:</strong> ${new Date().toLocaleString("en-GB", { timeZone: "UTC" })} UTC</td>
             </tr>
+            ${reportViewUrl ? `<tr>
+              <td style="padding:10px 0 4px;">
+                <a href="${reportViewUrl}" style="display:inline-block;padding:10px 22px;background:#1f6b45;color:#fff;border-radius:6px;font-size:13px;font-weight:700;text-decoration:none;">
+                  View Report →
+                </a>
+              </td>
+            </tr>` : ""}
           </table>
         </td></tr>
 
