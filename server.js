@@ -892,9 +892,21 @@ app.post("/api/report/:reportId/resend-pdf", async (req, res) => {
       const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || "https://knowyourpresence.com";
       const webReportUrl = `${PUBLIC_BASE_URL}/api/report/${reportId}/view`;
 
-      const emailBody = `<p>Your Business Presence Report PDF is attached.</p>
-        <p><a href="${webReportUrl}">View report online →</a></p>
-        <p style="color:#888;font-size:12px">Report ID: ${reportId}</p>`;
+      const emailBody = `
+        <div style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;background:#f5f6f8">
+          <div style="background:#0b0f1e;border-radius:12px;padding:32px;margin-bottom:24px;text-align:center">
+            <div style="font-size:22px;font-weight:800;color:#ffffff;margin-bottom:4px">Know Your Presence</div>
+            <div style="font-size:13px;color:#3b6ef8">Digital Presence Report</div>
+          </div>
+          <div style="background:#ffffff;border-radius:12px;padding:32px;margin-bottom:16px">
+            <h2 style="font-size:20px;font-weight:700;color:#0b0f1e;margin:0 0 16px">Your report is ready, ${businessName}!</h2>
+            <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 24px">Your full digital presence audit is attached to this email as a PDF. Please save it — your PDF is your permanent copy.</p>
+            <a href="${webReportUrl}" style="display:inline-block;background:#3b6ef8;color:#ffffff;font-weight:700;font-size:15px;padding:14px 28px;border-radius:8px;text-decoration:none;margin-bottom:24px">View Report Online →</a>
+            <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0"/>
+            <p style="color:#6b7280;font-size:13px;line-height:1.6;margin:0">💡 <strong>Tip:</strong> If you ever need your PDF again, open your report online and click the <strong>"Send PDF to Email"</strong> button — we'll regenerate and send it instantly.</p>
+          </div>
+          <p style="color:#9ca3af;font-size:12px;text-align:center;margin:0">Report ID: ${reportId} · knowyourpresence.com</p>
+        </div>`;
 
       const recipients = [];
       if (customerEmail) recipients.push(customerEmail);
