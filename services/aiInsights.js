@@ -13,7 +13,7 @@ const axios = require("axios");
 // NOTE: read from process.env at call time (not module load time) so the key
 // is picked up even if set after the process started / module was cached.
 const MODEL = "claude-haiku-4-5-20251001";
-const MAX_TOKENS = 600;
+const MAX_TOKENS = 1200;
 
 // ─── Core Claude caller ───────────────────────────────────────────────────────
 
