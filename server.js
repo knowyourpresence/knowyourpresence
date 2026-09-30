@@ -693,12 +693,51 @@ app.get("/report-ready", (req, res) => {
 
 // --- Serves a generated report HTML web view.
 // Also patches old reports that still have the broken PDF download banner/link.
-app.get("/api/report/:reportId/view", (req, res) => {
+app.get("/api/report/:reportId/view", async (req, res) => {
   const reportId = req.params.reportId;
   const htmlPath = path.join(REPORTS_DIR, `${reportId}.html`);
+
+  // If HTML missing (Render restart wiped disk), try to regenerate it
   if (!fs.existsSync(htmlPath)) {
-    return res.status(404).send("Report not found.");
+    let reportDataForRegen = null;
+
+    // 1) Try local orders.json first
+    const localOrder = getOrderByReportId(reportId);
+    if (localOrder?.reportData) {
+      reportDataForRegen = localOrder.reportData;
+    }
+
+    // 2) Fallback to Google Sheets
+    if (!reportDataForRegen) {
+      try {
+        const sheetRecord = await getReportDataFromSheet(reportId);
+        if (sheetRecord?.reportData) reportDataForRegen = sheetRecord.reportData;
+      } catch (e) {
+        console.error(`[view] Sheets lookup failed:`, e.message);
+      }
+    }
+
+    if (reportDataForRegen) {
+      try {
+        const { buildReportHtml } = require("./services/reportHtml");
+        const html = buildReportHtml(reportDataForRegen);
+        fs.writeFileSync(htmlPath, html);
+        console.log(`[view] Regenerated HTML for ${reportId}`);
+      } catch (e) {
+        console.error(`[view] Regeneration failed:`, e.message);
+        return res.status(500).send("Could not load report. Please contact support@knowyourpresence.com with your Report ID: " + reportId);
+      }
+    } else {
+      return res.status(404).send(`
+        <html><body style="font-family:sans-serif;padding:40px;text-align:center">
+          <h2>Report Temporarily Unavailable</h2>
+          <p>Report ID: <strong>${reportId}</strong></p>
+          <p>Please click <strong>"Send PDF to Email"</strong> from your original email, or contact <a href="mailto:support@knowyourpresence.com">support@knowyourpresence.com</a></p>
+        </body></html>
+      `);
+    }
   }
+
   res.setHeader("Content-Type", "text/html; charset=utf-8");
 
   let html = fs.readFileSync(htmlPath, "utf8");
