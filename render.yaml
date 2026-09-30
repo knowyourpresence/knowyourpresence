@@ -13,10 +13,14 @@ services:
         value: 10000
 
       # ── Payments ──────────────────────────────────────────────────────────────
-      - key: DODO_SECRET_KEY
+      - key: DODO_PAYMENTS_API_KEY
+        sync: false
+      - key: DODO_PRODUCT_ID
         sync: false
       - key: DODO_WEBHOOK_SECRET
         sync: false
+      - key: DODO_ENVIRONMENT
+        value: live_mode
 
       # ── Email (Resend) ────────────────────────────────────────────────────────
       - key: RESEND_API_KEY
