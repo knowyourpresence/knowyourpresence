@@ -962,20 +962,22 @@ app.get("/admin", requireAdmin, (req, res) => {
 app.get("/health", (req, res) => res.json({ status: "ok", ts: Date.now() }));
 
 // Env diagnostics (owner-only — only shows which keys are set, never the values)
-app.get("/api/debug/env", (req, res) => {
+app.get("/api/debug/env", requireAdmin, (req, res) => {
   const keys = [
-    "FACEBOOK_APP_TOKEN",
-    "GOOGLE_MAPS_API_KEY",
     "GOOGLE_PLACES_API_KEY",
-    "YOUTUBE_API_KEY",
+    "ANTHROPIC_API_KEY",
     "RESEND_API_KEY",
-    "DODO_PAYMENTS_API_KEY",
+    "DODO_SECRET_KEY",
     "DODO_WEBHOOK_SECRET",
-    "OPENAI_API_KEY",
     "OWNER_EMAIL",
+    "PUBLIC_BASE_URL",
     "META_ADS_ACCESS_TOKEN",
     "APIFY_API_TOKEN",
+    "URLSCAN_API_KEY",
     "BREVO_API_KEY",
+    "GOOGLE_SHEET_ID",
+    "GOOGLE_SERVICE_ACCOUNT_JSON",
+    "ADMIN_PASSWORD",
   ];
   const status = {};
   for (const k of keys) {

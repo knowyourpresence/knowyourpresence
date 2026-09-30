@@ -10,13 +10,15 @@
 
 const axios = require("axios");
 
-const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+// NOTE: read from process.env at call time (not module load time) so the key
+// is picked up even if set after the process started / module was cached.
 const MODEL = "claude-haiku-4-5-20251001";
 const MAX_TOKENS = 600;
 
 // ─── Core Claude caller ───────────────────────────────────────────────────────
 
 async function askClaude(prompt) {
+  const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
   if (!ANTHROPIC_KEY) return null;
   try {
     const { data } = await axios.post(
