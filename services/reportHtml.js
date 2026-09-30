@@ -602,7 +602,7 @@ section:last-child{border-bottom:none}
     <div class="section-tag">02 — Opportunities</div>
     <div class="section-title">Where to Win</div>
     <div class="narrative" style="margin-bottom:28px">
-      ${renderTextBlock(getInsightText(ai.seoContent) || getInsightText(ai.narrative), 'Identifying key opportunities to improve your digital presence.')}
+      ${renderTextBlock(getInsightText(ai.narrative), 'Identifying key opportunities to improve your digital presence.')}
     </div>
     <div style="font-size:13px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Priority Opportunities</div>
     <ul class="priority-list">
@@ -612,13 +612,13 @@ section:last-child{border-bottom:none}
 
   <!-- 03 AI VISIBILITY -->
   <section id="ai">
-    <div class="section-tag">03 — AI Visibility</div>
-    <div class="section-title">AI &amp; Search Presence</div>
-    <div class="ai-badge">✦ Powered by All AI's</div>
+    <div class="section-tag">03 — AI Analysis</div>
+    <div class="section-title">AI-Powered Insights</div>
+    <div class="ai-badge">✦ Powered by Claude AI</div>
 
     <div style="margin-bottom:28px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:8px">Narrative Analysis</div>
-      <div class="narrative">${renderTextBlock(getInsightText(ai.narrative), 'AI visibility analysis not available.')}</div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">Your Digital Health Summary</div>
+      <div class="narrative">${renderTextBlock(getInsightText(ai.narrative), 'AI analysis not available.')}</div>
     </div>
 
     ${getInsightText(ai.seoContent) ? `
@@ -642,35 +642,7 @@ section:last-child{border-bottom:none}
     ${getInsightText(ai.competitor) ? `
     <div class="narrative" style="margin-bottom:28px">
       ${renderTextBlock(getInsightText(ai.competitor))}
-    </div>` : ''}
-
-    ${comp && Object.keys(comp).length > 0 ? `
-    <table class="comp-table">
-      <thead>
-        <tr>
-          <th>Metric</th>
-          <th>You (${esc(data.businessName)})</th>
-          <th>Competitor</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${(() => {
-          const rows = [];
-          const keys = ['name','rating','reviewCount','website','googleScore','socialScore'];
-          keys.forEach(k => {
-            const cv = comp[k];
-            if (cv !== undefined && cv !== null) {
-              const myVal = k === 'rating' ? (scan.rating || '—') : k === 'reviewCount' ? (reviewCount || '—') : k === 'name' ? data.businessName : '—';
-              rows.push(`<tr><td>${esc(k.replace(/([A-Z])/g,' $1').trim())}</td><td class="you">${esc(String(myVal))}</td><td>${esc(String(cv))}</td></tr>`);
-            }
-          });
-          if (rows.length === 0) {
-            rows.push(`<tr><td colspan="3" style="color:var(--muted);font-style:italic">Competitor data not available.</td></tr>`);
-          }
-          return rows.join('');
-        })()}
-      </tbody>
-    </table>` : `<div style="color:var(--muted);font-style:italic">Competitor data not available.</div>`}
+    </div>` : `<div class="narrative" style="color:var(--muted);font-style:italic">Competitor analysis not available for this business type.</div>`}
   </section>
 
   <!-- 05 WEBSITE & REPUTATION -->
