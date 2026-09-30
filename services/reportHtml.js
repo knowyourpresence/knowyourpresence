@@ -601,25 +601,17 @@ section:last-child{border-bottom:none}
   <section id="opportunities">
     <div class="section-tag">02 — Opportunities</div>
     <div class="section-title">Where to Win</div>
-    <div class="narrative" style="margin-bottom:28px">
-      ${renderTextBlock(getInsightText(ai.narrative), 'Identifying key opportunities to improve your digital presence.')}
-    </div>
     <div style="font-size:13px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Priority Opportunities</div>
     <ul class="priority-list">
-      ${renderPriorityItems(getInsightText(ai.priorityPlan) || getInsightText(ai.narrative))}
+      ${renderPriorityItems(getInsightText(ai.priorityPlan))}
     </ul>
   </section>
 
-  <!-- 03 AI VISIBILITY -->
+  <!-- 03 AI ANALYSIS -->
   <section id="ai">
     <div class="section-tag">03 — AI Analysis</div>
     <div class="section-title">AI-Powered Insights</div>
     <div class="ai-badge">✦ Powered by Claude AI</div>
-
-    <div style="margin-bottom:28px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:8px">Your Digital Health Summary</div>
-      <div class="narrative">${renderTextBlock(getInsightText(ai.narrative), 'AI analysis not available.')}</div>
-    </div>
 
     ${getInsightText(ai.seoContent) ? `
     <div style="margin-bottom:28px">
