@@ -858,16 +858,29 @@ app.post("/api/report/:reportId/resend-pdf", async (req, res) => {
   const htmlPath = path.join(REPORTS_DIR, `${reportId}.html`);
   const pdfPath  = path.join(REPORTS_DIR, `${reportId}.pdf`);
 
+  const order = getOrderByReportId(reportId);
+  const customerEmail = order?.email || null;
+  const businessName = order?.businessName || reportId;
+
+  // If HTML missing from disk (Render restart wiped it), regenerate it from order data
   if (!fs.existsSync(htmlPath)) {
-    return res.status(404).json({ ok: false, error: "Report not found." });
+    if (!order) {
+      return res.status(404).json({ ok: false, error: "Report not found. Please contact support@knowyourpresence.com with your Report ID." });
+    }
+    try {
+      const { buildReportHtml } = require("./services/reportHtml");
+      const html = buildReportHtml(order.reportData || order);
+      fs.writeFileSync(htmlPath, html);
+      console.log(`[resend-pdf] Regenerated HTML from order data for ${reportId}`);
+    } catch (e) {
+      console.error(`[resend-pdf] Could not regenerate HTML:`, e.message);
+      return res.status(500).json({ ok: false, error: "Could not regenerate report. Please contact support@knowyourpresence.com" });
+    }
   }
 
   // Respond immediately so the browser doesn't time out — PDF generation
   // takes 60–90s on Render free tier. Process in background and email when done.
   res.json({ ok: true, message: "PDF is being generated and will arrive in your email within 2 minutes." });
-
-  const order = getOrderByReportId(reportId);
-  const customerEmail = order?.email || null;
 
   // Background generation — don't await
   (async () => {
@@ -913,7 +926,6 @@ app.post("/api/report/:reportId/resend-pdf", async (req, res) => {
       const ownerEmail = process.env.OWNER_EMAIL || "support@knowyourpresence.com";
       if (!recipients.includes(ownerEmail)) recipients.push(ownerEmail);
 
-      const businessName = order?.businessName || reportId;
       await resendClient.emails.send({
         from: "Know Your Presence <reports@knowyourpresence.com>",
         to: recipients,
