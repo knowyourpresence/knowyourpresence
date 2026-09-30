@@ -343,36 +343,68 @@ section:last-child{border-bottom:none}
   #sidebar,#topbar,#hamburger,#overlay,.export-bar,.sb-bottom,button{display:none!important}
 
   /* Layout */
-  body{background:var(--bg)!important;display:block!important}
-  #main{margin-left:0!important;padding:0!important;display:block!important}
+  html,body{margin:0!important;padding:0!important;background:#f5f2ec!important;display:block!important;width:100%!important}
+  #main{margin-left:0!important;margin:0!important;padding:0!important;display:block!important;width:100%!important;min-height:unset!important}
 
-  /* Page settings */
-  @page{margin:12mm 14mm;size:A4}
+  /* Page — small margins */
+  @page{margin:10mm 12mm;size:A4}
 
-  /* Sections */
-  section{padding:32px 24px;page-break-inside:avoid;break-inside:avoid}
-  .hero{margin:-32px -24px 24px;padding:32px 24px}
+  /* Sections — compact, natural flow */
+  section{padding:18px 24px 14px!important;margin-bottom:6px!important;border-bottom:none!important;page-break-inside:auto;break-inside:auto;display:block!important}
 
-  /* Cards keep colors */
-  .card,.phase-card,.priority-list li,.review-card,.refund-box{
-    background:var(--card-bg)!important;
-    border:1px solid var(--border)!important;
-    page-break-inside:avoid;break-inside:avoid
-  }
+  /* KEY FIX: headings stay glued to their first content line */
+  .section-tag{color:#1f6b45!important;page-break-after:avoid!important;break-after:avoid!important;display:block!important}
+  .section-title{font-size:20px!important;page-break-after:avoid!important;break-after:avoid!important;display:block!important;margin-bottom:10px!important}
+  div[style*="font-size:13px"][style*="font-weight:600"]{page-break-after:avoid!important;break-after:avoid!important}
 
-  /* Score bars keep color */
-  .bar-fill{print-color-adjust:exact!important}
+  /* Hero — navy background */
+  .hero{background:#152030!important;color:#fff!important;margin:0 0 14px!important;padding:24px!important;display:block!important}
+  .hero-tag{color:#1f6b45!important}
+  .hero-name{color:#fff!important;font-size:26px!important}
+  .hero-city{color:rgba(255,255,255,0.6)!important}
+  .hero-score{color:#fff!important;font-size:48px!important}
+  .hero-grade{color:rgba(255,255,255,0.6)!important}
+  .hero-date{color:rgba(255,255,255,0.4)!important}
 
-  /* Hero navy background must print */
-  .hero{background:#152030!important;color:#fff!important}
+  /* Cards */
+  .card{background:#fff!important;border:1px solid #e2ddd6!important;border-radius:8px!important;page-break-inside:avoid;break-inside:avoid}
+  .card-grid{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:10px!important;margin-bottom:14px!important}
 
-  /* Fonts stay crisp */
-  body{font-size:13px}
-  .section-title{font-size:24px}
-  .hero-score{font-size:56px}
-  .hero-name{font-size:30px}
+  /* Score bars */
+  .bar-fill{display:block!important;print-color-adjust:exact!important}
+  .bar-wrap{background:#e2ddd6!important;display:block!important}
+  .score-row{page-break-inside:avoid!important;break-inside:avoid!important}
 
-  /* Print header on each page */
+  /* Priority list — items stay together, list itself can page-break */
+  .priority-list{display:block!important;page-break-inside:auto!important;break-inside:auto!important}
+  .priority-list li{display:flex!important;background:#fff!important;border:1px solid #e2ddd6!important;margin-bottom:6px!important;page-break-inside:avoid!important;break-inside:avoid!important}
+
+  /* Phase grid */
+  .phase-grid{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:10px!important}
+  .phase-card{background:#fff!important;border:1px solid #e2ddd6!important;page-break-inside:avoid;break-inside:avoid}
+
+  /* Reviews */
+  .review-card{background:#fff!important;border:1px solid #e2ddd6!important;page-break-inside:avoid;break-inside:avoid;margin-bottom:8px!important}
+
+  /* Comparison table */
+  .comp-table th,.comp-table td{border-bottom:1px solid #e2ddd6!important}
+  .comp-table .you{color:#1f6b45!important}
+  .comp-table tr{page-break-inside:avoid!important;break-inside:avoid!important}
+
+  /* Narrative paragraphs */
+  .narrative p{page-break-inside:avoid!important;break-inside:avoid!important;orphans:3;widows:3}
+
+  /* Weight badges */
+  .weight-badge{background:rgba(31,107,69,0.12)!important;color:#1f6b45!important}
+
+  /* Refund box */
+  .refund-box{background:#fff!important;border:1px solid #e2ddd6!important;border-left:4px solid #1f6b45!important;page-break-inside:avoid!important;break-inside:avoid!important}
+  .refund-box strong{color:#1f6b45!important}
+
+  /* AI badge */
+  .ai-badge{background:linear-gradient(135deg,#1f6b45,#152030)!important;color:#fff!important}
+
+  /* Print header */
   #print-header{display:flex!important}
 }
 </style>

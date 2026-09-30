@@ -724,43 +724,76 @@ app.get("/api/report/:reportId/view", (req, res) => {
   html,body{margin:0!important;padding:0!important;background:#f5f2ec!important;display:block!important;width:100%!important}
   #main{margin-left:0!important;margin:0!important;padding:0!important;display:block!important;width:100%!important;min-height:unset!important}
 
-  /* Page */
-  @page{margin:0;size:A4}
+  /* Page — small margins so content breathes */
+  @page{margin:10mm 12mm;size:A4}
 
-  /* Sections — allow natural flow, no forced breaks */
-  section{padding:24px 28px!important;border-bottom:1px solid #e2ddd6!important;page-break-inside:auto;break-inside:auto;display:block!important}
+  /* Sections — small top padding, modest bottom gap, allow natural flow */
+  section{
+    padding:18px 24px 14px!important;
+    margin-bottom:6px!important;
+    border-bottom:none!important;
+    page-break-inside:auto;break-inside:auto;
+    display:block!important
+  }
+
+  /* ── KEY FIX: keep section-tag + section-title glued to first content line ── */
+  /* page-break-after:avoid on a heading means the browser will NOT break right  */
+  /* after it — it must keep at least one line of following content with it.      */
+  .section-tag{
+    color:#1f6b45!important;
+    page-break-after:avoid!important;
+    break-after:avoid!important;
+    display:block!important
+  }
+  .section-title{
+    font-size:20px!important;
+    page-break-after:avoid!important;
+    break-after:avoid!important;
+    display:block!important;
+    margin-bottom:10px!important
+  }
+  /* Also keep any div that directly precedes a list/grid from orphaning */
+  div[style*="font-size:13px"][style*="font-weight:600"]{
+    page-break-after:avoid!important;break-after:avoid!important
+  }
 
   /* Hero — full dark background */
-  .hero{background:#152030!important;color:#fff!important;margin:0!important;padding:28px!important;display:block!important}
+  .hero{background:#152030!important;color:#fff!important;margin:0 0 14px!important;padding:24px!important;display:block!important}
   .hero-tag{color:#1f6b45!important}
-  .hero-name{color:#fff!important;font-size:28px!important}
+  .hero-name{color:#fff!important;font-size:26px!important}
   .hero-city{color:rgba(255,255,255,0.6)!important}
-  .hero-score{color:#fff!important;font-size:52px!important}
+  .hero-score{color:#fff!important;font-size:48px!important}
   .hero-grade{color:rgba(255,255,255,0.6)!important}
   .hero-date{color:rgba(255,255,255,0.4)!important}
 
   /* Cards */
   .card{background:#fff!important;border:1px solid #e2ddd6!important;border-radius:8px!important;page-break-inside:avoid;break-inside:avoid}
-  .card-grid{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:12px!important}
+  .card-grid{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:10px!important;margin-bottom:14px!important}
 
   /* Score bars keep color */
   .bar-fill{display:block!important}
   .bar-wrap{background:#e2ddd6!important;display:block!important}
 
-  /* Priority list */
-  .priority-list{display:block!important}
-  .priority-list li{display:flex!important;background:#fff!important;border:1px solid #e2ddd6!important;margin-bottom:8px!important;page-break-inside:avoid;break-inside:avoid}
+  /* Score rows */
+  .score-row{page-break-inside:avoid!important;break-inside:avoid!important}
+
+  /* Priority list — keep each item together, but list itself can break across pages */
+  .priority-list{display:block!important;page-break-inside:auto!important;break-inside:auto!important}
+  .priority-list li{
+    display:flex!important;
+    background:#fff!important;
+    border:1px solid #e2ddd6!important;
+    margin-bottom:6px!important;
+    page-break-inside:avoid!important;
+    break-inside:avoid!important
+  }
 
   /* Phase cards */
-  .phase-grid{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:12px!important}
+  .phase-grid{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:10px!important}
   .phase-card{background:#fff!important;border:1px solid #e2ddd6!important;page-break-inside:avoid;break-inside:avoid}
 
   /* Review cards */
-  .review-card{background:#fff!important;border:1px solid #e2ddd6!important;page-break-inside:avoid;break-inside:avoid}
-
-  /* Section headings */
-  .section-tag{color:#1f6b45!important}
-  .section-title{font-size:22px!important}
+  .review-card{background:#fff!important;border:1px solid #e2ddd6!important;page-break-inside:avoid;break-inside:avoid;margin-bottom:8px!important}
 
   /* Weight badges */
   .weight-badge{background:rgba(31,107,69,0.12)!important;color:#1f6b45!important}
@@ -768,12 +801,16 @@ app.get("/api/report/:reportId/view", (req, res) => {
   /* Comparison table */
   .comp-table th,.comp-table td{border-bottom:1px solid #e2ddd6!important}
   .comp-table .you{color:#1f6b45!important}
+  .comp-table tr{page-break-inside:avoid!important;break-inside:avoid!important}
+
+  /* Narrative text — keep paragraphs together where possible */
+  .narrative p{page-break-inside:avoid!important;break-inside:avoid!important;orphans:3;widows:3}
 
   /* Print header */
-  #print-header{display:flex!important;background:#152030!important;color:#fff!important;padding:10px 28px!important;align-items:center!important;justify-content:space-between!important}
+  #print-header{display:flex!important;background:#152030!important;color:#fff!important;padding:8px 24px!important;align-items:center!important;justify-content:space-between!important}
 
   /* Refund box */
-  .refund-box{background:#fff!important;border:1px solid #e2ddd6!important;border-left:4px solid #1f6b45!important}
+  .refund-box{background:#fff!important;border:1px solid #e2ddd6!important;border-left:4px solid #1f6b45!important;page-break-inside:avoid!important;break-inside:avoid!important}
   .refund-box strong{color:#1f6b45!important}
 
   /* AI badge */
