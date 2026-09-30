@@ -31,6 +31,14 @@ function getGrade(score) {
   return 'D';
 }
 
+function getGradeLabel(score) {
+  if (score >= 90) return 'Excellent — Top-tier online presence';
+  if (score >= 80) return 'Strong — Well established online';
+  if (score >= 70) return 'Good — Solid, but clear room to improve';
+  if (score >= 60) return 'Average — Several important gaps found';
+  return 'Needs Work — Significant gaps holding you back';
+}
+
 function scoreColor(score) {
   if (score >= 75) return '#1f6b45';
   if (score >= 50) return '#d97706';
@@ -493,6 +501,7 @@ section:last-child{border-bottom:none}
         <div class="hero-score" style="color:${esc(ringColor)}">${overall}</div>
         <div class="hero-grade">${grade}</div>
       </div>
+      <div style="font-size:14px;font-weight:600;color:${esc(ringColor)};margin-bottom:4px">${getGradeLabel(overall)}</div>
       <div style="font-size:13px;color:rgba(255,255,255,.4);margin-bottom:4px">Overall Digital Presence Score</div>
       <div class="hero-date">Report Date: ${esc(data.reportDate)}</div>
     </div>
@@ -568,7 +577,8 @@ section:last-child{border-bottom:none}
     <div class="card" style="margin-top:28px;background:var(--card-bg)">
       <div class="card-label">Weighted Overall</div>
       <div class="card-value" style="color:${ringColor};font-size:40px">${overall} <span style="font-size:20px;color:var(--muted)">${grade}</span></div>
-      <div class="card-sub" style="margin-top:8px;font-size:12px;line-height:1.6">
+      <div style="margin-top:6px;font-size:13px;font-weight:600;color:${ringColor}">${getGradeLabel(overall)}</div>
+      <div class="card-sub" style="margin-top:6px;font-size:12px;line-height:1.6">
         Formula: (Google × 0.35) + (Social × 0.25) + (Website × 0.20) + (Reputation × 0.20)
       </div>
     </div>
