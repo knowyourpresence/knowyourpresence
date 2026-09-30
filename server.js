@@ -16,7 +16,7 @@ const { calculateOverallScore, projectPotentialScore } = require("./services/sco
 const { generateActionPlan } = require("./services/actionPlan");
 const { getPrice, REPORT_PRICE_USD, REPORT_CURRENCY } = require("./services/pricing");
 const { createCheckoutSession, verifyWebhookSignature } = require("./services/dodo");
-const { saveOrder, getAllOrders, getOrderByReportId, getOrdersByCountry } = require("./services/orders");
+const { saveOrder, getAllOrders, getOrderByReportId, getOrdersByCountry, updateOrderByReportId } = require("./services/orders");
 const { sendCustomerConfirmation, sendOwnerNotification } = require("./services/email");
 const { generateReportPdf, generateToolkitZip, makeReportId, REPORTS_DIR } = require("./services/reportPdf");
 const { generateWebReport } = require("./services/reportHtml");
@@ -516,6 +516,19 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
         console.log("[webhook] Web report saved:", webReportUrl);
       })().catch((e) => console.error("[webhook] Web report generation FAILED:", e.message)),
     ]);
+
+    // Persist full reportData into the order record so resend-pdf can
+    // regenerate the HTML after a Render restart wipes the disk.
+    try {
+      updateOrderByReportId(reportId, {
+        city: reportData.city,
+        scores: reportData.scores,
+        businessType: reportData.businessType,
+        reportData,  // full object for HTML regeneration
+      });
+    } catch (e) {
+      console.error("[webhook] updateOrderByReportId failed (non-blocking):", e.message);
+    }
 
     // Email sends only the PDF — the web report is shown immediately after
     // payment via the /report-ready loading page, not linked in the email.

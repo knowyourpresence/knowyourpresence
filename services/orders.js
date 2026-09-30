@@ -71,4 +71,17 @@ function getOrdersByCountry() {
   return counts;
 }
 
-module.exports = { saveOrder, getAllOrders, getOrderByReportId, getOrdersByCountry };
+/**
+ * Updates an existing order by reportId, merging in extra fields.
+ * Used after report generation to store reportData for PDF regeneration.
+ */
+function updateOrderByReportId(reportId, extraFields) {
+  const orders = readOrders();
+  const idx = orders.findIndex(o => o.reportId === reportId);
+  if (idx === -1) return null;
+  orders[idx] = { ...orders[idx], ...extraFields };
+  writeOrders(orders);
+  return orders[idx];
+}
+
+module.exports = { saveOrder, getAllOrders, getOrderByReportId, getOrdersByCountry, updateOrderByReportId };
