@@ -132,9 +132,17 @@ async function addBrevoContact({ email, businessName, city, scores, reportId, gr
   const trackEmails = TRACKS[track] || TRACKS.google;
   const delays = { day7: 7, day14: 14, day30: 30 };
 
+  // NOTE: setTimeout is used here for simplicity but will NOT survive a server
+  // restart (Render deploys reset all in-memory timers). For production reliability,
+  // move drip scheduling to Brevo's native campaign scheduler or a cron job.
+  // Max safe setTimeout delay = 2^31 - 1 ms ≈ 24.8 days, so day30 is capped.
+  const MAX_TIMEOUT_MS = 2147483647; // 2^31 - 1
+
   for (const [key, delayDays] of Object.entries(delays)) {
     const email_content = trackEmails[key];
     if (!email_content) continue;
+
+    const delayMs = Math.min(delayDays * 24 * 60 * 60 * 1000, MAX_TIMEOUT_MS);
 
     setTimeout(async () => {
       try {
@@ -142,7 +150,7 @@ async function addBrevoContact({ email, businessName, city, scores, reportId, gr
       } catch (e) {
         console.error(`Brevo drip ${key} failed for ${email}:`, e.message);
       }
-    }, delayDays * 24 * 60 * 60 * 1000);
+    }, delayMs);
 
     console.log(`Brevo: scheduled ${key} email for ${email} in ${delayDays} days`);
   }

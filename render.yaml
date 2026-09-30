@@ -3,7 +3,7 @@ services:
     name: know-your-presence
     env: node
     plan: free
-    buildCommand: npm install
+    buildCommand: npm install && node node_modules/puppeteer/install.mjs
     startCommand: npm start
     healthCheckPath: /health
     envVars:
