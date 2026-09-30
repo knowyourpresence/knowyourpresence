@@ -349,8 +349,9 @@ section:last-child{border-bottom:none}
   /* Page — small margins */
   @page{margin:10mm 12mm;size:A4}
 
-  /* Sections — compact, natural flow */
-  section{padding:18px 24px 14px!important;margin-bottom:6px!important;border-bottom:none!important;page-break-inside:auto;break-inside:auto;display:block!important}
+  /* Sections — compact padding, clear visual gap between topics */
+  section{padding:14px 24px 10px!important;margin:0 0 10px!important;border-bottom:2px solid #e2ddd6!important;page-break-inside:auto;break-inside:auto;display:block!important}
+  section:last-child{border-bottom:none!important}
 
   /* KEY FIX: headings stay glued to their first content line */
   .section-tag{color:#1f6b45!important;page-break-after:avoid!important;break-after:avoid!important;display:block!important}

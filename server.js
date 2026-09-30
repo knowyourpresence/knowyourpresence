@@ -727,14 +727,15 @@ app.get("/api/report/:reportId/view", (req, res) => {
   /* Page — small margins so content breathes */
   @page{margin:10mm 12mm;size:A4}
 
-  /* Sections — small top padding, modest bottom gap, allow natural flow */
+  /* Sections — compact padding, clear visual gap between topics */
   section{
-    padding:18px 24px 14px!important;
-    margin-bottom:6px!important;
-    border-bottom:none!important;
+    padding:14px 24px 10px!important;
+    margin:0 0 10px!important;
+    border-bottom:2px solid #e2ddd6!important;
     page-break-inside:auto;break-inside:auto;
     display:block!important
   }
+  section:last-child{border-bottom:none!important}
 
   /* ── KEY FIX: keep section-tag + section-title glued to first content line ── */
   /* page-break-after:avoid on a heading means the browser will NOT break right  */

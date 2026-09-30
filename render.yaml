@@ -11,23 +11,54 @@ services:
         value: production
       - key: PORT
         value: 10000
+
+      # ── Payments ──────────────────────────────────────────────────────────────
+      - key: DODO_SECRET_KEY
+        sync: false
+      - key: DODO_WEBHOOK_SECRET
+        sync: false
+
+      # ── Email (Resend) ────────────────────────────────────────────────────────
       - key: RESEND_API_KEY
         sync: false
       - key: EMAIL_FROM
         value: reports@knowyourpresence.com
       - key: OWNER_EMAIL
         sync: false
+
+      # ── Site config ───────────────────────────────────────────────────────────
       - key: PUBLIC_BASE_URL
         sync: false
       - key: ADMIN_PASSWORD
         sync: false
+
+      # ── Google Places API (business data, ratings, reviews) ───────────────────
+      # Enable "Places API (New)" in Google Cloud Console
+      - key: GOOGLE_PLACES_API_KEY
+        sync: false
+
+      # ── AI Insights (Claude — 6 report modules) ───────────────────────────────
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+      # ── Apify (web scraping: reviews, social, website crawl) ─────────────────
       - key: APIFY_API_TOKEN
         sync: false
+
+      # ── URLScan (website security scan) ──────────────────────────────────────
       - key: URLSCAN_API_KEY
         sync: false
+
+      # ── Meta Ads Intelligence ─────────────────────────────────────────────────
       - key: META_ADS_ACCESS_TOKEN
         sync: false
-      - key: DODO_SECRET_KEY
+
+      # ── Brevo (90-day email drip sequence) ───────────────────────────────────
+      - key: BREVO_API_KEY
         sync: false
-      - key: DODO_WEBHOOK_SECRET
+
+      # ── Google Sheets CRM (order logging) ────────────────────────────────────
+      - key: GOOGLE_SHEET_ID
+        sync: false
+      - key: GOOGLE_SERVICE_ACCOUNT_JSON
         sync: false
