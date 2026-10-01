@@ -141,10 +141,18 @@ function generateWebReport(data) {
 
   function renderPriorityItems(text) {
     if (!text) return '<li>Data not available.</li>';
-    const lines = text.split('\n').filter(l => l.trim()).slice(0, 7);
+    const lines = text.split('\n')
+      .filter(l => l.trim())
+      // Skip section headers like "WEEK 1 —", "WEEK 2 —", lines ending with ":"
+      .filter(l => !/^(WEEK\s*\d|DAY\s*\d|PHASE\s*\d|MONTH\s*\d)/i.test(l.trim()))
+      .filter(l => !l.trim().match(/^[A-Z\s\d—–-]{5,}:?\s*$/))
+      // Must start with a bullet/number or have actual content
+      .filter(l => l.trim().length > 10)
+      .slice(0, 7);
+    if (!lines.length) return '<li>Data not available.</li>';
     return lines.map((l, i) => {
       // Strip leading markdown list markers and bold markers for clean display
-      const clean = l.replace(/^[\d\.\-\*#]+\s*/, '').replace(/\*\*(.+?)\*\*/g, '$1');
+      const clean = l.replace(/^[\d\.\-\*#]+\s*/, '').replace(/\*\*(.+?)\*\*/g, '$1').trim();
       return `<li><span class="num">${String(i+1).padStart(2,'0')}</span>${esc(clean)}</li>`;
     }).join('');
   }
