@@ -607,7 +607,10 @@ src="https://www.facebook.com/tr?id=2039576636673482&ev=PageView&noscript=1"
             </div>
             <div class="scan-field">
               <label>Competitor to benchmark <span style="font-size:10px;color:var(--ink3);font-weight:400">optional</span></label>
-              <input class="scan-input" type="text" id="competitorInput" placeholder="e.g. a stronger competitor in your market"/>
+              <div style="position:relative">
+                <input class="scan-input" type="text" id="competitorInput" placeholder="e.g. a stronger competitor in your market" autocomplete="off"/>
+                <div id="competitorDropdown" class="biz-dropdown"></div>
+              </div>
             </div>
             <div class="scan-grid-2">
               <div class="scan-field">
@@ -1073,6 +1076,65 @@ window.onMapsLoaded = async function() {
   bizInput.addEventListener('blur', () => {
     setTimeout(() => dropdown.classList.remove('open'), 200);
   });
+
+  // ── Competitor autocomplete ──────────────────────────────────────────────
+  const compInput = document.getElementById('competitorInput');
+  const compDropdown = document.getElementById('competitorDropdown');
+  let compDebounce = null;
+
+  compInput.addEventListener('input', () => {
+    clearTimeout(compDebounce);
+    const q = compInput.value.trim();
+    if (q.length < 3) { compDropdown.classList.remove('open'); return; }
+    compDebounce = setTimeout(() => searchCompetitorPlaces(q), 350);
+  });
+
+  compInput.addEventListener('blur', () => {
+    setTimeout(() => compDropdown.classList.remove('open'), 200);
+  });
+
+  async function searchCompetitorPlaces(query) {
+    const cityVal = document.getElementById('cityInput').value.trim();
+    const countryVal = document.getElementById('countryInput').value || 'US';
+    const countryMap = { US:'us', GB:'gb', CA:'ca', AU:'au', NZ:'nz', IN:'in' };
+    const cc = countryMap[countryVal] || null;
+
+    compDropdown.innerHTML = '<div class="biz-searching">Searching…</div>';
+    compDropdown.classList.add('open');
+
+    try {
+      const { AutocompleteSuggestion } = await google.maps.importLibrary('places');
+      const request = {
+        input: query + (cityVal ? ' ' + cityVal : ''),
+        includedPrimaryTypes: ['establishment'],
+      };
+      if (cc) request.includedRegionCodes = [cc];
+
+      const { suggestions } = await AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
+
+      compDropdown.innerHTML = '';
+      if (!suggestions || suggestions.length === 0) {
+        compDropdown.classList.remove('open'); return;
+      }
+
+      suggestions.slice(0, 6).forEach((s) => {
+        const p = s.placePrediction;
+        const main = p.mainText?.toString() || p.text?.toString() || '';
+        const secondary = p.secondaryText?.toString() || '';
+        const div = document.createElement('div');
+        div.className = 'biz-option';
+        div.innerHTML = `<strong>${main}</strong><span>${secondary}</span>`;
+        div.addEventListener('mousedown', () => {
+          compInput.value = main;
+          compDropdown.classList.remove('open');
+        });
+        compDropdown.appendChild(div);
+      });
+    } catch(e) {
+      console.warn('Competitor places search error:', e);
+      compDropdown.classList.remove('open');
+    }
+  }
 
   async function searchPlaces(query) {
     const cityVal = document.getElementById('cityInput').value.trim();
