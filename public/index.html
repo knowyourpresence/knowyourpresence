@@ -357,7 +357,7 @@ footer{background:var(--navy);border-top:1px solid rgba(255,255,255,0.07);paddin
 }
 </style>
 
-<!-- Meta Pixel — replace YOUR_PIXEL_ID with your actual Pixel ID from Events Manager -->
+<!-- Meta Pixel — replace 2039576636673482 with your actual Pixel ID from Events Manager -->
 <script>
 !function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -367,11 +367,11 @@ n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];
 s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', 'YOUR_PIXEL_ID');
+fbq('init', '2039576636673482');
 fbq('track', 'PageView');
 </script>
 <noscript><img height="1" width="1" style="display:none"
-src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1"
+src="https://www.facebook.com/tr?id=2039576636673482&ev=PageView&noscript=1"
 /></noscript>
 <!-- End Meta Pixel -->
 </head>
@@ -1168,6 +1168,8 @@ document.getElementById('runBtn').addEventListener('click',async()=>{
     }
     if(!res.ok)throw new Error(data.message||data.error||'Scan failed');
     showResults(data,biz);
+    // Meta Pixel — Lead event (free scan completed)
+    if(typeof fbq!=='undefined') fbq('track','Lead',{content_name:'Free Scan',content_category:'Presence Audit'});
   }catch(e){
     err.hidden=false;err.textContent=e.message||'Scan failed. Please try again.';
     btn.disabled=false;btn.textContent='Run my FREE scan →';
@@ -1320,6 +1322,8 @@ function showResults(data,bizName){
     btn.textContent = 'Preparing checkout…';
     btn.style.opacity = '0.7';
     btn.style.pointerEvents = 'none';
+    // Meta Pixel — InitiateCheckout event
+    if(typeof fbq!=='undefined') fbq('track','InitiateCheckout',{value:129,currency:'USD',content_name:'Full Presence Report'});
     try {
       const scanData = JSON.parse(btn.dataset.scanData);
       const res = await fetch('/api/checkout/create-session', {
