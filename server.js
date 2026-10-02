@@ -21,13 +21,14 @@ const { sendCustomerConfirmation, sendOwnerNotification } = require("./services/
 const { generateReportPdf, generateToolkitZip, makeReportId, REPORTS_DIR } = require("./services/reportPdf");
 const { generateWebReport } = require("./services/reportHtml");
 const { scanRateLimit, hasEmailScanned, recordEmailScan } = require("./services/rateLimit");
-const { saveLead, markConverted, getAllLeads, getLeadStats, getPublicScanCount } = require("./services/leads");
+const { saveLead, markConverted, markCheckoutStarted, getAllLeads, getLeadStats, getPublicScanCount } = require("./services/leads");
 const { runApifyEnrichment } = require("./services/apify");
 const { scanUrl: urlScanUrl } = require("./services/urlscan");
 const { pushScanRecord, pushLeadRecord } = require("./services/coupler");
 const { runAdIntelligence } = require("./services/metaAds");
 const { generateAllInsights } = require("./services/aiInsights"); // ← AI Insights (6 modules)
 const { startFollowUpJob } = require("./services/followUpJob");   // ← 24h upsell follow-up
+const { startAbandonedCheckoutJob } = require("./services/abandonedCheckoutJob"); // ← 1h abandoned checkout
 const { logOrderToSheet, saveReportDataToSheet, getReportDataFromSheet } = require("./services/googleSheets");   // ← Google Sheets CRM
 const { addBrevoContact } = require("./services/brevo");          // ← 90-day drip sequence
 
@@ -292,6 +293,10 @@ app.post("/api/checkout/create-session", async (req, res) => {
         reportId: preReportId,
       },
     });
+
+    // Record that this lead started checkout — the abandoned checkout job
+    // will send a recovery email if they don't complete payment within 1 hour.
+    markCheckoutStarted(email);
 
     res.json({ checkoutUrl, sessionId });
   } catch (err) {
@@ -1134,4 +1139,6 @@ app.listen(PORT, () => {
   console.log(`KYP Scanner running at http://localhost:${PORT}`);
   // Start the 24-hour follow-up email job for unconverted free-scan leads
   startFollowUpJob();
+  // Start the 1-hour abandoned checkout recovery job
+  startAbandonedCheckoutJob();
 });

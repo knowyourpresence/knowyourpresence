@@ -58,6 +58,17 @@ function saveLead(lead) {
   return existing || leads[leads.length - 1];
 }
 
+/** Records when a lead initiates checkout (but hasn't paid yet). Used by the abandoned checkout job. */
+function markCheckoutStarted(email) {
+  const leads = readLeads();
+  const lead = leads.find((l) => l.email.toLowerCase() === email.toLowerCase());
+  if (lead) {
+    lead.checkoutStartedAt = new Date().toISOString();
+    lead.abandonedEmailSent = lead.abandonedEmailSent || false;
+    fs.writeFileSync(DB_FILE, JSON.stringify(leads, null, 2));
+  }
+}
+
 /** Marks a lead as converted once they buy - useful for measuring real conversion rate. */
 function markConverted(email) {
   const leads = readLeads();
@@ -108,4 +119,11 @@ function getPublicScanCount() {
   };
 }
 
-module.exports = { saveLead, markConverted, getAllLeads, getLeadStats, getPublicScanCount };
+/** Raw read/write for jobs that need to update multiple fields atomically. */
+function readLeadsRaw() { return readLeads(); }
+function writeLeadsRaw(leads) {
+  ensureDataFile();
+  fs.writeFileSync(DB_FILE, JSON.stringify(leads, null, 2));
+}
+
+module.exports = { saveLead, markConverted, markCheckoutStarted, getAllLeads, getLeadStats, getPublicScanCount, readLeadsRaw, writeLeadsRaw };
