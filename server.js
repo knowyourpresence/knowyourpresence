@@ -54,6 +54,12 @@ app.get("/privacy", (req, res) => res.sendFile(path.join(__dirname, "public", "p
 app.get("/terms", (req, res) => res.sendFile(path.join(__dirname, "public", "terms.html")));
 app.get("/refund", (req, res) => res.sendFile(path.join(__dirname, "public", "refund.html")));
 
+// Blog pages (clean URLs without .html)
+app.get("/blog", (req, res) => res.sendFile(path.join(__dirname, "public", "blog", "index.html")));
+app.get("/blog/how-to-check-your-business-online-presence", (req, res) => res.sendFile(path.join(__dirname, "public", "blog", "how-to-check-your-business-online-presence.html")));
+app.get("/blog/why-australian-small-businesses-lose-customers-online", (req, res) => res.sendFile(path.join(__dirname, "public", "blog", "why-australian-small-businesses-lose-customers-online.html")));
+app.get("/blog/google-reviews-small-business-australia", (req, res) => res.sendFile(path.join(__dirname, "public", "blog", "google-reviews-small-business-australia.html")));
+
 app.post("/api/scan", scanRateLimit, async (req, res) => {
   try {
     const {
