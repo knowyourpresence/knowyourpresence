@@ -1271,6 +1271,8 @@ document.getElementById('runBtn').addEventListener('click',async()=>{
   if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){err.hidden=false;err.textContent='Please enter a valid email address.';return}
   const btn=document.getElementById('runBtn');
   btn.disabled=true;btn.textContent='Scanning…';
+  // GA4 — scan started
+  if(typeof gtag!=='undefined') gtag('event','scan_started',{business_name:biz,city:city});
   try{
     const res=await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({businessName:biz,email,city,countryCode:country||'US',websiteUrl:document.getElementById('urlInput').value.trim(),competitorName:document.getElementById('competitorInput').value.trim(),placeId:selectedPlaceId||undefined,facebookUrl:document.getElementById('facebookInput').value.trim()||undefined,instagramHandle:document.getElementById('instagramInput').value.trim().replace(/^@/,'')||undefined})});
