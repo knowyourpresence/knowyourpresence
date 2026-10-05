@@ -32,12 +32,24 @@ const { startAbandonedCheckoutJob } = require("./services/abandonedCheckoutJob")
 const { logOrderToSheet, saveReportDataToSheet, getReportDataFromSheet } = require("./services/googleSheets");   // ← Google Sheets CRM
 const { addBrevoContact } = require("./services/brevo");          // ← 90-day drip sequence
 
+// Try to load compression middleware (npm install compression if missing)
+let compression;
+try { compression = require("compression"); } catch(e) { compression = null; }
+
 const app = express();
 // Required when running behind a proxy (Render, Railway, Heroku, nginx etc.)
 // so req.ip and x-forwarded-for resolve to the real visitor's IP rather than
 // the proxy's - without this, rate limiting would treat ALL traffic as one IP.
 app.set("trust proxy", 1);
 app.use(cors());
+
+// Gzip compression - cuts 99KB index.html to ~22KB, speeds up page load
+if (compression) {
+  app.use(compression());
+} else {
+  console.warn("compression package not found - run: npm install compression");
+}
+
 // IMPORTANT: the Dodo webhook route must receive the RAW, unparsed body so
 // its signature can be verified against the exact bytes Dodo signed. Running
 // express.json() on it first would re-serialize the JSON and break
@@ -47,7 +59,12 @@ app.use((req, res, next) => {
   if (req.originalUrl === "/api/webhooks/dodo") return next();
   express.json()(req, res, next);
 });
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "public"), {
+  // Cache static files for 1 day (helps repeat visitors)
+  maxAge: "1d",
+  etag: true,
+  lastModified: true,
+}));
 
 // Legal pages
 app.get("/privacy", (req, res) => res.sendFile(path.join(__dirname, "public", "privacy.html")));
