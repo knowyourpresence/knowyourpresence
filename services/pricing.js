@@ -11,7 +11,7 @@
 // dashboard, not here. If you change the price, change it in BOTH places or
 // the site will advertise a different number than it charges.
 
-const REPORT_PRICE_USD = 129;
+const REPORT_PRICE_USD = 99; // Launch offer: was 129
 const REPORT_CURRENCY = "USD";
 
 /**

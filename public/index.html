@@ -403,7 +403,7 @@ src="https://www.facebook.com/tr?id=972754118519664&ev=PageView&noscript=1"
 <div class="announce">
   <div class="wrap">
     <div class="announce-left"><span class="announce-dot"></span>PREVIEW ENVIRONMENT · LIVE DATA ON ALL PAID REPORTS</div>
-    <div class="announce-right">INTERNATIONAL DELIVERY · USD 129 ONE-TIME</div>
+    <div class="announce-right">INTERNATIONAL DELIVERY · USD 99 ONE-TIME (was $129)</div>
   </div>
 </div>
 
@@ -453,7 +453,7 @@ src="https://www.facebook.com/tr?id=972754118519664&ev=PageView&noscript=1"
         <div class="hero-trust-row">
           <span class="trust-chip"><span class="dot"></span>No passwords required</span>
           <span class="trust-chip"><span class="dot"></span>Global-ready</span>
-          <span class="trust-chip"><span class="dot"></span>One-time $129</span>
+          <span class="trust-chip"><span class="dot"></span>One-time $99</span>
           <span class="trust-chip"><span class="dot" style="background:rgba(22,163,74,0.2);border-color:rgba(22,163,74,0.5);"></span>90-Day Expert Follow-Through included</span>
         </div>
       </div>
@@ -687,7 +687,7 @@ src="https://www.facebook.com/tr?id=972754118519664&ev=PageView&noscript=1"
           <div class="upgrade-box">
             <h4>🔓 Unlock your full report</h4>
             <p id="upgradeDesc">See every finding, fix, and your 90-day roadmap — competitor intelligence, 6 AI insight modules, and a toolkit to act immediately.</p>
-            <a href="#" class="upgrade-cta" id="upgradeBtn">Get full report — $129 →</a>
+            <a href="#" class="upgrade-cta" id="upgradeBtn">Get full report — $99 →</a>
           </div>
         </div>
       </div>
@@ -815,7 +815,7 @@ src="https://www.facebook.com/tr?id=972754118519664&ev=PageView&noscript=1"
       </div>
     </div>
     <div class="ai-insights-cta">
-      <a href="#scan" class="btn-blue" style="font-size:0.95rem;padding:13px 28px;display:inline-flex">Get your AI insights — $129 →</a>
+      <a href="#scan" class="btn-blue" style="font-size:0.95rem;padding:13px 28px;display:inline-flex">Get your AI insights — $99 →</a>
       <div class="ai-insights-note">Included in every paid report. Generated fresh for each customer.</div>
     </div>
   </div>
@@ -959,7 +959,7 @@ src="https://www.facebook.com/tr?id=972754118519664&ev=PageView&noscript=1"
           </div>
           <div class="price-amount">
             <span class="price-currency">$</span>
-            <span class="price-num">129</span>
+            <span class="price-num">99</span>
             <span class="price-period">USD</span>
           </div>
           <div class="price-note">For a deeper look at the signals shaping your growth.</div>
@@ -1055,7 +1055,7 @@ src="https://www.facebook.com/tr?id=972754118519664&ev=PageView&noscript=1"
       <div class="cta-chips">
         <span class="cta-chip"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>No passwords</span>
         <span class="cta-chip"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Global-ready</span>
-        <span class="cta-chip"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>One-time $129</span>
+        <span class="cta-chip"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>One-time $99</span>
         <span class="cta-chip"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>6 AI insight modules</span>
         <span class="cta-chip" style="color:#4ade80;border-color:rgba(74,222,128,0.25);background:rgba(74,222,128,0.06);"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#4ade80" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>90-Day Expert Follow-Through</span>
       </div>
@@ -1451,9 +1451,9 @@ function showResults(data,bizName){
     btn.style.opacity = '0.7';
     btn.style.pointerEvents = 'none';
     // Meta Pixel — InitiateCheckout event
-    if(typeof fbq!=='undefined') fbq('track','InitiateCheckout',{value:129,currency:'USD',content_name:'Full Presence Report'});
+    if(typeof fbq!=='undefined') fbq('track','InitiateCheckout',{value:99,currency:'USD',content_name:'Full Presence Report'});
     // GA4 — checkout started
-    if(typeof gtag!=='undefined') gtag('event','begin_checkout',{currency:'USD',value:129});
+    if(typeof gtag!=='undefined') gtag('event','begin_checkout',{currency:'USD',value:99});
     try {
       const scanData = JSON.parse(btn.dataset.scanData);
       const res = await fetch('/api/checkout/create-session', {
@@ -1469,7 +1469,7 @@ function showResults(data,bizName){
         throw new Error('No checkout URL returned');
       }
     } catch(err) {
-      btn.textContent = 'Get full report — $129 →';
+      btn.textContent = 'Get full report — $99 →';
       btn.style.opacity = '';
       btn.style.pointerEvents = '';
       alert('Could not start checkout: ' + err.message);
@@ -1488,22 +1488,54 @@ function showEmailGate(data, bizName) {
     display:flex;align-items:center;justify-content:center;padding:16px;
     backdrop-filter:blur(4px);animation:fadeIn .3s ease;
   `;
+  // 48-hour countdown from first visit (stored in sessionStorage)
+  const cKey = 'kyp_offer_end';
+  if(!sessionStorage.getItem(cKey)) {
+    sessionStorage.setItem(cKey, Date.now() + 48*60*60*1000);
+  }
+  const offerEnd = parseInt(sessionStorage.getItem(cKey));
+
   overlay.innerHTML = `
-    <div style="background:#fff;border-radius:20px;padding:36px 32px;max-width:420px;width:100%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.3);position:relative;">
-      <div style="font-size:48px;margin-bottom:8px;">📊</div>
-      <div style="font-size:13px;font-weight:700;color:#3b6ef8;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Your Score Is Ready</div>
-      <h2 style="font-size:22px;font-weight:800;color:#0b0f1e;margin-bottom:6px;line-height:1.2">${bizName} scored <span style="color:${score>=70?'#22c55e':score>=50?'#f59e0b':'#ef4444'}">${score}/100</span></h2>
-      <p style="color:#6b7280;font-size:14px;margin-bottom:24px;line-height:1.5">Enter your email to unlock the full breakdown — which areas need fixing and exactly how to improve your score.</p>
+    <div style="background:#fff;border-radius:20px;padding:32px 28px;max-width:420px;width:100%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.3);position:relative;">
+      <div style="font-size:42px;margin-bottom:6px;">📊</div>
+      <div style="font-size:12px;font-weight:700;color:#3b6ef8;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">Your Score Is Ready</div>
+      <h2 style="font-size:21px;font-weight:800;color:#0b0f1e;margin-bottom:16px;line-height:1.2">${bizName} scored <span style="color:${score>=70?'#22c55e':score>=50?'#f59e0b':'#ef4444'}">${score}/100</span></h2>
+
+      <!-- Launch offer banner -->
+      <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;padding:12px 16px;margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;color:#ea580c;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">🔥 Launch Offer — Ends In</div>
+        <div id="gateCountdown" style="font-size:22px;font-weight:900;color:#ea580c;letter-spacing:.02em;margin-bottom:6px;">--:--:--</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;">
+          <span style="font-size:18px;font-weight:900;color:#0b0f1e;">$99 USD</span>
+          <span style="font-size:14px;color:#9ca3af;text-decoration:line-through;">$129 USD</span>
+          <span style="background:#22c55e;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;">SAVE $30</span>
+        </div>
+      </div>
+
+      <p style="color:#6b7280;font-size:13px;margin-bottom:16px;line-height:1.5">Enter your email to unlock the full breakdown — which areas are hurting you and exactly how to fix them.</p>
       <input id="gateEmailInput" type="email" placeholder="your@email.com" autocomplete="email"
-        style="width:100%;padding:13px 16px;border:2px solid #e5e7eb;border-radius:10px;font-size:15px;margin-bottom:12px;outline:none;font-family:inherit;transition:border .2s"
+        style="width:100%;padding:13px 16px;border:2px solid #e5e7eb;border-radius:10px;font-size:15px;margin-bottom:10px;outline:none;font-family:inherit;transition:border .2s"
         onfocus="this.style.borderColor='#3b6ef8'" onblur="this.style.borderColor='#e5e7eb'"/>
       <p id="gateEmailErr" style="color:#ef4444;font-size:13px;margin-bottom:8px;display:none">Please enter a valid email address.</p>
       <button onclick="submitEmailGate()" style="width:100%;padding:14px;background:#3b6ef8;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px;transition:background .2s" onmouseover="this.style.background='#2555e0'" onmouseout="this.style.background='#3b6ef8'">
-        Unlock My Full Report →
+        Unlock My Full Report — $99 →
       </button>
-      <p style="font-size:11px;color:#9ca3af">No spam. Unsubscribe anytime. Results emailed instantly.</p>
+      <p style="font-size:11px;color:#9ca3af">No spam. Unsubscribe anytime. Price returns to $129 when timer ends.</p>
     </div>
   `;
+
+  // Countdown ticker
+  function tickCountdown() {
+    const el = document.getElementById('gateCountdown');
+    if(!el) return;
+    const diff = Math.max(0, offerEnd - Date.now());
+    const h = Math.floor(diff/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    const s = Math.floor((diff%60000)/1000);
+    el.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if(diff > 0) setTimeout(tickCountdown, 1000);
+  }
+  tickCountdown();
   document.body.appendChild(overlay);
   setTimeout(()=>document.getElementById('gateEmailInput')?.focus(), 100);
   document.getElementById('gateEmailInput').addEventListener('keydown', e => {
