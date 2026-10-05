@@ -262,6 +262,31 @@ app.get("/api/config", (req, res) => {
   });
 });
 
+// --- EMAIL GATE: saves email captured after scan results shown ─────────────
+app.post("/api/save-email", async (req, res) => {
+  try {
+    const { email, businessName, city, score } = req.body;
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: "Invalid email" });
+    }
+    saveLead({ email, businessName: businessName || "", countryCode: "AU" });
+    // Send lead notification to owner
+    try {
+      const { Resend } = require("resend");
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      await resend.emails.send({
+        from: process.env.EMAIL_FROM || "KYP <no-reply@knowyourpresence.com>",
+        to: process.env.OWNER_EMAIL || "syt55565556@gmail.com",
+        subject: `🎯 New Lead: ${businessName || email} (score ${score})`,
+        html: `<p><strong>${businessName}</strong> in ${city || "unknown"} scored <strong>${score}/100</strong>.</p><p>Email: ${email}</p>`,
+      });
+    } catch(e) { console.error("Lead email failed:", e.message); }
+    res.json({ ok: true });
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // --- CHECKOUT: creates a Dodo Payments checkout session and returns the
 // hosted checkout URL for the browser to redirect to.
 //

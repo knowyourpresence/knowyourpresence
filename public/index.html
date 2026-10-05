@@ -618,7 +618,7 @@ src="https://www.facebook.com/tr?id=972754118519664&ev=PageView&noscript=1"
                 </select>
               </div>
             </div>
-            <div class="scan-field">
+            <div class="scan-field" id="emailFieldWrap" style="display:none">
               <label>Where should we send your preview?</label>
               <input class="scan-input" type="email" id="emailInput" placeholder="you@company.com" autocomplete="email"/>
             </div>
@@ -1268,31 +1268,26 @@ document.getElementById('runBtn').addEventListener('click',async()=>{
   err.hidden=true;
   if(!biz){err.hidden=false;err.textContent='Please enter your business name.';return}
   if(!city){err.hidden=false;err.textContent='Please enter your city.';return}
-  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){err.hidden=false;err.textContent='Please enter a valid email address.';return}
   const btn=document.getElementById('runBtn');
   btn.disabled=true;btn.textContent='Scanning…';
   // GA4 — scan started
   if(typeof gtag!=='undefined') gtag('event','scan_started',{business_name:biz,city:city});
   try{
     const res=await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({businessName:biz,email,city,countryCode:country||'US',websiteUrl:document.getElementById('urlInput').value.trim(),competitorName:document.getElementById('competitorInput').value.trim(),placeId:selectedPlaceId||undefined,facebookUrl:document.getElementById('facebookInput').value.trim()||undefined,instagramHandle:document.getElementById('instagramInput').value.trim().replace(/^@/,'')||undefined})});
+      body:JSON.stringify({businessName:biz,email:'noemail@placeholder.com',city,countryCode:country||'US',websiteUrl:document.getElementById('urlInput').value.trim(),competitorName:document.getElementById('competitorInput').value.trim(),placeId:selectedPlaceId||undefined,facebookUrl:document.getElementById('facebookInput').value.trim()||undefined,instagramHandle:document.getElementById('instagramInput').value.trim().replace(/^@/,'')||undefined})});
     const data=await res.json();
     if(res.status===429){
       err.hidden=false;
-      if(data.error==='already_scanned'){
-        err.innerHTML='This email has already used its free scan. <a href="#pricing" style="color:#dc2626;font-weight:700;text-decoration:underline">Upgrade to get your full report →</a>';
-      } else {
-        err.textContent=data.message||'Too many attempts. Please try again later.';
-      }
+      err.textContent=data.message||'Too many attempts. Please try again later.';
       btn.disabled=false;btn.textContent='Run my FREE scan →';
       return;
     }
     if(!res.ok)throw new Error(data.message||data.error||'Scan failed');
-    showResults(data,biz);
-    // Meta Pixel — Lead event (free scan completed)
-    if(typeof fbq!=='undefined') fbq('track','Lead',{content_name:'Free Scan',content_category:'Presence Audit'});
     // GA4 — scan completed
     if(typeof gtag!=='undefined') gtag('event','scan_completed',{business_name:biz});
+    showResults(data,biz);
+    // Show email gate after brief delay so user sees score first
+    setTimeout(()=>showEmailGate(data,biz),1800);
   }catch(e){
     err.hidden=false;err.textContent=e.message||'Scan failed. Please try again.';
     btn.disabled=false;btn.textContent='Run my FREE scan →';
@@ -1439,6 +1434,10 @@ function showResults(data,bizName){
     scanDetails: data.scanDetails || {},
     competitorName: document.getElementById('competitorInput')?.value.trim() || '',
   });
+  // Store scan data for email gate
+  window._lastScanData = data;
+  window._lastBizName = bizName;
+
   btn.href = '#';
   btn.onclick = async function(e) {
     e.preventDefault();
@@ -1470,6 +1469,76 @@ function showResults(data,bizName){
       alert('Could not start checkout: ' + err.message);
     }
   };
+}
+
+// ── Email Gate ──────────────────────────────────────────────────────────────
+function showEmailGate(data, bizName) {
+  if(document.getElementById('emailGateOverlay')) return; // already shown
+  const score = data.overall ?? data.score ?? 75;
+  const overlay = document.createElement('div');
+  overlay.id = 'emailGateOverlay';
+  overlay.style.cssText = `
+    position:fixed;inset:0;background:rgba(11,15,30,0.82);z-index:9999;
+    display:flex;align-items:center;justify-content:center;padding:16px;
+    backdrop-filter:blur(4px);animation:fadeIn .3s ease;
+  `;
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:20px;padding:36px 32px;max-width:420px;width:100%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.3);position:relative;">
+      <div style="font-size:48px;margin-bottom:8px;">📊</div>
+      <div style="font-size:13px;font-weight:700;color:#3b6ef8;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Your Score Is Ready</div>
+      <h2 style="font-size:22px;font-weight:800;color:#0b0f1e;margin-bottom:6px;line-height:1.2">${bizName} scored <span style="color:${score>=70?'#22c55e':score>=50?'#f59e0b':'#ef4444'}">${score}/100</span></h2>
+      <p style="color:#6b7280;font-size:14px;margin-bottom:24px;line-height:1.5">Enter your email to unlock the full breakdown — which areas need fixing and exactly how to improve your score.</p>
+      <input id="gateEmailInput" type="email" placeholder="your@email.com" autocomplete="email"
+        style="width:100%;padding:13px 16px;border:2px solid #e5e7eb;border-radius:10px;font-size:15px;margin-bottom:12px;outline:none;font-family:inherit;transition:border .2s"
+        onfocus="this.style.borderColor='#3b6ef8'" onblur="this.style.borderColor='#e5e7eb'"/>
+      <p id="gateEmailErr" style="color:#ef4444;font-size:13px;margin-bottom:8px;display:none">Please enter a valid email address.</p>
+      <button onclick="submitEmailGate()" style="width:100%;padding:14px;background:#3b6ef8;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px;transition:background .2s" onmouseover="this.style.background='#2555e0'" onmouseout="this.style.background='#3b6ef8'">
+        Unlock My Full Report →
+      </button>
+      <p style="font-size:11px;color:#9ca3af">No spam. Unsubscribe anytime. Results emailed instantly.</p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(()=>document.getElementById('gateEmailInput')?.focus(), 100);
+  document.getElementById('gateEmailInput').addEventListener('keydown', e => {
+    if(e.key === 'Enter') submitEmailGate();
+  });
+}
+
+async function submitEmailGate() {
+  const emailEl = document.getElementById('gateEmailInput');
+  const errEl = document.getElementById('gateEmailErr');
+  const email = emailEl?.value.trim();
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errEl.style.display = 'block';
+    emailEl.style.borderColor = '#ef4444';
+    return;
+  }
+  errEl.style.display = 'none';
+
+  // Store email for checkout
+  document.getElementById('emailInput').value = email;
+
+  // Save email to backend
+  try {
+    await fetch('/api/save-email', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        email,
+        businessName: window._lastBizName || '',
+        city: document.getElementById('cityInput').value.trim(),
+        score: window._lastScanData?.overall ?? window._lastScanData?.score ?? 0,
+      })
+    });
+  } catch(e) { /* non-blocking */ }
+
+  // Fire tracking events
+  if(typeof fbq!=='undefined') fbq('track','Lead',{content_name:'Free Scan',content_category:'Presence Audit'});
+  if(typeof gtag!=='undefined') gtag('event','email_captured',{method:'scan_gate'});
+
+  // Remove overlay
+  document.getElementById('emailGateOverlay')?.remove();
 }
 </script>
 </body>
