@@ -1278,6 +1278,8 @@ document.getElementById('runBtn').addEventListener('click',async()=>{
   btn.disabled=true;btn.textContent='Scanning…';
   // GA4 — scan started
   if(typeof gtag!=='undefined') gtag('event','scan_started',{business_name:biz,city:city});
+  // FB Pixel — ViewContent (high-intent: user started a scan)
+  if(typeof fbq!=='undefined') fbq('track','ViewContent',{content_name:'Free Scan',content_category:'Presence Audit'});
   try{
     const res=await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({businessName:biz,email:'noemail@placeholder.com',city,countryCode:country||'US',websiteUrl:document.getElementById('urlInput').value.trim(),competitorName:document.getElementById('competitorInput').value.trim(),placeId:selectedPlaceId||undefined,facebookUrl:document.getElementById('facebookInput').value.trim()||undefined,instagramHandle:document.getElementById('instagramInput').value.trim().replace(/^@/,'')||undefined})});
@@ -1291,6 +1293,8 @@ document.getElementById('runBtn').addEventListener('click',async()=>{
     if(!res.ok)throw new Error(data.message||data.error||'Scan failed');
     // GA4 — scan completed
     if(typeof gtag!=='undefined') gtag('event','scan_completed',{business_name:biz});
+    // FB Pixel — AddToCart equivalent (user saw their score = warm lead)
+    if(typeof fbq!=='undefined') fbq('track','AddToCart',{value:99,currency:'USD',content_name:'Full Presence Report'});
     showResults(data,biz);
     // Show email gate after brief delay so user sees score first
     setTimeout(()=>showEmailGate(data,biz),1800);
