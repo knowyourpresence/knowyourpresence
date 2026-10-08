@@ -1296,8 +1296,6 @@ document.getElementById('runBtn').addEventListener('click',async()=>{
     // FB Pixel — AddToCart equivalent (user saw their score = warm lead)
     if(typeof fbq!=='undefined') fbq('track','AddToCart',{value:99,currency:'USD',content_name:'Full Presence Report'});
     showResults(data,biz);
-    // Show email gate after brief delay so user sees score first
-    setTimeout(()=>showEmailGate(data,biz),1800);
   }catch(e){
     err.hidden=false;err.textContent=e.message||'Scan failed. Please try again.';
     btn.disabled=false;btn.textContent='Run my FREE scan →';
@@ -1402,7 +1400,7 @@ function showResults(data,bizName){
             <div class="pain-item-label">${item.label}</div>
             <div class="pain-item-detail pain-blur">${item.detail} ${item.blur}</div>
           </div>
-          <div class="pain-lock" onclick="document.getElementById('upgradeBtn').click()">
+          <div class="pain-lock" onclick="showEmailGate(window._lastScanData,window._lastBizName)">
             <span class="pain-lock-badge">🔒 Unlock</span>
           </div>
         </div>`;
@@ -1416,7 +1414,7 @@ function showResults(data,bizName){
             <div class="pain-item-detail">${item.detail}</div>
             <div class="pain-item-detail pain-blur" style="margin-top:4px">${item.blur}</div>
           </div>
-          <div class="pain-lock" onclick="document.getElementById('upgradeBtn').click()">
+          <div class="pain-lock" onclick="showEmailGate(window._lastScanData,window._lastBizName)">
             <span class="pain-lock-badge">🔒 Unlock fix</span>
           </div>
         </div>`;
@@ -1578,6 +1576,11 @@ async function submitEmailGate() {
   // Fire tracking events
   if(typeof fbq!=='undefined') fbq('track','Lead',{content_name:'Free Scan',content_category:'Presence Audit'});
   if(typeof gtag!=='undefined') gtag('event','email_captured',{method:'scan_gate'});
+
+  // Unblur all pain items
+  document.querySelectorAll('.pain-blur').forEach(el => {
+    el.classList.remove('pain-blur');
+  });
 
   // Remove overlay
   document.getElementById('emailGateOverlay')?.remove();
