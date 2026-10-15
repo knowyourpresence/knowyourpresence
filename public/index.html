@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<meta name="description" content="Free digital presence score for Australian small businesses. See how you rank on Google, social media and reviews vs your competitors — results in 60 seconds."/>
-<title>Know Your Presence — Free Digital Presence Score for Australian Businesses</title>
-<meta name="keywords" content="digital presence score, online presence checker Australia, business visibility audit, Google ranking checker, small business SEO Australia"/>
+<meta name="description" content="Free digital presence score for small businesses. See how you rank on Google, social media and reviews vs your competitors — results in 60 seconds."/>
+<title>Know Your Presence — Free Digital Presence Score for Businesses</title>
+<meta name="keywords" content="digital presence score, online presence checker, business visibility audit, Google ranking checker,"/>
 <meta name="robots" content="index, follow"/>
 <meta name="google-site-verification" content="K63qrUK6k-o-CubZsyx9XIpj2KUOwyTVPXz65NSwM0s" />
 <link rel="canonical" href="https://knowyourpresence.com/"/>
 <meta property="og:title" content="Know Your Presence — Free Digital Presence Score"/>
-<meta property="og:description" content="Find out if customers can find your business online. Free 60-second scan for Australian small businesses."/>
+<meta property="og:description" content="Find out if customers can find your business online. Free 60-second scan for small businesses."/>
 <meta property="og:url" content="https://knowyourpresence.com"/>
 <meta property="og:type" content="website"/>
 <!-- Google Analytics GA4 -->
@@ -619,7 +619,6 @@ src="https://www.facebook.com/tr?id=972754118519664&ev=PageView&noscript=1"
   <option value="US">🇺🇸 United States</option>
   <option value="GB">🇬🇧 United Kingdom</option>
   <option value="CA">🇨🇦 Canada</option>
-  <option value="AU">🇦🇺 Australia</option>
   <option value="NZ">🇳🇿 New Zealand</option>
                 </select>
               </div>
@@ -1159,7 +1158,7 @@ window.onMapsLoaded = async function() {
   async function searchCompetitorPlaces(query) {
     const cityVal = document.getElementById('cityInput').value.trim();
     const countryVal = document.getElementById('countryInput').value || 'US';
-    const countryMap = { US:'us', GB:'gb', CA:'ca', AU:'au', NZ:'nz', IN:'in' };
+    const countryMap = { US:'us', GB:'gb', CA:'ca', NZ:'nz', IN:'in' };
     const cc = countryMap[countryVal] || null;
 
     compDropdown.innerHTML = '<div class="biz-searching">Searching…</div>';
@@ -1212,7 +1211,7 @@ window.onMapsLoaded = async function() {
     dropdown.innerHTML = '<div class="biz-searching">Searching…</div>';
     dropdown.classList.add('open');
 
-    const countryMap = { US:'us', GB:'gb', CA:'ca', AU:'au', NZ:'nz', IN:'in' };
+    const countryMap = { US:'us', GB:'gb', CA:'ca', NZ:'nz', IN:'in' };
     const cc = countryMap[countryVal] || null;
 
     try {

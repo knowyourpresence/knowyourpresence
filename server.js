@@ -74,8 +74,10 @@ app.get("/refund", (req, res) => res.sendFile(path.join(__dirname, "public", "re
 // Blog pages (clean URLs without .html)
 app.get("/blog", (req, res) => res.sendFile(path.join(__dirname, "public", "blog", "index.html")));
 app.get("/blog/how-to-check-your-business-online-presence", (req, res) => res.sendFile(path.join(__dirname, "public", "blog", "how-to-check-your-business-online-presence.html")));
-app.get("/blog/why-australian-small-businesses-lose-customers-online", (req, res) => res.sendFile(path.join(__dirname, "public", "blog", "why-australian-small-businesses-lose-customers-online.html")));
-app.get("/blog/google-reviews-small-business-australia", (req, res) => res.sendFile(path.join(__dirname, "public", "blog", "google-reviews-small-business-australia.html")));
+app.get("/blog/why-small-businesses-lose-customers-online", (req, res) => res.sendFile(path.join(__dirname, "public", "blog", "why-small-businesses-lose-customers-online.html")));
+app.get("/blog/google-reviews-small-business-guide", (req, res) => res.sendFile(path.join(__dirname, "public", "blog", "google-reviews-small-business-guide.html")));
+app.get("/blog/why-australian-small-businesses-lose-customers-online", (req, res) => res.redirect(301, "/blog/why-small-businesses-lose-customers-online"));
+app.get("/blog/google-reviews-small-business-australia", (req, res) => res.redirect(301, "/blog/google-reviews-small-business-guide"));
 
 app.post("/api/scan", scanRateLimit, async (req, res) => {
   try {
