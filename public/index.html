@@ -1280,7 +1280,7 @@ document.getElementById('runBtn').addEventListener('click',async()=>{
   if(typeof fbq!=='undefined') fbq('track','ViewContent',{content_name:'Free Scan',content_category:'Presence Audit'});
   try{
     const res=await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({businessName:biz,email:'noemail@placeholder.com',city,countryCode:country||'US',websiteUrl:document.getElementById('urlInput').value.trim(),competitorName:document.getElementById('competitorInput').value.trim(),placeId:selectedPlaceId||undefined,facebookUrl:document.getElementById('facebookInput').value.trim()||undefined,instagramHandle:document.getElementById('instagramInput').value.trim().replace(/^@/,'')||undefined})});
+      body:JSON.stringify({businessName:biz,email:email,city,countryCode:country||'US',websiteUrl:document.getElementById('urlInput').value.trim(),competitorName:document.getElementById('competitorInput').value.trim(),placeId:selectedPlaceId||undefined,facebookUrl:document.getElementById('facebookInput').value.trim()||undefined,instagramHandle:document.getElementById('instagramInput').value.trim().replace(/^@/,'')||undefined})});
     const data=await res.json();
     if(res.status===429){
       err.hidden=false;
