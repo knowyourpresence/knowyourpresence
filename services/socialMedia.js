@@ -17,7 +17,7 @@ const axios = require("axios");
 async function fetchFacebookData(businessName, city) {
   const token = process.env.FACEBOOK_APP_TOKEN;
   if (!token) {
-    console.warn("[socialMedia] FACEBOOK_APP_TOKEN not set — Facebook scoring skipped. Set it in Render env vars.");
+    console.warn("[socialMedia] FACEBOOK_APP_TOKEN not set — Facebook scoring skipped. Set it in /home/app/.env on the VPS.");
     return { platform: "Facebook", score: 0, real: false, raw: { note: "no token" } };
   }
   if (!businessName) {
@@ -33,6 +33,9 @@ async function fetchFacebookData(businessName, city) {
   const shortName = businessName.split(/\s+/).slice(0, 2).join(" ");
   if (shortName !== businessName) queries.push(shortName);
 
+  let anySearchSucceeded = false;
+  let lastApiError = null;
+
   for (const query of queries) {
     try {
       const searchRes = await axios.get("https://graph.facebook.com/v19.0/search", {
@@ -46,6 +49,7 @@ async function fetchFacebookData(businessName, city) {
         timeout: 10000,
       });
 
+      anySearchSucceeded = true;
       const pages = searchRes.data?.data || [];
       if (!pages.length) continue; // try next query
 
@@ -96,8 +100,16 @@ async function fetchFacebookData(businessName, city) {
         raw: { followers, daysSincePost, isActive, engagementRate: +engagementRate.toFixed(2), avgEngagement: Math.round(avgEngagement), pageName: page.name, matchedQuery: query },
       };
     } catch (err) {
-      console.error(`Facebook search failed for query "${query}":`, err.message);
+      const apiMessage = err.response?.data?.error?.message || err.message;
+      lastApiError = apiMessage;
+      console.error(`Facebook search failed for query "${query}":`, apiMessage);
     }
+  }
+
+  // If every request failed (bad token, permissions, rate limit), this is NOT
+  // "no page exists" — report it so the score isn't treated as a real absence.
+  if (!anySearchSucceeded && lastApiError) {
+    return { platform: "Facebook", score: 0, real: false, raw: { note: lastApiError }, reason: "api_error" };
   }
 
   return { platform: "Facebook", score: 0, real: true, raw: { note: "no page found after all queries" }, reason: "no_page" };
@@ -447,7 +459,8 @@ async function calculateSocialScore(handles = {}) {
   const realResults = [fb, yt, ig].filter(r => r.real && r.score > 0);
 
   // Detect specific problem cases for report context
-  const noFacebook = fb.reason === "no_page" || (!fb.real && fb.score === 0);
+  const fbApiError = fb.reason === "api_error";
+  const noFacebook = !fbApiError && (fb.reason === "no_page" || (!fb.real && fb.score === 0));
   const noInstagram = ig.score === 0 && !ig.real;
   const hasNoActivity = fb.real && fb.score > 0 && fb.raw?.daysSincePost > 180;
   const ghostAccount = fb.real && fb.raw?.followers > 0 && fb.raw?.avgEngagement === 0;
@@ -483,9 +496,10 @@ async function calculateSocialScore(handles = {}) {
       finding = "no_social_presence";
       console.warn("[socialMedia] Business has no detectable social presence");
     } else {
-      // Data fetch failed (API limits etc) — use baseline
+      // Data fetch failed (API limits, token problems) — use baseline, never 10
       score = 35;
-      console.warn("[socialMedia] No real social data — using baseline estimate of 35");
+      finding = fbApiError ? "data_unavailable" : null;
+      console.warn(`[socialMedia] No real social data — using baseline estimate of 35${fbApiError ? " (Facebook API error: " + fb.raw?.note + ")" : ""}`);
     }
   }
 
