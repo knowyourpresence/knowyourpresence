@@ -2,7 +2,7 @@
 // Two-layer protection for the free scan endpoint:
 //
 //  Layer 1 — EMAIL (primary, persistent)
-//    Each email address gets exactly 1 free scan, forever.
+//    Each email address gets 2 free scans, forever.
 //    Stored in a JSON file on disk → survives server restarts.
 //    Checked AFTER email validation in server.js via hasEmailScanned()
 //    and recorded via recordEmailScan().
@@ -25,12 +25,20 @@ if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
 // Load existing scanned emails from disk into a Set for O(1) lookups.
 // If the file doesn't exist or is corrupt, start fresh.
-let scannedEmails = new Set();
+// Free scans allowed per email address.
+const MAX_FREE_SCANS_PER_EMAIL = 2;
+
+// email -> number of free scans used. Old files (a plain array of emails)
+// are read as one scan each, so existing customers keep their history.
+let scannedEmails = new Map();
 try {
   if (fs.existsSync(SCANNED_EMAILS_FILE)) {
-    const raw = fs.readFileSync(SCANNED_EMAILS_FILE, "utf8");
-    const arr = JSON.parse(raw);
-    scannedEmails = new Set(arr.map(e => e.toLowerCase().trim()));
+    const raw = JSON.parse(fs.readFileSync(SCANNED_EMAILS_FILE, "utf8"));
+    if (Array.isArray(raw)) {
+      raw.forEach(e => scannedEmails.set(String(e).toLowerCase().trim(), 1));
+    } else {
+      Object.entries(raw).forEach(([e, n]) => scannedEmails.set(e, Number(n) || 1));
+    }
     console.log(`[rateLimit] Loaded ${scannedEmails.size} scanned emails from disk.`);
   }
 } catch (e) {
@@ -39,7 +47,7 @@ try {
 
 function _saveEmails() {
   try {
-    fs.writeFileSync(SCANNED_EMAILS_FILE, JSON.stringify([...scannedEmails]), "utf8");
+    fs.writeFileSync(SCANNED_EMAILS_FILE, JSON.stringify(Object.fromEntries(scannedEmails)), "utf8");
   } catch (e) {
     console.error("[rateLimit] Could not save scanned_emails.json:", e.message);
   }
@@ -50,7 +58,7 @@ function _saveEmails() {
  * Call this AFTER validating the email format.
  */
 function hasEmailScanned(email) {
-  return scannedEmails.has(email.toLowerCase().trim());
+  return (scannedEmails.get(email.toLowerCase().trim()) || 0) >= MAX_FREE_SCANS_PER_EMAIL;
 }
 
 /**
@@ -59,7 +67,8 @@ function hasEmailScanned(email) {
  * the attempt even if the scan itself fails mid-way).
  */
 function recordEmailScan(email) {
-  scannedEmails.add(email.toLowerCase().trim());
+  const key = email.toLowerCase().trim();
+  scannedEmails.set(key, (scannedEmails.get(key) || 0) + 1);
   _saveEmails();
 }
 
