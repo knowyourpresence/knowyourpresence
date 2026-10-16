@@ -445,7 +445,62 @@ async function fetchInstagramByHandle(handle) {
  * @param {string} [handles.businessName]   — used for Facebook/Instagram search
  * @param {string} [handles.city]           — improves search accuracy
  */
+// ── Find social profile links on the business's own website ───────────────────
+// Used when Facebook's page search returns nothing. Reads the homepage HTML and
+// picks out facebook.com / instagram.com profile links. Best effort: any failure
+// returns empty results and the scan continues.
+const FB_RESERVED = new Set(["sharer", "share", "plugins", "tr", "dialog", "login", "policies", "help", "events", "groups", "watch", "reel", "photo", "photos", "video", "videos", "hashtag", "pg", "privacy", "legal", "ads", "business", "profile.php", "pages"]);
+const IG_RESERVED = new Set(["p", "reel", "reels", "explore", "accounts", "stories", "tv", "sharer", "share", "developer", "about", "legal", "privacy"]);
+
+async function findSocialLinksOnWebsite(websiteUrl) {
+  if (!websiteUrl) return { facebookUrl: null, instagramHandle: null };
+  const url = /^https?:\/\//.test(websiteUrl) ? websiteUrl : `https://${websiteUrl}`;
+  try {
+    const { data: html } = await axios.get(url, {
+      timeout: 8000,
+      maxContentLength: 2 * 1024 * 1024,
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; KYPBot/1.0)" },
+      responseType: "text",
+    });
+    const body = typeof html === "string" ? html : "";
+
+    let facebookUrl = null;
+    const fbRe = /https?:\/\/(?:www\.|m\.)?facebook\.com\/([A-Za-z0-9.\-_]+)\/?/gi;
+    for (const m of body.matchAll(fbRe)) {
+      const slug = m[1];
+      if (FB_RESERVED.has(slug.toLowerCase())) continue;
+      facebookUrl = `https://www.facebook.com/${slug}`;
+      break;
+    }
+
+    let instagramHandle = null;
+    const igRe = /https?:\/\/(?:www\.)?instagram\.com\/([A-Za-z0-9._]+)\/?/gi;
+    for (const m of body.matchAll(igRe)) {
+      const handle = m[1];
+      if (IG_RESERVED.has(handle.toLowerCase())) continue;
+      instagramHandle = handle;
+      break;
+    }
+
+    console.log(`[socialMedia] Website links — facebook: ${facebookUrl || "none"}, instagram: ${instagramHandle ? "@" + instagramHandle : "none"}`);
+    return { facebookUrl, instagramHandle };
+  } catch (err) {
+    console.warn("[socialMedia] Website link lookup failed:", err.message);
+    return { facebookUrl: null, instagramHandle: null };
+  }
+}
+
 async function calculateSocialScore(handles = {}) {
+  // Fill in any missing profile links from the business's own website
+  if (!handles.facebookUrl || !handles.instagramHandle) {
+    const found = await findSocialLinksOnWebsite(handles.websiteUrl);
+    handles = {
+      ...handles,
+      facebookUrl: handles.facebookUrl || found.facebookUrl || undefined,
+      instagramHandle: handles.instagramHandle || found.instagramHandle || undefined,
+    };
+  }
+
   const [fb, yt, ig] = await Promise.all([
     handles.facebookUrl
       ? fetchFacebookByUrl(handles.facebookUrl)

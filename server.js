@@ -191,7 +191,7 @@ app.post("/api/scan", scanRateLimit, async (req, res) => {
       urlscanResult,
     ] = await Promise.all([
       fetchGoogleBusinessData(resolvedPlaceId),
-      calculateSocialScore({ youtubeChannelId, businessName, city, facebookUrl, instagramHandle }),
+      calculateSocialScore({ youtubeChannelId, businessName, city, facebookUrl, instagramHandle, websiteUrl: resolvedWebsiteUrl }),
       fetchWebsiteHealth(resolvedWebsiteUrl),
       fetchYelpData(businessName, city),
       runTechnicalChecks(websiteUrl),
