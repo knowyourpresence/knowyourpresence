@@ -8,6 +8,18 @@
 
 const fs   = require("fs");
 const path = require("path");
+
+// HTML-escape any string coming from scraped or user-supplied data before it is
+// interpolated into the report markup (prevents injected script in reports).
+function esc(value) {
+  if (value === null || value === undefined) return "";
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 const os   = require("os");
 const archiver = require("archiver");
 
@@ -144,9 +156,9 @@ function buildOpportunities(sc, scanDetails, aiInsights, businessName) {
         <div class="opp-num" style="color:${i===0?'var(--red)':i<=2?'var(--amber)':'var(--muted2)'};">0${i+1}</div>
         <div>
           <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;">
-            <div class="opp-title">${o.title || o.action || o.item}</div>
+            <div class="opp-title">${esc(o.title || o.action || o.item)}</div>
           </div>
-          <div class="opp-body">${o.description || o.detail || o.why || ""}</div>
+          <div class="opp-body">${esc(o.description || o.detail || o.why || "")}</div>
           <div class="opp-tags"><span class="pill ${impact}">${i===0?'HIGH':i<=2?'MEDIUM':'LOW'} IMPACT</span><span class="pill pill-gray">${timing}</span></div>
         </div>
       </div>`);
@@ -165,8 +177,8 @@ function buildOpportunities(sc, scanDetails, aiInsights, businessName) {
         <div class="opp">
           <div class="opp-num" style="color:${o.color};">0${i+1}</div>
           <div>
-            <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;"><div class="opp-title">${o.title}</div></div>
-            <div class="opp-body">${o.body}</div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;"><div class="opp-title">${esc(o.title)}</div></div>
+            <div class="opp-body">${esc(o.body)}</div>
             <div class="opp-tags"><span class="pill ${o.impact}">${o.impact==='pill-red'?'HIGH':o.impact==='pill-amber'?'MEDIUM':'LOW'} IMPACT</span><span class="pill pill-gray">${o.timing}</span></div>
           </div>
         </div>`;
@@ -206,7 +218,7 @@ function buildAiCards(scanDetails, aiInsights) {
 // ── Competitor rows HTML ───────────────────────────────────────────────────────
 function buildCompetitorSection(reportData, sc) {
   const comp = reportData.competitor;
-  const businessName = reportData.businessName;
+  const businessName = esc(reportData.businessName);
 
   if (!comp || !comp.name) {
     return {
@@ -245,10 +257,10 @@ function buildCompetitorSection(reportData, sc) {
   return {
     compRows,
     usefulGapTitle: gapVal < 0 ? biggestGap : "Strong across the board",
-    usefulGapSub:   gapVal < 0 ? `Behind by ${Math.abs(gapVal)} points` : `You lead ${comp.name}`,
+    usefulGapSub:   gapVal < 0 ? `Behind by ${Math.abs(gapVal)} points` : `You lead ${esc(comp.name)}`,
     usefulGapBody:  gapVal < 0
-      ? `${comp.name} has a lead in ${biggestGap}. Closing this gap is your highest-leverage competitive move.`
-      : `You outperform ${comp.name} on the metrics that matter most — keep improving to widen the lead.`,
+      ? `${esc(comp.name)} has a lead in ${biggestGap}. Closing this gap is your highest-leverage competitive move.`
+      : `You outperform ${esc(comp.name)} on the metrics that matter most — keep improving to widen the lead.`,
   };
 }
 
@@ -469,14 +481,19 @@ function buildAdCopy(aiInsights, businessName, city, scanDetails) {
 // ── MAIN: build full print HTML ───────────────────────────────────────────────
 function buildPrintHtml(reportData) {
   const {
-    businessName = "Your Business",
-    city         = "",
+    businessName: businessNameRaw = "Your Business",
+    city:         cityRaw         = "",
     reportId     = "KYP-000000",
     reportDate   = new Date().toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" }),
     aiInsights   = null,
     scanDetails  = null,
     metaAds      = null,
   } = reportData;
+
+  // Business name and city are owner/third-party controlled (Google Places,
+  // checkout form). Escape once here so every template below is safe.
+  const businessName = esc(businessNameRaw);
+  const city         = esc(cityRaw);
 
   const sc      = getScores(reportData);
   const g       = grade(sc.overall);
@@ -735,7 +752,7 @@ hr.rule{border:none;border-top:1px solid var(--rule);margin:10px 0;}
 <div class="section">
   <div class="sec-label">03 / The New Front Door</div>
   <div class="h2">AI visibility</div>
-  <p class="lead">When a guest asks an assistant where to find great ${reportData.businessType || "local services"} in ${city || "your city"}, these signals shape whether ${businessName} enters the answer.</p>
+  <p class="lead">When a guest asks an assistant where to find great ${esc(reportData.businessType || "local services")} in ${city || "your city"}, these signals shape whether ${businessName} enters the answer.</p>
   <div class="ai-info">
     <div class="ai-circle"><div class="ai-circle-text">AI<br/>READINESS</div></div>
     <div><p class="body-t" style="font-weight:600;margin-bottom:3px;">AI systems are learning the same public evidence your guests see.</p><p class="body-t">Consistency, specificity, and fresh proof make it easier for an answer engine to describe you accurately.</p></div>
@@ -751,7 +768,7 @@ hr.rule{border:none;border-top:1px solid var(--rule);margin:10px 0;}
   <p class="lead">A competitor comparison is useful when it leads to a specific response — this one shows where the gap is behavioral, not just numerical.</p>
   <div class="comp-layout">
     <table class="comp-table">
-      <thead><tr><th>Metric</th><th>${businessName}</th><th>${reportData.competitor?.name || "Competitor"}</th><th>Gap</th><th>Read</th></tr></thead>
+      <thead><tr><th>Metric</th><th>${businessName}</th><th>${esc(reportData.competitor?.name || "Competitor")}</th><th>Gap</th><th>Read</th></tr></thead>
       <tbody>${comp.compRows}</tbody>
     </table>
     <div class="gap-box">
