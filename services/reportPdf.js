@@ -535,7 +535,7 @@ function buildPrintHtml(reportData) {
   --serif:'EB Garamond',Georgia,serif;--sans:'Inter',system-ui,sans-serif;
 }
 html,body{font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:13px;line-height:1.55;}
-.page{width:100%;max-width:760px;margin:0 auto;padding:0 0 40px;}
+.page{width:100%;max-width:760px;margin:0 auto;padding:0;}
 .report-header{background:var(--navy);padding:16px 36px;display:flex;justify-content:space-between;align-items:center;}
 .rh-brand{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#4ade80;}
 .rh-title{font-size:13px;font-weight:600;color:#fff;}
