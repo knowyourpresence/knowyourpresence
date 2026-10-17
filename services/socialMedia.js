@@ -116,6 +116,7 @@ async function fetchFacebookData(businessName, city) {
 }
 
 // ── YouTube public channel ────────────────────────────────────────────────────
+// channelId is either a channel ID ("UC...") or a handle ("@name").
 async function fetchYouTubeData(channelId) {
   const apiKey = process.env.YOUTUBE_API_KEY;
   if (!apiKey || !channelId) {
@@ -123,8 +124,11 @@ async function fetchYouTubeData(channelId) {
   }
 
   try {
+    const lookup = channelId.startsWith("@")
+      ? { forHandle: channelId }
+      : { id: channelId };
     const { data } = await axios.get("https://www.googleapis.com/youtube/v3/channels", {
-      params: { part: "statistics,snippet", id: channelId, key: apiKey },
+      params: { part: "statistics,snippet", ...lookup, key: apiKey },
       timeout: 10000,
     });
 
@@ -482,22 +486,32 @@ async function findSocialLinksOnWebsite(websiteUrl) {
       break;
     }
 
-    console.log(`[socialMedia] Website links — facebook: ${facebookUrl || "none"}, instagram: ${instagramHandle ? "@" + instagramHandle : "none"}`);
-    return { facebookUrl, instagramHandle };
+    // YouTube: /channel/UC... (exact ID) or /@handle (resolved via the API)
+    let youtubeChannelId = null;
+    const ytRe = /https?:\/\/(?:www\.|m\.)?youtube\.com\/(channel\/UC[\w-]{20,}|@[\w.\-]{3,})/gi;
+    for (const m of body.matchAll(ytRe)) {
+      const ref = m[1];
+      youtubeChannelId = ref.startsWith("channel/") ? ref.slice("channel/".length) : ref;
+      break;
+    }
+
+    console.log(`[socialMedia] Website links — facebook: ${facebookUrl || "none"}, instagram: ${instagramHandle ? "@" + instagramHandle : "none"}, youtube: ${youtubeChannelId || "none"}`);
+    return { facebookUrl, instagramHandle, youtubeChannelId };
   } catch (err) {
     console.warn("[socialMedia] Website link lookup failed:", err.message);
-    return { facebookUrl: null, instagramHandle: null };
+    return { facebookUrl: null, instagramHandle: null, youtubeChannelId: null };
   }
 }
 
 async function calculateSocialScore(handles = {}) {
   // Fill in any missing profile links from the business's own website
-  if (!handles.facebookUrl || !handles.instagramHandle) {
+  if (!handles.facebookUrl || !handles.instagramHandle || !handles.youtubeChannelId) {
     const found = await findSocialLinksOnWebsite(handles.websiteUrl);
     handles = {
       ...handles,
       facebookUrl: handles.facebookUrl || found.facebookUrl || undefined,
       instagramHandle: handles.instagramHandle || found.instagramHandle || undefined,
+      youtubeChannelId: handles.youtubeChannelId || found.youtubeChannelId || undefined,
     };
   }
 
