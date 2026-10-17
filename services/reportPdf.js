@@ -663,7 +663,7 @@ hr.rule{border:none;border-top:1px solid var(--rule);margin:10px 0;}
 .refund-box{background:var(--cream);border:1px solid var(--rule);border-radius:7px;padding:12px 14px;display:grid;grid-template-columns:70px 1fr;gap:10px;margin-top:14px;}
 .refund-lbl{font-size:11.5px;font-weight:600;color:var(--ink);}
 .refund-body{font-size:11px;color:var(--muted);line-height:1.55;}
-.report-footer{padding:20px 36px 28px;text-align:center;border-top:1px solid var(--rule);margin-top:8px;}
+.report-footer{padding:12px 36px 0;text-align:center;border-top:1px solid var(--rule);margin-top:0;}
 </style>
 </head>
 <body>
