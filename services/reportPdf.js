@@ -479,20 +479,32 @@ function buildAdCopy(aiInsights, businessName, city, scanDetails) {
 }
 
 // ── MAIN: build full print HTML ───────────────────────────────────────────────
-// Turns an AI text block into simple paragraphs and bullet lines.
-// Escapes first, then allows **bold** markers.
+// Turns an AI text block into structured, readable HTML:
+// ALL-CAPS labels become subheadings, numbered items and bullets are indented,
+// and **bold** markers are kept. Input is escaped first.
 function formatAiText(text) {
+  const bold = s => s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   const lines = esc(String(text || ""))
     .split(/\n+/)
-    .map(l => l.trim())
+    .map(l => l.trim().replace(/^#+\s*/, ""))
     .filter(Boolean);
-  return lines.map(line => {
-    const bold = s => s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-    if (/^[-•*]\s+/.test(line)) {
-      return `<div style="margin:0 0 4px 14px;">&bull; ${bold(line.replace(/^[-•*]\s+/, ""))}</div>`;
+  const out = [];
+  for (const raw of lines) {
+    const line = raw.replace(/^\*\*(.+?)\*\*:?/, (_, t) => `<strong>${t}</strong>:`);
+    const label = line.match(/^<strong>([^<]+)<\/strong>:?\s*(.*)$/) || line.match(/^([A-Z][A-Z0-9 &\/\-]{3,}):\s*(.*)$/);
+    if (label && label[1] === label[1].toUpperCase()) {
+      out.push(`<div style="font-weight:700;color:var(--ink);margin:12px 0 4px;">${label[1]}</div>`);
+      if (label[2]) out.push(`<p style="margin:0 0 6px;">${bold(label[2])}</p>`);
+    } else if (/^\d+[.)]\s+/.test(line)) {
+      const num = line.match(/^(\d+)[.)]\s+(.*)$/);
+      out.push(`<div style="display:flex;gap:8px;margin:0 0 6px;"><span style="font-weight:700;color:var(--green);min-width:16px;">${num[1]}.</span><span>${bold(num[2])}</span></div>`);
+    } else if (/^[-•*]\s+/.test(line)) {
+      out.push(`<div style="display:flex;gap:8px;margin:0 0 6px 6px;"><span style="color:var(--green);">&bull;</span><span>${bold(line.replace(/^[-•*]\s+/, ""))}</span></div>`);
+    } else {
+      out.push(`<p style="margin:0 0 6px;">${bold(line)}</p>`);
     }
-    return `<p style="margin:0 0 6px;">${bold(line)}</p>`;
-  }).join("");
+  }
+  return out.join("");
 }
 
 function buildPrintHtml(reportData) {
@@ -523,9 +535,12 @@ function buildPrintHtml(reportData) {
 <div class="section">
   <div class="sec-label">10 / AI Analysis</div>
   <div class="h2">What the analysis found</div>
+  <p class="lead">Generated from this business's reviews, social presence and local search, then checked against the scores above.</p>
   ${aiBlocks.map(([title, text]) => `
-  <div class="h3" style="margin-top:16px;">${title}</div>
-  <div class="body-t">${formatAiText(text)}</div>`).join("")}
+  <div style="margin-top:18px;padding:16px 18px;background:var(--surface);border:1px solid var(--rule);border-radius:8px;page-break-inside:avoid;">
+    <div class="h3" style="margin-bottom:10px;">${title}</div>
+    <div class="body-t" style="line-height:1.6;">${formatAiText(text)}</div>
+  </div>`).join("")}
 </div>` : "";
 
   const sc      = getScores(reportData);
