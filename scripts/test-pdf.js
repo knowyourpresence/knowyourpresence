@@ -23,6 +23,12 @@ function sampleReportData() {
 
 (async () => {
   const reportId = process.argv[2];
+  if (reportId === "list") {
+    const { getAllOrders } = require("../services/orders");
+    const withAi = getAllOrders().filter(o => o.reportData && o.reportData.aiInsights);
+    console.log("Orders with AI insights:", withAi.map(o => o.reportId).join(", ") || "none");
+    process.exit(0);
+  }
   let reportData;
   if (reportId) {
     const order = getOrderByReportId(reportId);
