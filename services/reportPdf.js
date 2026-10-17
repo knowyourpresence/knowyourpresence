@@ -482,15 +482,27 @@ function buildAdCopy(aiInsights, businessName, city, scanDetails) {
 // Turns an AI text block into structured, readable HTML:
 // ALL-CAPS labels become subheadings, numbered items and bullets are indented,
 // and **bold** markers are kept. Input is escaped first.
+// Removes markdown leftovers and emoji the PDF font cannot draw.
+function cleanAiText(text) {
+  return String(text || "")
+    .replace(/\p{Extended_Pictographic}\uFE0F?/gu, "")
+    .replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/gm, "$1$2")
+    .replace(/::/g, ":")
+    .replace(/^\s*>\s?/gm, "")
+    .split("\n")
+    .filter(l => !/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(l))
+    .join("\n");
+}
+
 function formatAiText(text) {
   const bold = s => s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-  const lines = esc(String(text || ""))
+  const lines = esc(cleanAiText(text))
     .split(/\n+/)
     .map(l => l.trim().replace(/^#+\s*/, ""))
     .filter(Boolean);
   const out = [];
   for (const raw of lines) {
-    const line = raw.replace(/^\*\*(.+?)\*\*:?/, (_, t) => `<strong>${t}</strong>:`);
+    const line = raw.replace(/^\*\*(.+?)\*\*/, (_, t) => `<strong>${t}</strong>`);
     const label = line.match(/^<strong>([^<]+)<\/strong>:?\s*(.*)$/) || line.match(/^([A-Z][A-Z0-9 &\/\-]{3,}):\s*(.*)$/);
     if (label && label[1] === label[1].toUpperCase()) {
       out.push(`<div style="font-weight:700;color:var(--ink);margin:12px 0 4px;">${label[1]}</div>`);
@@ -536,8 +548,8 @@ function buildPrintHtml(reportData) {
   <div class="sec-label">10 / AI Analysis</div>
   <div class="h2">What the analysis found</div>
   <p class="lead">Generated from this business's reviews, social presence and local search, then checked against the scores above.</p>
-  ${aiBlocks.map(([title, text]) => `
-  <div style="margin-top:18px;padding:16px 18px;background:var(--surface);border:1px solid var(--rule);border-radius:8px;page-break-inside:avoid;">
+  ${aiBlocks.map(([title, text], i) => `
+  <div style="${i > 0 ? "page-break-before:always;" : ""}margin-top:18px;padding:16px 18px;background:var(--surface);border:1px solid var(--rule);border-radius:8px;">
     <div class="h3" style="margin-bottom:10px;">${title}</div>
     <div class="body-t" style="line-height:1.6;">${formatAiText(text)}</div>
   </div>`).join("")}
