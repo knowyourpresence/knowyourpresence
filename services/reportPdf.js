@@ -505,15 +505,16 @@ function formatAiText(text) {
     const line = raw.replace(/^\*\*(.+?)\*\*/, (_, t) => `<strong>${t}</strong>`);
     const label = line.match(/^<strong>([^<]+)<\/strong>:?\s*(.*)$/) || line.match(/^([A-Z][A-Z0-9 &\/\-]{3,}):\s*(.*)$/);
     if (label && label[1] === label[1].toUpperCase()) {
-      out.push(`<div style="font-weight:700;color:var(--ink);margin:12px 0 4px;">${label[1]}</div>`);
+      out.push(`<div style="font-weight:700;color:var(--ink);margin:12px 0 4px;page-break-after:avoid;">${label[1]}</div>`);
       if (label[2]) out.push(`<p style="margin:0 0 6px;">${bold(label[2])}</p>`);
     } else if (/^\d+[.)]\s+/.test(line)) {
       const num = line.match(/^(\d+)[.)]\s+(.*)$/);
-      out.push(`<div style="display:flex;gap:8px;margin:0 0 6px;"><span style="font-weight:700;color:var(--green);min-width:16px;">${num[1]}.</span><span>${bold(num[2])}</span></div>`);
+      out.push(`<div style="display:flex;gap:8px;margin:0 0 6px;page-break-inside:avoid;"><span style="font-weight:700;color:var(--green);min-width:16px;">${num[1]}.</span><span>${bold(num[2])}</span></div>`);
     } else if (/^[-•*]\s+/.test(line)) {
-      out.push(`<div style="display:flex;gap:8px;margin:0 0 6px 6px;"><span style="color:var(--green);">&bull;</span><span>${bold(line.replace(/^[-•*]\s+/, ""))}</span></div>`);
+      out.push(`<div style="display:flex;gap:8px;margin:0 0 6px 6px;page-break-inside:avoid;"><span style="color:var(--green);">&bull;</span><span>${bold(line.replace(/^[-•*]\s+/, ""))}</span></div>`);
     } else {
-      out.push(`<p style="margin:0 0 6px;">${bold(line)}</p>`);
+      const onlyBold = /^<strong>[^<]+<\/strong>:?$/.test(line);
+      out.push(`<p style="margin:0 0 6px;${onlyBold ? "page-break-after:avoid;" : "page-break-inside:avoid;"}">${bold(line)}</p>`);
     }
   }
   return out.join("");
