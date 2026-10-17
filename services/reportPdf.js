@@ -517,6 +517,7 @@ function buildPrintHtml(reportData) {
     ["Review sentiment and themes", aiInsights.reviewAnalysis],
     ["Social media audit", aiInsights.socialAudit],
     ["Local SEO content ideas", aiInsights.seoContent],
+    ["Priority action plan", aiInsights.priorityPlan],
   ].filter(([, text]) => text) : [];
   const aiSectionHtml = aiBlocks.length ? `
 <div class="section">
@@ -856,6 +857,10 @@ hr.rule{border:none;border-top:1px solid var(--rule);margin:10px 0;}
   <div class="sec-label">08 / Context, Not Comparison Theatre</div>
   <div class="h2">Benchmark context</div>
   <p class="lead">Median tells you where the market sits. Top quartile shows what a more disciplined presence makes possible.</p>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+    <strong style="color:var(--ink);">Grade scale:</strong>
+    A+ = 90 and above &nbsp;·&nbsp; A = 80–89 &nbsp;·&nbsp; B = 70–79 &nbsp;·&nbsp; C = 60–69 &nbsp;·&nbsp; D = below 60
+  </div>
   <table class="bench-table">
     <thead><tr><th>Metric</th><th>You</th><th>Median</th><th>Top Quartile</th><th>Status</th><th>Insight</th></tr></thead>
     <tbody>${bench}</tbody>
