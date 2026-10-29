@@ -211,7 +211,8 @@ section{padding:100px 0}
 .r-bar-name{font-size:0.8rem;color:var(--ink2);width:140px;flex-shrink:0;font-weight:500}
 .r-bar-track{flex:1;height:6px;background:var(--bg2);border-radius:3px;overflow:hidden}
 .r-bar-fill{height:100%;border-radius:3px;transition:width .8s cubic-bezier(.4,0,.2,1)}
-.r-bar-val{font-size:0.82rem;font-weight:700;width:24px;text-align:right;color:var(--ink2)}
+.r-bar-val{font-size:0.82rem;font-weight:700;min-width:24px;text-align:right;color:var(--ink2)}
+.r-bar-note{font-size:0.72rem;color:var(--ink3);line-height:1.45;margin-top:2px}
 .upgrade-box{background:var(--blue-light);border-radius:10px;padding:18px;text-align:center}
 .upgrade-box h4{font-size:0.9rem;font-weight:700;color:var(--ink);margin-bottom:5px;letter-spacing:-0.01em}
 .upgrade-box p{font-size:0.8rem;color:var(--ink3);margin-bottom:14px;line-height:1.5}
@@ -643,6 +644,7 @@ src="https://www.facebook.com/tr?id=972754118519664&ev=PageView&noscript=1"
                 <input class="scan-input" type="text" id="instagramInput" placeholder="@yourbusiness"/>
               </div>
             </div>
+            <div style="font-size:11px;color:var(--ink3);line-height:1.45;margin:-4px 0 12px">Add both for an accurate social score. Without them we show an estimate.</div>
             <div id="scanErr" class="scan-error" hidden></div>
             <button type="button" class="scan-btn" id="runBtn">Run my FREE scan →</button>
             <div class="scan-privacy">🔒 Your details stay private. No spam, no subscriptions.</div>
@@ -1328,7 +1330,7 @@ function showResults(data,bizName){
   arc.setAttribute('stroke-dashoffset',circ*(1-score/100));
   const cats=[
     {name:'Google Business',score:getScore(data,'google'),color:'#22c55e'},
-    {name:'Social Media',score:getScore(data,'social'),color:'#f59e0b'},
+    {name:data.socialEstimated?'Social Media (est.)':'Social Media',score:getScore(data,'social'),color:'#f59e0b',est:!!data.socialEstimated},
     {name:'Website & Technical',score:getScore(data,'website'),color:'#f59e0b'},
     {name:'Reputation',score:getScore(data,'reputation'),color:'#3b6ef8'},
   ];
@@ -1336,8 +1338,8 @@ function showResults(data,bizName){
     <div class="r-bar-row">
       <span class="r-bar-name">${c.name}</span>
       <div class="r-bar-track"><div class="r-bar-fill" style="width:${c.score}%;background:${c.color}"></div></div>
-      <span class="r-bar-val">${c.score}</span>
-    </div>`).join('');
+      <span class="r-bar-val">${c.est?'~':''}${c.score}</span>
+    </div>`).join('')+(data.socialEstimated?'<div class="r-bar-note">Social score is an estimate: we couldn\'t read your social accounts. Add your Facebook and Instagram and scan again for a measured score.</div>':'');
 
   // ── Pain section: real findings, blurred to drive upgrade ─────────────
   (function(){

@@ -252,6 +252,9 @@ app.post("/api/scan", scanRateLimit, async (req, res) => {
       overall: scoreResult.overall,
       grade: scoreResult.grade,
       potentialScore: potential,
+      // true when no real Facebook/Instagram/YouTube data could be read and the
+      // social score is a placeholder estimate rather than a measurement
+      socialEstimated: !socialResult.hasRealData && socialResult.finding !== "no_social_presence",
       breakdown: scoreResult.breakdown,
       // scores object passed through to checkout → webhook → reportData
       scores: {
