@@ -274,6 +274,23 @@ app.post("/api/scan", scanRateLimit, async (req, res) => {
         urlscan: urlscanResult,  // security headers, tracker count, screenshot URL
         metaAds: metaAdsTeaser,  // is this business running Facebook/Instagram ads?
       },
+      // Trimmed evidence carried through checkout -> webhook. Kept small because
+      // Dodo metadata values are size-limited. Includes the inputs the paid
+      // report needs to re-check social and enrich the website.
+      scanDetails: {
+        websiteUrl: (resolvedWebsiteUrl || "").slice(0, 200),
+        facebookUrl: (facebookUrl || "").slice(0, 200),
+        instagramHandle: instagramHandle || "",
+        youtubeChannelId: youtubeChannelId || "",
+        grade: scoreResult.grade,
+        rating: googleResult?.raw?.rating ?? null,
+        reviewCount: googleResult?.raw?.reviewCount ?? null,
+        photoCount: googleResult?.raw?.photoCount ?? null,
+        perfScore: websiteResult?.raw?.perfScore ?? null,
+        isHttps: websiteResult?.raw?.isHttps ?? null,
+        hasViewportMeta: websiteResult?.raw?.hasViewportMeta ?? null,
+        socialEstimated: !socialResult.hasRealData && socialResult.finding !== "no_social_presence",
+      },
       actionPlan,
     });
   } catch (err) {
@@ -427,6 +444,31 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
       scanDetails = meta.scanDetails ? JSON.parse(meta.scanDetails) : null;
     } catch {
       scanDetails = null;
+    }
+
+    // Paid-report accuracy: re-read the customer's social accounts now. If the
+    // free scan could only estimate social, replace the estimate with a measured
+    // score when real data is available this time; otherwise keep the estimate.
+    if (scores && scanDetails && scanDetails.socialEstimated) {
+      try {
+        const fresh = await calculateSocialScore({
+          youtubeChannelId: scanDetails.youtubeChannelId || undefined,
+          businessName: meta.businessName,
+          city: meta.city,
+          facebookUrl: scanDetails.facebookUrl || undefined,
+          instagramHandle: scanDetails.instagramHandle || undefined,
+          websiteUrl: scanDetails.websiteUrl || undefined,
+        });
+        if (fresh.hasRealData) {
+          scores.social = fresh.score;
+          scanDetails.socialEstimated = false;
+          console.log("Social re-check: measured score", fresh.score, "for", meta.businessName);
+        } else {
+          console.log("Social re-check: still no readable data for", meta.businessName);
+        }
+      } catch (e) {
+        console.error("Social re-check failed (keeping estimate):", e.message);
+      }
     }
 
     const order = saveOrder({
