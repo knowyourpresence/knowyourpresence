@@ -596,6 +596,12 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
           isHttps: scanDetails?.isHttps ?? null,
           hasViewportMeta: scanDetails?.hasViewportMeta ?? null,
           social: socialFacts,
+          focusArea: (() => {
+            const w = { "Google Business": [scores?.google, 0.35], "Social Media": [scores?.social, 0.25], "Website": [scores?.website, 0.20], "Reputation": [scores?.reputation, 0.20] };
+            let best = null, bestGap = -1;
+            for (const [k, [v, wt]] of Object.entries(w)) { const gap = (100 - (v ?? 0)) * wt; if (gap > bestGap) { bestGap = gap; best = k; } }
+            return best;
+          })(),
           competitor: competitorData ? { name: competitorData.name, google: competitorData.google, website: competitorData.website } : null,
         },
         aiVisibility: null,
