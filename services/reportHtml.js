@@ -595,10 +595,17 @@ section:last-child{border-bottom:none}
     <div style="margin-top:24px">
       <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase">Scan Details</div>
       <div class="card-grid">
-        ${Object.entries(scan).slice(0, 6).map(([k, v]) => `
+        ${[
+          ['Google Rating', scan.rating != null ? scan.rating + ' ★' : null],
+          ['Google Reviews', scan.reviewCount],
+          ['Photos on Profile', scan.photoCount],
+          ['Mobile PageSpeed', scan.perfScore != null ? scan.perfScore + '/100' : null],
+          ['HTTPS / SSL', scan.isHttps == null ? null : (scan.isHttps ? 'Pass' : 'Missing')],
+          ['Mobile-Friendly', scan.hasViewportMeta == null ? null : (scan.hasViewportMeta ? 'Pass' : 'Check')],
+        ].map(([label, val]) => `
           <div class="card">
-            <div class="card-label">${esc(k.replace(/([A-Z])/g,' $1').trim())}</div>
-            <div class="card-value" style="font-size:16px;font-weight:600">${typeof v === 'object' ? (v && v.value !== undefined ? esc(String(v.value)) : '—') : esc(String(v ?? '—'))}</div>
+            <div class="card-label">${label}</div>
+            <div class="card-value" style="font-size:16px;font-weight:600">${val == null || val === '' ? 'Not measured' : esc(String(val))}</div>
           </div>
         `).join('')}
       </div>
