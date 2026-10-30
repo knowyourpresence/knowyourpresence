@@ -17,7 +17,34 @@ const MAX_TOKENS = 1200;
 
 // ─── Core Claude caller ───────────────────────────────────────────────────────
 
-async function askClaude(prompt) {
+// Rules applied to every prompt. These reports are paid deliverables, so the
+// model must never invent facts or leave template placeholders behind.
+const GROUNDING = `STRICT RULES (apply to everything you write):
+- Use ONLY the facts provided below. If something is not provided, say it was "not measured" or skip it. Never guess.
+- Never output bracketed placeholders such as [Address], [Phone], [Link], [Name], [QR code]. Write complete text a customer can use as-is, or leave that item out.
+- Never invent customer reviews, testimonials, names of customers, statistics, percentages, benchmarks or competitor names.
+- Do not use hedging like "likely", "probably" or "possibly" about the business's own accounts; state what was found, or say it was not measured.
+- Write for a business owner in the United States. Do not mention any other country.
+`;
+
+function factsBlock(reportData) {
+  const f = reportData.facts || {};
+  const lines = [];
+  if (f.websiteUrl) lines.push(`Website: ${f.websiteUrl}`); else lines.push("Website: none provided");
+  if (f.rating != null) lines.push(`Google rating: ${f.rating} stars`);
+  if (f.reviewCount != null) lines.push(`Google reviews: ${f.reviewCount}`);
+  if (f.photoCount != null) lines.push(`Google profile photos: ${f.photoCount}`);
+  if (f.perfScore != null) lines.push(`Mobile PageSpeed: ${f.perfScore}/100`); else lines.push("Mobile PageSpeed: not measured");
+  if (f.isHttps != null) lines.push(`HTTPS: ${f.isHttps ? "yes" : "no"}`);
+  if (f.hasViewportMeta != null) lines.push(`Mobile-friendly viewport: ${f.hasViewportMeta ? "yes" : "no"}`);
+  lines.push(f.facebookUrl ? `Facebook given: ${f.facebookUrl}` : "Facebook: none provided");
+  lines.push(f.instagramHandle ? `Instagram given: @${String(f.instagramHandle).replace(/^@/, "")}` : "Instagram: none provided");
+  if (f.social) lines.push(`Social platform readings: ${JSON.stringify(f.social)}`);
+  else lines.push("Social platform readings: not available (do not guess their content or activity)");
+  return "VERIFIED FACTS:\n" + lines.join("\n");
+}
+
+async function askClaude(prompt, reportData) {
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
   if (!ANTHROPIC_KEY) return null;
   try {
@@ -26,7 +53,7 @@ async function askClaude(prompt) {
       {
         model: MODEL,
         max_tokens: MAX_TOKENS,
-        messages: [{ role: "user", content: prompt }],
+        messages: [{ role: "user", content: GROUNDING + "\n" + (reportData ? factsBlock(reportData) + "\n\n" : "") + prompt }],
       },
       {
         headers: {
@@ -68,7 +95,7 @@ Write a 3-paragraph summary:
 
 Write as if speaking directly to the business owner. Use "your business" not "the business".`;
 
-  const text = await askClaude(prompt);
+  const text = await askClaude(prompt, reportData);
   return text || "Unable to generate narrative at this time.";
 }
 
@@ -79,16 +106,10 @@ async function generateCompetitorSummary(reportData) {
   const { businessName, city, businessType } = reportData;
   const type = businessType || "business";
 
-  const prompt = `List the top 5 competitors or similar businesses to "${businessName}" in ${city} that are in the ${type} category.
+  const prompt = `Write a short guide (under 200 words) on how "${businessName}", a ${type} in ${city}, can size up its local competitors. Do NOT name or invent any specific businesses. Cover: what to compare on Google (rating, review count, photos, response to reviews), what to check on their websites and social accounts, and one way to find the top 3 local competitors themselves by searching "${type} in ${city}" on Google Maps.`;
 
-For each competitor, give:
-- Business name
-- One sentence on why they are strong competition (online presence, reviews, visibility)
-
-Format as a clean numbered list. If you don't know specific competitors, describe the competitive landscape generally for ${type}s in ${city}.`;
-
-  const text = await askClaude(prompt);
-  return text || "Competitor data unavailable.";
+  const text = await askClaude(prompt, reportData);
+  return text || "Competitor guidance unavailable.";
 }
 
 // ─── 3. Review Analyser ───────────────────────────────────────────────────────
@@ -121,7 +142,7 @@ Provide:
 
 Keep it concise and honest.`;
 
-  const text = await askClaude(prompt);
+  const text = await askClaude(prompt, reportData);
   return text || "Review analysis unavailable.";
 }
 
@@ -144,7 +165,7 @@ Format:
 
 Make titles specific, not generic.`;
 
-  const text = await askClaude(prompt);
+  const text = await askClaude(prompt, reportData);
   return text || "SEO content suggestions unavailable.";
 }
 
@@ -171,7 +192,7 @@ Provide:
 
 Be specific to their business type: ${businessType || "local business"}.`;
 
-  const text = await askClaude(prompt);
+  const text = await askClaude(prompt, reportData);
   return text || "Social media audit unavailable.";
 }
 
@@ -209,7 +230,7 @@ WEEK 3-4 — GROWTH (longer term):
 
 Be very specific. Name the exact platform or action. No generic advice.`;
 
-  const text = await askClaude(prompt);
+  const text = await askClaude(prompt, reportData);
   return text || "Priority plan unavailable.";
 }
 

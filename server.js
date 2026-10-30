@@ -452,6 +452,7 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
     // Paid-report accuracy: re-read the customer's social accounts now. If the
     // free scan could only estimate social, replace the estimate with a measured
     // score when real data is available this time; otherwise keep the estimate.
+    let socialFacts = null;
     if (scores && scanDetails && scanDetails.socialEstimated) {
       try {
         const fresh = await calculateSocialScore({
@@ -463,6 +464,7 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
           websiteUrl: scanDetails.websiteUrl || undefined,
         });
         if (fresh.hasRealData) {
+          socialFacts = (fresh.platforms || []).filter((x) => x && x.real).map((x) => ({ platform: x.platform, raw: x.raw }));
           scores.social = fresh.score;
           scanDetails.socialEstimated = false;
           console.log("Social re-check: measured score", fresh.score, "for", meta.businessName);
@@ -569,6 +571,18 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
         },
         reviews: reviewsArray,
         socialData: null,
+        facts: {
+          websiteUrl: scanDetails?.websiteUrl || "",
+          facebookUrl: scanDetails?.facebookUrl || "",
+          instagramHandle: scanDetails?.instagramHandle || "",
+          rating: scanDetails?.rating ?? null,
+          reviewCount: scanDetails?.reviewCount ?? null,
+          photoCount: scanDetails?.photoCount ?? null,
+          perfScore: scanDetails?.perfScore ?? null,
+          isHttps: scanDetails?.isHttps ?? null,
+          hasViewportMeta: scanDetails?.hasViewportMeta ?? null,
+          social: socialFacts,
+        },
         aiVisibility: null,
       });
       console.log("AI Insights: All 6 modules complete.");

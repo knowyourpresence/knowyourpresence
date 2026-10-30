@@ -77,9 +77,9 @@ function grade(overall) {
   return "D";
 }
 function gradeRank(overall, city) {
-  if (overall >= 85) return `Top 10% of local businesses in ${city}`;
-  if (overall >= 75) return `Top 25% of local businesses in ${city}`;
-  if (overall >= 65) return `Top 40% of local businesses in ${city}`;
+  // No percentile claims: we have no dataset to rank against.
+  if (overall >= 75) return `Strong digital presence in ${city}`;
+  if (overall >= 65) return `Solid foundation in ${city}`;
   return `Growing — room to climb in ${city}`;
 }
 
@@ -372,11 +372,9 @@ function buildBenchRows(sc, scanDetails) {
     `<tr><td>${metric}</td><td style="font-weight:700;color:var(--${pillCls==='pill-green'?'green':pillCls==='pill-red'?'red':'amber'});">${you}</td><td style="color:var(--muted);">${median}</td><td style="color:var(--muted);">${top}</td><td><span class="pill ${pillCls}">${pillTxt}</span></td><td style="font-size:11.5px;color:var(--muted);">${insight}</td></tr>`;
 
   return [
-    row("Google rating",       `${rating}★`,  "4.1★", "4.4+",  rating >= 4.4 ? "pill-green":"pill-amber", rating >= 4.4?"LEAD":"ON TRACK", "Protect and grow review count."),
-    row("Total reviews",       reviews,       "80–150","250+",  reviews >= 250?"pill-green":reviews>=80?"pill-amber":"pill-red", reviews>=250?"TOP":reviews>=80?"ON TRACK":"BUILD", "More reviews = stronger social proof."),
-    row("Mobile PageSpeed",    perf,          "55–70","80+",    perf>=80?"pill-green":perf>=55?"pill-amber":"pill-red", perf>=80?"PASS":perf>=55?"AT MEDIAN":"BEHIND", "Aim for 80+ this quarter."),
-    row("Review response rate","~"+(sc.rep>=80?"90%":sc.rep>=70?"70%":"50%"), "70–80%","95%+", sc.rep>=80?"pill-green":"pill-red", sc.rep>=80?"STRONG":"BEHIND", "Top performers reply within 24 hrs."),
-    row("Social posting/month",sc.soc>=75?"20+":sc.soc>=55?"8–12":"<8","8–12","20+", sc.soc>=75?"pill-green":sc.soc>=55?"pill-amber":"pill-red", sc.soc>=75?"TOP":"BEHIND", "5–7× per week reaches top quartile."),
+    row("Google rating",       `${rating}★`,  "4.0★", "4.5+",  rating >= 4.4 ? "pill-green":"pill-amber", rating >= 4.4?"LEAD":"ON TRACK", "Protect and grow review count."),
+    row("Total reviews",       reviews,       "100+","250+",  reviews >= 250?"pill-green":reviews>=80?"pill-amber":"pill-red", reviews>=250?"TOP":reviews>=80?"ON TRACK":"BUILD", "More reviews = stronger social proof."),
+    row("Mobile PageSpeed",    perf,          "60+","80+",    perf>=80?"pill-green":perf>=60?"pill-amber":"pill-red", perf>=80?"PASS":perf>=60?"ON TRACK":"BEHIND", "Aim for 80+ this quarter."),
   ].join("");
 }
 
@@ -882,15 +880,15 @@ hr.rule{border:none;border-top:1px solid var(--rule);margin:10px 0;}
 
 <!-- 08 BENCHMARKS -->
 <div class="section">
-  <div class="sec-label">08 / Context, Not Comparison Theatre</div>
-  <div class="h2">Benchmark context</div>
-  <p class="lead">Median tells you where the market sits. Top quartile shows what a more disciplined presence makes possible.</p>
+  <div class="sec-label">08 / Targets</div>
+  <div class="h2">Your targets</div>
+  <p class="lead">Practical targets for each measured metric. These are goals to aim for, not statistics about other businesses.</p>
   <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">
     <strong style="color:var(--ink);">Grade scale:</strong>
     A+ = 90 and above &nbsp;·&nbsp; A = 80–89 &nbsp;·&nbsp; B = 70–79 &nbsp;·&nbsp; C = 60–69 &nbsp;·&nbsp; D = below 60
   </div>
   <table class="bench-table">
-    <thead><tr><th>Metric</th><th>You</th><th>Median</th><th>Top Quartile</th><th>Status</th><th>Insight</th></tr></thead>
+    <thead><tr><th>Metric</th><th>You</th><th>Good</th><th>Strong</th><th>Status</th><th>Insight</th></tr></thead>
     <tbody>${bench}</tbody>
   </table>
 </div>

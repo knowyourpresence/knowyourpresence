@@ -1322,7 +1322,7 @@ function showResults(data,bizName){
   const grade=data.grade??(score>=85?'A':score>=75?'B+':score>=65?'B':score>=55?'C+':'C');
   document.getElementById('rScore').textContent=score;
   document.getElementById('rBizName').textContent=bizName;
-  document.getElementById('rGrade').textContent=`Grade ${grade} · Top 35% of local businesses`;
+  document.getElementById('rGrade').textContent=`Grade ${grade}`;
   document.getElementById('rPotential').textContent=potential;
   const circ=2*Math.PI*34;
   const arc=document.getElementById('rArc');

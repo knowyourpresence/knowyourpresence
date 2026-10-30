@@ -766,33 +766,18 @@ section:last-child{border-bottom:none}
   <!-- 08 BENCHMARKS -->
   <section id="benchmarks">
     <div class="section-tag">08 — Benchmarks</div>
-    <div class="section-title">Industry Context</div>
+    <div class="section-title">How to Read Your Score</div>
     <div class="card-grid" style="margin-bottom:28px">
       <div class="card">
         <div class="card-label">Your Overall Score</div>
         <div class="card-value" style="color:${ringColor}">${overall}</div>
         <div class="card-sub">Grade: ${grade}</div>
       </div>
-      <div class="card">
-        <div class="card-label">Industry Average</div>
-        <div class="card-value" style="color:var(--muted)">52</div>
-        <div class="card-sub">Typical local business</div>
-      </div>
-      <div class="card">
-        <div class="card-label">Top Performer</div>
-        <div class="card-value" style="color:#1f6b45">85+</div>
-        <div class="card-sub">Best-in-class benchmark</div>
-      </div>
-      <div class="card">
-        <div class="card-label">vs Industry Avg</div>
-        <div class="card-value" style="color:${overall >= 52 ? '#1f6b45' : '#dc2626'}">${overall >= 52 ? '+' : ''}${overall - 52}</div>
-        <div class="card-sub">${overall >= 52 ? 'Above average' : 'Below average'}</div>
-      </div>
     </div>
     <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:20px">
       <div style="font-size:13px;font-weight:700;margin-bottom:12px">Score Interpretation</div>
       <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
-        <div style="display:flex;align-items:center;gap:10px"><span style="min-width:30px;font-weight:700;color:#1f6b45">A+</span><span>90–100 — Exceptional. Top 10% of all local businesses.</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="min-width:30px;font-weight:700;color:#1f6b45">A+</span><span>90–100 — Exceptional.</span></div>
         <div style="display:flex;align-items:center;gap:10px"><span style="min-width:30px;font-weight:700;color:#1f6b45">A</span><span>80–89 — Excellent. Well above average.</span></div>
         <div style="display:flex;align-items:center;gap:10px"><span style="min-width:30px;font-weight:700;color:#d97706">B</span><span>70–79 — Good. Above average with room to grow.</span></div>
         <div style="display:flex;align-items:center;gap:10px"><span style="min-width:30px;font-weight:700;color:#d97706">C</span><span>60–69 — Average. Significant opportunities available.</span></div>
