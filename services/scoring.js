@@ -3,12 +3,15 @@
 // Each sub-score comes in as 0-100 from its own module, and gets
 // combined here using the weights we defined in the blueprint.
 
+// Same formula the paid report shows to customers:
+// Google 35% + Social 25% + Website 20% + Reputation 20%.
+// (competitive is not scored: no competitor data in the free scan.)
 const WEIGHTS = {
-  google: 0.25,
-  social: 0.30,
+  google: 0.35,
+  social: 0.25,
   website: 0.20,
-  reputation: 0.15,
-  competitive: 0.10,
+  reputation: 0.20,
+  competitive: 0,
 };
 
 /**
