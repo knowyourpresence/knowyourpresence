@@ -808,8 +808,8 @@ section:last-child{border-bottom:none}
     </div>
 
     <div class="refund-box">
-      <strong>Satisfaction Guarantee</strong><br/>
-      This report represents a thorough analysis of your business's digital presence at the time of scan. All data is collected from publicly available sources.
+      <strong>About this report</strong><br/>
+      This report is a snapshot of your business's digital presence at the time of the scan, based on publicly available sources. Scores marked as estimates could not be measured directly.
     </div>
 
     <div class="footer" style="margin-top:40px">

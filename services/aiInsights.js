@@ -27,6 +27,7 @@ const GROUNDING = `STRICT RULES (apply to everything you write):
 - Do not use hedging like "likely", "probably" or "possibly" about the business's own accounts; state what was found, or say it was not measured.
 - Sample captions, posts or ad copy must not assert facts about the business that are not in VERIFIED FACTS (e.g. "handmade", "made fresh daily", "near [landmark]"). Use neutral wording or tell the owner to edit it to match their business.
 - Do not name landmarks, neighbourhood features or cuisine details that are not in VERIFIED FACTS.
+- Never infer cuisine, ethnicity, nationality or community from the business name. Use only the business type the owner gave; if it is just "local business", keep the wording generic.
 - Mobile PageSpeed guide: 90-100 good, 50-89 moderate (room to improve), below 50 slow. Never call a score of 50 or higher "slow".
 - Write for a business owner in the United States. Do not mention any other country.
 `;
