@@ -1331,7 +1331,7 @@ function showResults(data,bizName){
   const cats=[
     {name:'Google Business',score:getScore(data,'google'),color:'#22c55e'},
     {name:data.socialEstimated?'Social Media (est.)':'Social Media',score:getScore(data,'social'),color:'#f59e0b',est:!!data.socialEstimated},
-    {name:'Website & Technical',score:getScore(data,'website'),color:'#f59e0b'},
+    {name:data.websiteEstimated?'Website & Technical (est.)':'Website & Technical',score:getScore(data,'website'),color:'#f59e0b',est:!!data.websiteEstimated},
     {name:'Reputation',score:getScore(data,'reputation'),color:'#3b6ef8'},
   ];
   document.getElementById('rBars').innerHTML=cats.map(c=>`
@@ -1339,7 +1339,7 @@ function showResults(data,bizName){
       <span class="r-bar-name">${c.name}</span>
       <div class="r-bar-track"><div class="r-bar-fill" style="width:${c.score}%;background:${c.color}"></div></div>
       <span class="r-bar-val">${c.est?'~':''}${c.score}</span>
-    </div>`).join('')+(data.socialEstimated?'<div class="r-bar-note">Social score is an estimate: we couldn\'t read your social accounts. Add your Facebook and Instagram and scan again for a measured score.</div>':'');
+    </div>`).join('')+(data.socialEstimated?'<div class="r-bar-note">Social score is an estimate: we couldn\'t read your social accounts. Add your Facebook and Instagram and scan again for a measured score.</div>':'')+(data.websiteEstimated?'<div class="r-bar-note">Website score is an estimate: we couldn\'t measure your site speed. Add your website address and scan again for a measured score.</div>':'');
 
   // ── Pain section: real findings, blurred to drive upgrade ─────────────
   (function(){

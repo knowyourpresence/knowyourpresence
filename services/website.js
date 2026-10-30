@@ -5,7 +5,7 @@ const axios = require("axios");
 
 async function fetchWebsiteHealth(websiteUrl) {
   const apiKey = process.env.GOOGLE_PAGESPEED_API_KEY;
-  if (!apiKey || !websiteUrl) return mockWebsiteData();
+  if (!apiKey || !websiteUrl) return mockWebsiteData(websiteUrl);
 
   try {
     const url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
@@ -26,15 +26,27 @@ async function fetchWebsiteHealth(websiteUrl) {
     return {
       score: Math.round(Math.min(100, score)),
       raw: { perfScore: Math.round(perfScore), isHttps, hasViewportMeta },
+      estimated: false,
     };
   } catch (err) {
     console.error("PageSpeed fetch failed:", err.message);
-    return mockWebsiteData();
+    return mockWebsiteData(websiteUrl);
   }
 }
 
-function mockWebsiteData() {
-  return { score: 55, raw: { perfScore: 48, isHttps: true, hasViewportMeta: true } };
+// Placeholder when the website could not be measured (no URL, no API key, or
+// PageSpeed failed). Flagged estimated so the UI/report don't present it as a
+// measurement. Only HTTPS is inferable from the URL itself.
+function mockWebsiteData(websiteUrl) {
+  return {
+    score: 55,
+    raw: {
+      perfScore: null,
+      isHttps: websiteUrl ? websiteUrl.startsWith("https://") : null,
+      hasViewportMeta: null,
+    },
+    estimated: true,
+  };
 }
 
 module.exports = { fetchWebsiteHealth };
