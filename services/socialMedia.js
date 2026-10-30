@@ -285,7 +285,19 @@ async function fetchFacebookByUrl(fbUrl) {
   const match = fbUrl.match(/(?:facebook\.com|fb\.com)\/([^/?#\s]+)/i);
   if (!match) return { platform: "Facebook", score: 0, real: false, raw: { note: "invalid FB URL" } };
 
-  const pageSlug = match[1];
+  let pageSlug = match[1];
+  // New-style page URLs: facebook.com/p/Page-Name-1000123456789/ -> use the numeric id
+  if (pageSlug.toLowerCase() === "p") {
+    const pm = fbUrl.match(/(?:facebook\.com|fb\.com)\/p\/([^/?#\s]+)/i);
+    const idm = pm && pm[1].match(/-(\d{6,})$/);
+    if (idm) pageSlug = idm[1];
+    else if (pm) pageSlug = pm[1];
+  }
+  // Classic URLs with an id: facebook.com/pages/Name/123456789
+  if (pageSlug.toLowerCase() === "pages") {
+    const gm = fbUrl.match(/\/pages\/[^/]+\/(\d{6,})/i);
+    if (gm) pageSlug = gm[1];
+  }
   if (["pages", "groups", "profile.php", "events"].includes(pageSlug)) {
     return { platform: "Facebook", score: 0, real: false, raw: { note: "unsupported FB URL type" } };
   }
