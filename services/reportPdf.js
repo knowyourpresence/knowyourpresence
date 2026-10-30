@@ -297,20 +297,19 @@ function buildPlatRows(scanDetails) {
 }
 
 // ── Ad stats HTML ─────────────────────────────────────────────────────────────
-function buildAdStats(metaAds, businessName) {
+function buildAdStats(metaAds, businessName, competitorNamed) {
   const m = metaAds || {};
   const bizAds  = m.business?.adCount || 0;
-  const compAds = m.competitor?.adCount || "—";
 
-  const stat = (lbl, val, sub, dark=false) =>
-    `<div class="ad-stat${dark?' dark':''}"><div class="ad-stat-lbl" ${dark?'style="color:#64748b;"':''}>${lbl}</div><div class="ad-stat-val" style="${dark?'font-size:11.5px;color:#94a3b8;line-height:1.5;margin-top:3px;':''}">${dark?val:`<span style="color:${bizAds===0?'var(--muted)':'var(--green)'};">${val}</span>`}</div>${dark?'':`<div class="ad-stat-sub">${sub}</div>`}</div>`;
+  const stat = (lbl, val, sub) =>
+    `<div class="ad-stat"><div class="ad-stat-lbl">${lbl}</div><div class="ad-stat-val">${val}</div><div class="ad-stat-sub">${sub}</div></div>`;
 
-  return [
-    stat("Your Active Ads", bizAds === 0 ? "0" : bizAds, bizAds === 0 ? "None detected" : "Active campaigns"),
-    stat("Competitor Ads",  compAds, "Est. active campaigns"),
-    stat("Suggested Test Budget", "$5/day", "Start with 7-day test"),
-    stat("Opportunity", `With your reputation and reviews, a paid ad converts far more efficiently than competitors with weaker social proof.`, "", true),
-  ].join("");
+  const out = [stat("Your Active Ads", bizAds === 0 ? "0" : bizAds, bizAds === 0 ? "None detected" : "Active campaigns")];
+  // Only show a competitor figure when the customer named a competitor
+  if (competitorNamed && m.competitor?.checked) {
+    out.push(stat("Competitor Ads", m.competitor.adCount || 0, "Active campaigns found"));
+  }
+  return out.join("");
 }
 
 // ── Phase cards HTML ──────────────────────────────────────────────────────────
@@ -567,7 +566,7 @@ function buildPrintHtml(reportData) {
   const comp    = buildCompetitorSection(reportData, sc);
   const webChks = buildWebChecks(scanDetails);
   const platRows = buildPlatRows(scanDetails);
-  const adStats = buildAdStats(metaAds, businessName);
+  const adStats = buildAdStats(metaAds, businessName, !!reportData.competitor);
   const adCopy  = buildAdCopy(aiInsights, businessName, city, scanDetails);
   const phases  = buildPhases(aiInsights, sc);
   const bench   = buildBenchRows(sc, scanDetails);
@@ -678,7 +677,7 @@ hr.rule{border:none;border-top:1px solid var(--rule);margin:10px 0;}
 .plat-row{display:grid;grid-template-columns:26px 1fr 100px;gap:9px;padding:9px 0;border-bottom:1px solid var(--rule);align-items:center;}
 .plat-row:last-child{border-bottom:none;}
 .plat-letter{width:22px;height:22px;background:var(--ink);color:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;}
-.ad-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:14px;}
+.ad-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px;margin-bottom:14px;}
 .ad-stat{background:var(--surface);border:1px solid var(--rule);border-radius:7px;padding:12px;}
 .ad-stat.dark{background:var(--navy);border-color:var(--navy);}
 .ad-stat-lbl{font-size:8.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px;}
