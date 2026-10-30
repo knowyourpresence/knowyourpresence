@@ -89,13 +89,21 @@ function generateWebReport(data) {
   // Priority plan split into phases
   const priorityPlanRaw = getInsightText(ai.priorityPlan) || '';
   function splitPhases(text) {
-    if (!text) return { p1: 'No data available.', p2: 'No data available.', p3: 'No data available.' };
+    const none = 'No data available.';
+    if (!text) return { p1: none, p2: none, p3: none };
+    // Prefer explicit "PHASE n" headings from the plan; fall back to thirds
+    const parts = text.split(/^[\s#*_>-]*PHASE\s*([123])\b[^\n]*$/gim);
+    if (parts.length >= 7) {
+      const out = { p1: none, p2: none, p3: none };
+      for (let i = 1; i < parts.length; i += 2) out['p' + parts[i]] = parts[i + 1].trim() || none;
+      return out;
+    }
     const lines = text.split('\n').filter(l => l.trim());
     const third = Math.ceil(lines.length / 3);
     return {
-      p1: lines.slice(0, third).join('\n') || 'No data available.',
-      p2: lines.slice(third, third * 2).join('\n') || 'No data available.',
-      p3: lines.slice(third * 2).join('\n') || 'No data available.',
+      p1: lines.slice(0, third).join('\n') || none,
+      p2: lines.slice(third, third * 2).join('\n') || none,
+      p3: lines.slice(third * 2).join('\n') || none,
     };
   }
   const phases = splitPhases(priorityPlanRaw);
@@ -655,13 +663,24 @@ section:last-child{border-bottom:none}
         <div class="card"><div class="card-label">Your Website</div><div class="card-value">${wScore}</div></div>
         <div class="card"><div class="card-label">${esc(data.competitor.name)} — Website</div><div class="card-value">${data.competitor.website ?? 'Not measured'}</div></div>
       </div>
+      <div class="narrative" style="margin-top:14px">${(() => {
+        const c = data.competitor;
+        const cmp = (label, mine, theirs) => {
+          if (theirs == null) return `${label}: ${esc(c.name)} could not be measured.`;
+          const d = mine - theirs;
+          return d > 0 ? `${label}: you lead ${esc(c.name)} by ${d} points (${mine} vs ${theirs}).`
+               : d < 0 ? `${label}: ${esc(c.name)} leads you by ${-d} points (${theirs} vs ${mine}).`
+               : `${label}: you and ${esc(c.name)} are level at ${mine}.`;
+        };
+        return cmp('Google Business', gScore, c.google) + ' ' + cmp('Website', wScore, c.website);
+      })()}</div>
       <div style="font-size:12px;color:var(--muted);margin-top:10px">Only Google Business and Website can be measured for a business that isn't yours; social and reputation need account access.</div>
     </div>` : ''}
 
-    ${getInsightText(ai.competitor) ? `
+    ${!(data.competitor && data.competitor.name) && getInsightText(ai.competitor) ? `
     <div class="narrative" style="margin-bottom:28px">
       ${renderTextBlock(getInsightText(ai.competitor))}
-    </div>` : `<div class="narrative" style="color:var(--muted);font-style:italic">Competitor analysis not available for this business type.</div>`}
+    </div>` : (data.competitor && data.competitor.name ? '' : `<div class="narrative" style="color:var(--muted);font-style:italic">No competitor was named. Add one next time for a side-by-side comparison.</div>`)}
   </section>
 
   <!-- 05 WEBSITE & REPUTATION -->
@@ -821,7 +840,7 @@ section:last-child{border-bottom:none}
 
     <div class="refund-box">
       <strong>About this report</strong><br/>
-      This report is a snapshot of your business's digital presence at the time of the scan, based on publicly available sources. Where a score is marked as an estimate, it could not be measured directly.
+      This report is a snapshot of your business's digital presence at the time of the scan, based on publicly available sources.${(scan.socialEstimated || scan.websiteEstimated) ? ' Scores marked as estimates could not be measured directly.' : ''}
     </div>
 
     <div class="footer" style="margin-top:40px">

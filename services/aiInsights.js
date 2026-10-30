@@ -47,6 +47,7 @@ function factsBlock(reportData) {
   lines.push(f.facebookUrl ? `Facebook given: ${f.facebookUrl}` : "Facebook: none provided");
   lines.push(f.instagramHandle ? `Instagram given: @${String(f.instagramHandle).replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//, "").replace(/\/$/, "")}` : "Instagram: none provided");
   if (f.competitor) lines.push(`Competitor named by owner: ${f.competitor.name} — Google Business score ${f.competitor.google}/100, Website score ${f.competitor.website ?? "not measured"}`);
+  if (f.focusArea) lines.push(`Biggest score opportunity (weighted): ${f.focusArea}. Name this as the first thing to fix; do not name a different category as the top priority.`);
   if (f.social) lines.push(`Social platform readings: ${JSON.stringify(f.social)}`);
   else lines.push("Social platform readings: not available (do not guess their content or activity)");
   return "VERIFIED FACTS:\n" + lines.join("\n");
@@ -94,6 +95,7 @@ async function askClaude(prompt, reportData, retried = false) {
         if (again) out = again;
       } catch (_) {}
     }
+    if (out && reportData?.businessName) out = out.replace(/\[(?:[a-z]+ )?(?:business |restaurant |company |clinic |shop |store )?name\]/gi, reportData.businessName);
     if (out) out = out.replace(/\s*\[(?:insert|mention|your|day|event|occasion|name|address|phone|link|date|time|qr|founder|title|city|business|specials|season|number|url|link)[^\]\n]{0,58}\]/gi, "");
     return stripUnsourcedStats(out);
   } catch (err) {
@@ -255,16 +257,7 @@ SCORES:
 ${scoreLines}
 AI Visibility: ${aiScore}/100 (${aiGrade})
 
-Create a clear "Fix These First" action plan:
-
-WEEK 1 — URGENT (highest impact, easiest wins):
-- 2-3 specific tasks
-
-WEEK 2 — IMPORTANT (takes a bit more effort):
-- 2-3 specific tasks
-
-WEEK 3-4 — GROWTH (longer term):
-- 2-3 specific tasks
+Create a clear 90-day action plan in exactly three phases. Start each phase with a heading line in this exact form: "PHASE 1 — Days 1–30: Foundation", "PHASE 2 — Days 31–60: Growth", "PHASE 3 — Days 61–90: Scale". Under each heading give 2-4 bullet tasks. Phase 1 must start with the biggest score opportunity from the verified facts.
 
 Be very specific. Name the exact platform or action. No generic advice.`;
 
