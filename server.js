@@ -10,6 +10,7 @@ const axios = require("axios");
 const { fetchGoogleBusinessData, searchCompetitorByName } = require("./services/googleBusiness");
 const { fetchYelpData } = require("./services/yelp");
 const { calculateSocialScore } = require("./services/socialMedia");
+const { resolveFinalUrl } = require("./services/resolveUrl");
 const { fetchWebsiteHealth } = require("./services/website");
 const { runTechnicalChecks } = require("./services/technical");
 const { calculateOverallScore, projectPotentialScore } = require("./services/scoring");
@@ -154,6 +155,14 @@ app.post("/api/scan", scanRateLimit, async (req, res) => {
     // If no placeId passed from frontend, look it up via Places Text Search
     let resolvedPlaceId = placeId;
     let resolvedWebsiteUrl = websiteUrl;
+    // Follow redirects so every check tests the page visitors really land on
+    if (resolvedWebsiteUrl) {
+      try {
+        resolvedWebsiteUrl = await resolveFinalUrl(resolvedWebsiteUrl);
+      } catch (e) {
+        console.error("URL resolve failed (using as typed):", e.message);
+      }
+    }
     if (!resolvedPlaceId && businessName && process.env.GOOGLE_PLACES_API_KEY) {
       try {
         const query = city ? `${businessName} in ${city}` : businessName;
@@ -194,7 +203,7 @@ app.post("/api/scan", scanRateLimit, async (req, res) => {
       calculateSocialScore({ youtubeChannelId, businessName, city, facebookUrl, instagramHandle, websiteUrl: resolvedWebsiteUrl }),
       fetchWebsiteHealth(resolvedWebsiteUrl),
       fetchYelpData(businessName, city),
-      runTechnicalChecks(websiteUrl),
+      runTechnicalChecks(resolvedWebsiteUrl),
       // Meta Ads Library: quick teaser check — is this business running ads?
       // (Full competitor comparison only in the paid report)
       runAdIntelligence(businessName, null, countryCode || "US").catch((e) => {
@@ -206,8 +215,8 @@ app.post("/api/scan", scanRateLimit, async (req, res) => {
       Promise.resolve({ checked: false, reason: "free_scan_only" }),
       // URLScan: security headers, trackers, screenshot (non-blocking)
       // URLScan takes ~25-30s so only run it if a websiteUrl was provided
-      websiteUrl
-        ? urlScanUrl(websiteUrl).catch((e) => {
+      resolvedWebsiteUrl
+        ? urlScanUrl(resolvedWebsiteUrl).catch((e) => {
             console.error("URLScan failed (non-blocking):", e.message);
             return { checked: false };
           })
