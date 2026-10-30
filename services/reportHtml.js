@@ -646,6 +646,18 @@ section:last-child{border-bottom:none}
     <div class="section-tag">04 — Competitor Analysis</div>
     <div class="section-title">Competitive Landscape</div>
 
+    ${data.competitor && data.competitor.name ? `
+    <div style="margin-bottom:24px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase">You vs ${esc(data.competitor.name)}</div>
+      <div class="card-grid">
+        <div class="card"><div class="card-label">Your Google Business</div><div class="card-value">${gScore}</div></div>
+        <div class="card"><div class="card-label">${esc(data.competitor.name)} — Google Business</div><div class="card-value">${data.competitor.google ?? 'Not measured'}</div></div>
+        <div class="card"><div class="card-label">Your Website</div><div class="card-value">${wScore}</div></div>
+        <div class="card"><div class="card-label">${esc(data.competitor.name)} — Website</div><div class="card-value">${data.competitor.website ?? 'Not measured'}</div></div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:10px">Only Google Business and Website can be measured for a business that isn't yours; social and reputation need account access.</div>
+    </div>` : ''}
+
     ${getInsightText(ai.competitor) ? `
     <div class="narrative" style="margin-bottom:28px">
       ${renderTextBlock(getInsightText(ai.competitor))}
@@ -809,7 +821,7 @@ section:last-child{border-bottom:none}
 
     <div class="refund-box">
       <strong>About this report</strong><br/>
-      This report is a snapshot of your business's digital presence at the time of the scan, based on publicly available sources. Scores marked as estimates could not be measured directly.
+      This report is a snapshot of your business's digital presence at the time of the scan, based on publicly available sources. Where a score is marked as an estimate, it could not be measured directly.
     </div>
 
     <div class="footer" style="margin-top:40px">
