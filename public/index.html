@@ -628,6 +628,10 @@ src="https://www.facebook.com/tr?id=972754118519664&ev=PageView&noscript=1"
               <input class="scan-input" type="email" id="emailInput" placeholder="you@company.com" autocomplete="email"/>
             </div>
             <div class="scan-field">
+              <label>What kind of business is it? <span style="font-size:10px;color:var(--ink3);font-weight:400">optional</span></label>
+              <input class="scan-input" type="text" id="businessTypeInput" maxlength="60" placeholder="e.g. Pakistani restaurant, dental clinic, plumber" autocomplete="off"/>
+            </div>
+            <div class="scan-field">
               <label>Competitor to benchmark <span style="font-size:10px;color:var(--ink3);font-weight:400">optional</span></label>
               <div style="position:relative">
                 <input class="scan-input" type="text" id="competitorInput" placeholder="e.g. a stronger competitor in your market" autocomplete="off"/>
@@ -1435,7 +1439,7 @@ function showResults(data,bizName){
     businessName: bizName,
     email: document.getElementById('emailInput').value.trim(),
     city: document.getElementById('cityInput').value.trim(),
-    businessType: data.businessType || 'local business',
+    businessType: (document.getElementById('businessTypeInput')?.value.trim().slice(0,60)) || data.businessType || 'local business',
     businessDescription: data.businessDescription || '',
     waNumber: data.waNumber || '',
     scores: data.scores || {},
