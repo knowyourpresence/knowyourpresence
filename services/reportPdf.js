@@ -124,7 +124,7 @@ function buildCatCards(sc, scanDetails) {
   <div class="cat-card">
     <div class="cat-top">
       <div><div class="cat-title">Website &amp; Technical <span style="font-weight:400;color:var(--muted);font-size:11px;">${sc.web}/100 · 20% weight</span></div>
-      <div class="cat-meta">SSL: ${d.isHttps ? "pass" : "missing"} · Mobile: ${d.hasViewportMeta ? "pass" : "check"} · PageSpeed: ${perfScore}/100 · Schema: ${d.hasSchema ? "found" : "missing"}</div></div>
+      <div class="cat-meta">SSL: ${d.isHttps == null ? "not checked" : d.isHttps ? "pass" : "missing"} · Mobile: ${d.hasViewportMeta == null ? "not checked" : d.hasViewportMeta ? "pass" : "check"} · PageSpeed: ${perfScore}/100 · Schema: ${d.hasSchema ? "found" : "missing"}</div></div>
       <span class="pill ${pillClass(sc.web)}">${pillLabel(sc.web)}</span>
     </div>
     <div class="cat-next"><b>Next:</b> ${sc.web < 75 ? "Compress images for page speed; install LocalBusiness schema for rich search results." : "Maintain current technical health — monitor monthly."}</div>

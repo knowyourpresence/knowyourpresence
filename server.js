@@ -252,6 +252,8 @@ app.post("/api/scan", scanRateLimit, async (req, res) => {
       overall: scoreResult.overall,
       grade: scoreResult.grade,
       potentialScore: potential,
+      // true when the website could not be measured (PageSpeed unavailable)
+      websiteEstimated: !!websiteResult.estimated,
       // true when no real Facebook/Instagram/YouTube data could be read and the
       // social score is a placeholder estimate rather than a measurement
       socialEstimated: !socialResult.hasRealData && socialResult.finding !== "no_social_presence",
@@ -290,6 +292,7 @@ app.post("/api/scan", scanRateLimit, async (req, res) => {
         isHttps: websiteResult?.raw?.isHttps ?? null,
         hasViewportMeta: websiteResult?.raw?.hasViewportMeta ?? null,
         socialEstimated: !socialResult.hasRealData && socialResult.finding !== "no_social_presence",
+        websiteEstimated: !!websiteResult.estimated,
       },
       actionPlan,
     });
