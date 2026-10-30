@@ -27,6 +27,8 @@ const GROUNDING = `STRICT RULES (apply to everything you write):
 - Do not use hedging like "likely", "probably" or "possibly" about the business's own accounts; state what was found, or say it was not measured.
 - Sample captions, posts or ad copy must not assert facts about the business that are not in VERIFIED FACTS (e.g. "handmade", "made fresh daily", "near [landmark]"). Use neutral wording or tell the owner to edit it to match their business.
 - Do not name landmarks, neighbourhood features or cuisine details that are not in VERIFIED FACTS.
+- Never say customers or reviews are "five-star" or give review counts as star counts; the average rating is in VERIFIED FACTS.
+- Never claim a business is "best", "authentic", "fresh", "handmade" or offers reservations/events unless it is in VERIFIED FACTS.
 - Never infer cuisine, ethnicity, nationality or community from the business name. Use only the business type the owner gave; if it is just "local business", keep the wording generic.
 - Mobile PageSpeed guide: 90-100 good, 50-89 moderate (room to improve), below 50 slow. Never call a score of 50 or higher "slow".
 - Write for a business owner in the United States. Do not mention any other country.
@@ -44,6 +46,7 @@ function factsBlock(reportData) {
   if (f.hasViewportMeta != null) lines.push(f.hasViewportMeta ? "Mobile viewport tag: detected" : "Mobile viewport tag: NOT detected by the automated test (word this as \"our test did not detect it, please verify\"; never state the site is not mobile-friendly as fact)");
   lines.push(f.facebookUrl ? `Facebook given: ${f.facebookUrl}` : "Facebook: none provided");
   lines.push(f.instagramHandle ? `Instagram given: @${String(f.instagramHandle).replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//, "").replace(/\/$/, "")}` : "Instagram: none provided");
+  if (f.competitor) lines.push(`Competitor named by owner: ${f.competitor.name} — Google Business score ${f.competitor.google}/100, Website score ${f.competitor.website ?? "not measured"}`);
   if (f.social) lines.push(`Social platform readings: ${JSON.stringify(f.social)}`);
   else lines.push("Social platform readings: not available (do not guess their content or activity)");
   return "VERIFIED FACTS:\n" + lines.join("\n");
@@ -63,7 +66,7 @@ function stripUnsourcedStats(text) {
     .join("\n");
 }
 
-async function askClaude(prompt, reportData) {
+async function askClaude(prompt, reportData, retried = false) {
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
   if (!ANTHROPIC_KEY) return null;
   try {
@@ -83,7 +86,16 @@ async function askClaude(prompt, reportData) {
         timeout: 25000,
       }
     );
-    return stripUnsourcedStats(data.content?.[0]?.text || null);
+    let out = data.content?.[0]?.text || null;
+    // Bracketed template placeholders must never reach a customer: retry once, then strip
+    if (out && /\[(?:insert|mention|your|day|event|occasion|name|address|phone|link|date|time|qr|founder|title|city|business|specials|season|number|url|link)[^\]\n]{0,58}\]/i.test(out) && !retried) {
+      try {
+        const again = await askClaude(prompt + "\n\nIMPORTANT: your previous answer contained bracketed placeholders like [Event Type]. Rewrite with NO square brackets at all; write complete, usable text.", reportData, true);
+        if (again) out = again;
+      } catch (_) {}
+    }
+    if (out) out = out.replace(/\s*\[(?:insert|mention|your|day|event|occasion|name|address|phone|link|date|time|qr|founder|title|city|business|specials|season|number|url|link)[^\]\n]{0,58}\]/gi, "");
+    return stripUnsourcedStats(out);
   } catch (err) {
     console.error("Claude insight error:", err.message);
     return null;
@@ -125,7 +137,8 @@ async function generateCompetitorSummary(reportData) {
   const { businessName, city, businessType } = reportData;
   const type = businessType || "business";
 
-  const prompt = `Write a short guide (under 200 words) on how "${businessName}", a ${type} in ${city}, can size up its local competitors. Do NOT name or invent any specific businesses. Cover: what to compare on Google (rating, review count, photos, response to reviews), what to check on their websites and social accounts, and one way to find the top 3 local competitors themselves by searching "${type} in ${city}" on Google Maps.`;
+  const named = reportData.facts?.competitor;
+  const prompt = named ? `In under 120 words, compare "${businessName}" with the competitor "${named.name}" using ONLY the Google Business and Website scores in VERIFIED FACTS. State who is ahead on each and by how much, and give one practical next step. Do not mention anything about the competitor beyond those scores.` : `Write a short guide (under 200 words) on how "${businessName}", a ${type} in ${city}, can size up its local competitors. Do NOT name or invent any specific businesses. Cover: what to compare on Google (rating, review count, photos, response to reviews), what to check on their websites and social accounts, and one way to find the top 3 local competitors themselves by searching "${type} in ${city}" on Google Maps.`;
 
   const text = await askClaude(prompt, reportData);
   return text || "Competitor guidance unavailable.";
@@ -186,7 +199,7 @@ Each idea should:
 - Help them rank on Google for "${type} in ${city}" type searches
 
 Format:
-1. [Title] — [One sentence on why this will rank and attract customers]
+1. Title — one sentence on why this will rank and attract customers
 
 Make titles specific, not generic.`;
 
@@ -210,7 +223,7 @@ async function auditSocialMedia(reportData) {
 ${context}
 
 Provide:
-1. CONSISTENCY CHECK: Are they mentioning their city and business category clearly? (Yes/No/Partial + reason)
+1. WHAT WAS FOUND: which accounts the owner provided and what the verified facts say about them (nothing more; handles alone do not prove location or activity)
 2. PROFILE STATUS: what was found on their accounts, using only the verified facts (do NOT give a numeric score and do NOT claim how active they are unless activity data is provided)
 3. TOP 3 QUICK WINS: specific things they can fix in their bio or posts this week
 4. CONTENT IDEA: One post idea they should publish this week that will get local engagement
@@ -245,13 +258,13 @@ AI Visibility: ${aiScore}/100 (${aiGrade})
 Create a clear "Fix These First" action plan:
 
 WEEK 1 — URGENT (highest impact, easiest wins):
-- [2-3 specific tasks]
+- 2-3 specific tasks
 
 WEEK 2 — IMPORTANT (takes a bit more effort):
-- [2-3 specific tasks]
+- 2-3 specific tasks
 
 WEEK 3-4 — GROWTH (longer term):
-- [2-3 specific tasks]
+- 2-3 specific tasks
 
 Be very specific. Name the exact platform or action. No generic advice.`;
 

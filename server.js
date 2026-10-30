@@ -596,6 +596,7 @@ app.post("/api/webhooks/dodo", express.raw({ type: "application/json" }), async 
           isHttps: scanDetails?.isHttps ?? null,
           hasViewportMeta: scanDetails?.hasViewportMeta ?? null,
           social: socialFacts,
+          competitor: competitorData ? { name: competitorData.name, google: competitorData.google, website: competitorData.website } : null,
         },
         aiVisibility: null,
       });
