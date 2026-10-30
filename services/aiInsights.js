@@ -22,6 +22,7 @@ const MAX_TOKENS = 1200;
 const GROUNDING = `STRICT RULES (apply to everything you write):
 - Use ONLY the facts provided below. If something is not provided, say it was "not measured" or skip it. Never guess.
 - Never output bracketed placeholders such as [Address], [Phone], [Link], [Name], [QR code]. Write complete text a customer can use as-is, or leave that item out.
+- Do NOT include any percentage or numeric statistic unless it appears in VERIFIED FACTS. Never write claims like "X% higher click-through".
 - Never invent customer reviews, testimonials, names of customers, statistics, percentages, benchmarks or competitor names.
 - Do not use hedging like "likely", "probably" or "possibly" about the business's own accounts; state what was found, or say it was not measured.
 - Write for a business owner in the United States. Do not mention any other country.
@@ -36,12 +37,26 @@ function factsBlock(reportData) {
   if (f.photoCount != null) lines.push(`Google profile photos: ${f.photoCount}`);
   if (f.perfScore != null) lines.push(`Mobile PageSpeed: ${f.perfScore}/100`); else lines.push("Mobile PageSpeed: not measured");
   if (f.isHttps != null) lines.push(`HTTPS: ${f.isHttps ? "yes" : "no"}`);
-  if (f.hasViewportMeta != null) lines.push(`Mobile-friendly viewport: ${f.hasViewportMeta ? "yes" : "no"}`);
+  if (f.hasViewportMeta != null) lines.push(f.hasViewportMeta ? "Mobile viewport tag: detected" : "Mobile viewport tag: NOT detected by the automated test (word this as \"our test did not detect it, please verify\"; never state the site is not mobile-friendly as fact)");
   lines.push(f.facebookUrl ? `Facebook given: ${f.facebookUrl}` : "Facebook: none provided");
   lines.push(f.instagramHandle ? `Instagram given: @${String(f.instagramHandle).replace(/^@/, "")}` : "Instagram: none provided");
   if (f.social) lines.push(`Social platform readings: ${JSON.stringify(f.social)}`);
   else lines.push("Social platform readings: not available (do not guess their content or activity)");
   return "VERIFIED FACTS:\n" + lines.join("\n");
+}
+
+// Safety net: drop sentences that still carry a percentage figure; the model
+// has no sourced statistics to cite, so any such claim is unverifiable.
+function stripUnsourcedStats(text) {
+  if (!text) return text;
+  return text
+    .split("\n")
+    .map((line) => {
+      if (!/\d\s?%/.test(line)) return line;
+      const kept = line.split(/(?<=[.!?])\s+/).filter((sent) => !/\d\s?%/.test(sent));
+      return kept.join(" ");
+    })
+    .join("\n");
 }
 
 async function askClaude(prompt, reportData) {
@@ -64,7 +79,7 @@ async function askClaude(prompt, reportData) {
         timeout: 25000,
       }
     );
-    return data.content?.[0]?.text || null;
+    return stripUnsourcedStats(data.content?.[0]?.text || null);
   } catch (err) {
     console.error("Claude insight error:", err.message);
     return null;
@@ -130,7 +145,10 @@ reviewText = reviewsArr.slice(0, 20).map(r => typeof r === "string" ? r : (r?.te
     reviewText = `No review text available. Provide general advice for a ${reportData.businessType || "local business"} in ${city}.`;
   }
 
-  const prompt = `You are a reputation analyst. Analyse these customer reviews for "${businessName}" in ${city}:
+  const sampleN = Array.isArray(reviews) ? reviews.length : 0;
+  const sampleNote = sampleN > 0 ? `You have only ${sampleN} sample review(s) out of ${reportData.facts?.reviewCount ?? 'many'} total. State clearly that this is a sample, and never say there are no complaints overall; say none appeared in the sample.` : `No review text was available. Do NOT describe what customers say. Only give general advice on collecting and responding to reviews.`;
+
+  const prompt = `You are a reputation analyst. ${sampleNote} Analyse these customer reviews for "${businessName}" in ${city}:
 
 ${reviewText}
 
@@ -186,7 +204,7 @@ ${context}
 
 Provide:
 1. CONSISTENCY CHECK: Are they mentioning their city and business category clearly? (Yes/No/Partial + reason)
-2. PROFILE OPTIMIZATION SCORE: /10 with explanation
+2. PROFILE STATUS: what was found on their accounts, using only the verified facts (do NOT give a numeric score and do NOT claim how active they are unless activity data is provided)
 3. TOP 3 QUICK WINS: specific things they can fix in their bio or posts this week
 4. CONTENT IDEA: One post idea they should publish this week that will get local engagement
 

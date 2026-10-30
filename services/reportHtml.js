@@ -734,7 +734,7 @@ section:last-child{border-bottom:none}
         <div class="card-label">Longest Running</div>
         <div class="card-value">${biz.longestRunningDays || 0} days</div>
       </div>` : ''}
-      ${comp.checked ? `
+      ${comp.checked && data.competitor ? `
       <div class="card">
         <div class="card-label">Competitor Ads</div>
         <div class="card-value" style="color:${compRunning ? '#dc2626' : '#1f6b45'}">${comp.adCount || 0}</div>
@@ -742,7 +742,7 @@ section:last-child{border-bottom:none}
     </div>
     ${!isRunning && compRunning ? `<div class="narrative">⚠️ Your competitor is running ${comp.adCount} active ad${comp.adCount !== 1 ? 's' : ''} on Facebook/Instagram — and you have none. This is a gap that can be closed quickly with even a small ad budget.</div>` : ''}
     ${isRunning ? `<div class="narrative">✅ You are actively advertising on Meta platforms with ${biz.adCount} active ad${biz.adCount !== 1 ? 's' : ''}${biz.longestRunningDays > 30 ? `, including ads running for ${biz.longestRunningDays}+ days` : ''}.</div>` : ''}
-    ${!isRunning && !compRunning ? `<div class="narrative">No active Facebook or Instagram ads were found for your business. Running even a small awareness campaign ($5–$10/day) can significantly increase local visibility.</div>` : ''}
+    ${!isRunning && !compRunning ? `<div class="narrative">No active Facebook or Instagram ads were found for your business. Consider testing a small awareness campaign to reach local customers.</div>` : ''}
     `;
     })()}
   </section>
@@ -785,10 +785,10 @@ section:last-child{border-bottom:none}
       <div style="font-size:13px;font-weight:700;margin-bottom:12px">Score Interpretation</div>
       <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
         <div style="display:flex;align-items:center;gap:10px"><span style="min-width:30px;font-weight:700;color:#1f6b45">A+</span><span>90–100 — Exceptional.</span></div>
-        <div style="display:flex;align-items:center;gap:10px"><span style="min-width:30px;font-weight:700;color:#1f6b45">A</span><span>80–89 — Excellent. Well above average.</span></div>
-        <div style="display:flex;align-items:center;gap:10px"><span style="min-width:30px;font-weight:700;color:#d97706">B</span><span>70–79 — Good. Above average with room to grow.</span></div>
-        <div style="display:flex;align-items:center;gap:10px"><span style="min-width:30px;font-weight:700;color:#d97706">C</span><span>60–69 — Average. Significant opportunities available.</span></div>
-        <div style="display:flex;align-items:center;gap:10px"><span style="min-width:30px;font-weight:700;color:#dc2626">D</span><span>Below 60 — Below average. Immediate action recommended.</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="min-width:30px;font-weight:700;color:#1f6b45">A</span><span>80–89 — Excellent.</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="min-width:30px;font-weight:700;color:#d97706">B</span><span>70–79 — Good, with room to grow.</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="min-width:30px;font-weight:700;color:#d97706">C</span><span>60–69 — Fair. Significant opportunities available.</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="min-width:30px;font-weight:700;color:#dc2626">D</span><span>Below 60 — Needs work. Immediate action recommended.</span></div>
       </div>
     </div>
   </section>
