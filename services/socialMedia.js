@@ -515,6 +515,14 @@ async function calculateSocialScore(handles = {}) {
     };
   }
 
+  // No handle from the customer and none linked on their website. Guessing
+  // accounts from the business name can attach someone else's profile (or
+  // wrongly conclude "no social presence"), so return an honest estimate.
+  if (!handles.facebookUrl && !handles.instagramHandle && !handles.youtubeChannelId) {
+    console.log("[socialMedia] No handles provided or found on website — returning estimate (35)");
+    return { score: 35, platforms: [], hasRealData: false, finding: "not_provided" };
+  }
+
   const [fb, yt, ig] = await Promise.all([
     handles.facebookUrl
       ? fetchFacebookByUrl(handles.facebookUrl)
