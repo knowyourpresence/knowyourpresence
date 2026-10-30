@@ -464,7 +464,7 @@ section:last-child{border-bottom:none}
     <a href="#cover"      class="active"><span class="nav-num">00</span>Overview</a>
     <a href="#scores"            ><span class="nav-num">01</span>Scores</a>
     <a href="#opportunities"     ><span class="nav-num">02</span>Opportunities</a>
-    <a href="#ai"                ><span class="nav-num">03</span>AI Visibility</a>
+    <a href="#ai"                ><span class="nav-num">03</span>AI Insights</a>
     <a href="#competitor"        ><span class="nav-num">04</span>Competitor</a>
     <a href="#website"           ><span class="nav-num">05</span>Website &amp; Reputation</a>
     <a href="#ads"               ><span class="nav-num">06</span>Ad Intelligence</a>

@@ -93,7 +93,7 @@ app.get("/blog/google-reviews-small-business-australia", (req, res) => res.redir
 
 app.post("/api/scan", scanRateLimit, async (req, res) => {
   try {
-    const {
+    let {
       businessName,
       placeId,
       websiteUrl,
@@ -153,6 +153,11 @@ app.post("/api/scan", scanRateLimit, async (req, res) => {
 
     // --- PLACE ID LOOKUP ---
     // If no placeId passed from frontend, look it up via Places Text Search
+    // Customers paste full URLs or @handles; normalise to a bare Instagram handle
+    if (instagramHandle) {
+      const m = String(instagramHandle).trim().match(/(?:instagram\.com\/)?@?([A-Za-z0-9._]{1,30})\/?(?:\?.*)?$/);
+      instagramHandle = m ? m[1] : "";
+    }
     let resolvedPlaceId = placeId;
     let resolvedWebsiteUrl = websiteUrl;
     // Follow redirects so every check tests the page visitors really land on

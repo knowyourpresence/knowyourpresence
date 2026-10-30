@@ -25,6 +25,9 @@ const GROUNDING = `STRICT RULES (apply to everything you write):
 - Do NOT include any percentage or numeric statistic unless it appears in VERIFIED FACTS. Never write claims like "X% higher click-through".
 - Never invent customer reviews, testimonials, names of customers, statistics, percentages, benchmarks or competitor names.
 - Do not use hedging like "likely", "probably" or "possibly" about the business's own accounts; state what was found, or say it was not measured.
+- Sample captions, posts or ad copy must not assert facts about the business that are not in VERIFIED FACTS (e.g. "handmade", "made fresh daily", "near [landmark]"). Use neutral wording or tell the owner to edit it to match their business.
+- Do not name landmarks, neighbourhood features or cuisine details that are not in VERIFIED FACTS.
+- Mobile PageSpeed guide: 90-100 good, 50-89 moderate (room to improve), below 50 slow. Never call a score of 50 or higher "slow".
 - Write for a business owner in the United States. Do not mention any other country.
 `;
 
@@ -39,7 +42,7 @@ function factsBlock(reportData) {
   if (f.isHttps != null) lines.push(`HTTPS: ${f.isHttps ? "yes" : "no"}`);
   if (f.hasViewportMeta != null) lines.push(f.hasViewportMeta ? "Mobile viewport tag: detected" : "Mobile viewport tag: NOT detected by the automated test (word this as \"our test did not detect it, please verify\"; never state the site is not mobile-friendly as fact)");
   lines.push(f.facebookUrl ? `Facebook given: ${f.facebookUrl}` : "Facebook: none provided");
-  lines.push(f.instagramHandle ? `Instagram given: @${String(f.instagramHandle).replace(/^@/, "")}` : "Instagram: none provided");
+  lines.push(f.instagramHandle ? `Instagram given: @${String(f.instagramHandle).replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//, "").replace(/\/$/, "")}` : "Instagram: none provided");
   if (f.social) lines.push(`Social platform readings: ${JSON.stringify(f.social)}`);
   else lines.push("Social platform readings: not available (do not guess their content or activity)");
   return "VERIFIED FACTS:\n" + lines.join("\n");
@@ -137,7 +140,7 @@ async function analyzeReviews(reportData) {
   let reviewText = "";
   if (Array.isArray(reviews) && reviews.length > 0) {
     const reviewsArr = Array.isArray(reviews) ? reviews : (reviews?.reviews || reviews?.results || reviews?.items || []);
-reviewText = reviewsArr.slice(0, 20).map(r => typeof r === "string" ? r : (r?.text || r?.snippet || r?.comment || JSON.stringify(r))).join("\n---\n");
+reviewText = reviewsArr.filter(r => (typeof r === 'string' ? r : (r?.text || r?.snippet || r?.comment || '')).trim().length > 0).slice(0, 20).map(r => typeof r === "string" ? r : (r?.text || r?.snippet || r?.comment || JSON.stringify(r))).join("\n---\n");
   } else if (typeof reviews === "string" && reviews.length > 0) {
     reviewText = reviews;
   } else {
@@ -145,12 +148,15 @@ reviewText = reviewsArr.slice(0, 20).map(r => typeof r === "string" ? r : (r?.te
     reviewText = `No review text available. Provide general advice for a ${reportData.businessType || "local business"} in ${city}.`;
   }
 
-  const sampleN = Array.isArray(reviews) ? reviews.length : 0;
-  const sampleNote = sampleN > 0 ? `You have only ${sampleN} sample review(s) out of ${reportData.facts?.reviewCount ?? 'many'} total. State clearly that this is a sample, and never say there are no complaints overall; say none appeared in the sample.` : `No review text was available. Do NOT describe what customers say. Only give general advice on collecting and responding to reviews.`;
+  const textReviews = Array.isArray(reviews) ? reviews.filter((r) => (typeof r === 'string' ? r : (r?.text || r?.snippet || r?.comment || '')).trim().length > 0) : [];
+  const sampleN = textReviews.length;
+  const sampleNote = sampleN > 0 ? `You have only ${sampleN} sample review(s) that contain written text out of ${reportData.facts?.reviewCount ?? 'many'} total. State clearly that this is a sample, and never say there are no complaints overall; say none appeared in the sample.` : `No review text was available. Do NOT describe what customers say. Only give general advice on collecting and responding to reviews.`;
 
   const prompt = `You are a reputation analyst. ${sampleNote} Analyse these customer reviews for "${businessName}" in ${city}:
 
 ${reviewText}
+
+Only mention dishes, themes or complaints that literally appear in the review text above; if the sample is too small, say so rather than generalising.
 
 Provide:
 1. OVERALL SENTIMENT: (Positive / Mixed / Negative) with one sentence explanation
