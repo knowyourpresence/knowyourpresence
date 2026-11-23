@@ -181,6 +181,13 @@ section{padding:100px 0}
 .biz-option span{font-size:0.78rem;color:var(--ink3)}
 .biz-searching{padding:10px 14px;font-size:0.82rem;color:var(--ink3);font-style:italic}
 .scan-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.scan-more{border:1px dashed var(--border);border-radius:10px;padding:0}
+.scan-more>summary{cursor:pointer;list-style:none;padding:11px 14px;font-size:12.5px;font-weight:600;color:var(--blue);display:flex;align-items:center;gap:6px}
+.scan-more>summary::-webkit-details-marker{display:none}
+.scan-more>summary::before{content:"+";font-weight:700;width:14px;text-align:center}
+.scan-more[open]>summary::before{content:"\2212"}
+.scan-more-opt{color:var(--ink3);font-weight:400}
+.scan-more-body{display:flex;flex-direction:column;gap:14px;padding:4px 14px 14px}
 .scan-select{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:11px 14px;font-size:0.92rem;color:var(--ink);font-family:var(--sans);outline:none;cursor:pointer;transition:border-color .15s;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
 .scan-select:focus{border-color:var(--blue)}
 .scan-select option{background:#fff}
@@ -592,7 +599,7 @@ src="https://www.facebook.com/tr?id=972754118519664&ev=PageView&noscript=1"
             <div class="scan-card-count" style="font-size:1.1rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;margin-bottom:0">Let's map your presence</div>
             <span style="background:rgba(22,163,74,0.12);border:1px solid rgba(22,163,74,0.35);color:#16a34a;font-size:10px;font-weight:700;letter-spacing:0.08em;padding:3px 8px;border-radius:20px">FREE</span>
           </div>
-          <div style="font-size:12px;color:var(--ink3);margin-bottom:14px">No credit card needed — see your score instantly.</div>
+          <div style="font-size:12px;color:var(--ink3);margin-bottom:14px">Free. About 90 seconds. We only look at public information.</div>
           <div style="font-size:11px;color:var(--ink3);margin-bottom:10px">Try a sample:</div>
           <div class="scan-samples" id="sampleRow"></div>
           <div class="scan-form">
@@ -604,27 +611,27 @@ src="https://www.facebook.com/tr?id=972754118519664&ev=PageView&noscript=1"
               </div>
             </div>
             <div class="scan-field">
+              <label>City</label>
+              <input class="scan-input" type="text" id="cityInput" placeholder="e.g. Austin"/>
+            </div>
+            <details class="scan-more" id="scanMore">
+              <summary>Add more details for a more accurate score <span class="scan-more-opt">(optional)</span></summary>
+              <div class="scan-more-body">
+            <div class="scan-field">
               <label>Website URL <span style="font-size:10px;color:var(--ink3);font-weight:400">(optional)</span></label>
               <input class="scan-input" type="text" id="urlInput" placeholder="https://yourbusiness.com"/>
             </div>
-            <div class="scan-grid-2">
-              <div class="scan-field">
-                <label>City</label>
-                <input class="scan-input" type="text" id="cityInput" placeholder="e.g. Austin"/>
-              </div>
               <div class="scan-field">
                 <label>Market</label>
                 <select class="scan-select" id="countryInput">
-  <option value="">Select…</option>
-  <option value="US">🇺🇸 United States</option>
+  <option value="US" selected>🇺🇸 United States</option>
   <option value="GB">🇬🇧 United Kingdom</option>
   <option value="CA">🇨🇦 Canada</option>
   <option value="NZ">🇳🇿 New Zealand</option>
                 </select>
               </div>
-            </div>
             <div class="scan-field" id="emailFieldWrap">
-              <label>Where should we send your preview?</label>
+              <label>Where should we send your preview? <span style="font-size:10px;color:var(--ink3);font-weight:400">optional</span></label>
               <input class="scan-input" type="email" id="emailInput" placeholder="you@company.com" autocomplete="email"/>
             </div>
             <div class="scan-field">
@@ -649,6 +656,8 @@ src="https://www.facebook.com/tr?id=972754118519664&ev=PageView&noscript=1"
               </div>
             </div>
             <div style="font-size:11px;color:var(--ink3);line-height:1.45;margin:-4px 0 12px">Add both for an accurate social score. Without them we show an estimate.</div>
+              </div>
+            </details>
             <div id="scanErr" class="scan-error" hidden></div>
             <button type="button" class="scan-btn" id="runBtn">Run my FREE scan →</button>
             <div class="scan-privacy">🔒 Your details stay private. No spam, no subscriptions.</div>
@@ -1203,15 +1212,31 @@ window.onMapsLoaded = async function() {
     }
   }
 
+  // Fill the City box from the business the visitor picked (only when City is empty).
+  async function fillCityFromPlace(p, secondary) {
+    const cityEl = document.getElementById('cityInput');
+    if (cityEl.value.trim()) return;
+    try {
+      const { Place } = await google.maps.importLibrary('places');
+      const place = new Place({ id: p.placeId });
+      await place.fetchFields({ fields: ['addressComponents'] });
+      const comps = place.addressComponents || [];
+      const pick = (t) => comps.find((c) => c.types && c.types.includes(t));
+      const c = pick('locality') || pick('postal_town') || pick('sublocality') || pick('administrative_area_level_2');
+      if (c && c.longText && !cityEl.value.trim()) { cityEl.value = c.longText; return; }
+    } catch (e) {
+      console.warn('City lookup failed', e);
+    }
+    if (cityEl.value.trim()) return;
+    const parts = (secondary || '').split(',').map((s) => s.trim()).filter(Boolean);
+    const last = parts[parts.length - 1] || '';
+    if (parts.length >= 3 && /^(USA|United States)$/i.test(last)) cityEl.value = parts[parts.length - 3];
+    else if (parts.length === 2) cityEl.value = parts[0];
+  }
+
   async function searchPlaces(query) {
     const cityVal = document.getElementById('cityInput').value.trim();
     const countryVal = document.getElementById('countryInput').value || 'US';
-
-    if (!cityVal) {
-      dropdown.innerHTML = '<div class="biz-searching">💡 Enter your city first for accurate results</div>';
-      dropdown.classList.add('open');
-      return;
-    }
 
     dropdown.innerHTML = '<div class="biz-searching">Searching…</div>';
     dropdown.classList.add('open');
@@ -1223,7 +1248,7 @@ window.onMapsLoaded = async function() {
       // Use new AutocompleteSuggestion API
       const { AutocompleteSuggestion } = await google.maps.importLibrary('places');
       const request = {
-        input: query + ' ' + cityVal,
+        input: query + (cityVal ? ' ' + cityVal : ''),
         includedPrimaryTypes: ['establishment'],
       };
       if (cc) request.includedRegionCodes = [cc];
@@ -1245,10 +1270,7 @@ window.onMapsLoaded = async function() {
         div.addEventListener('mousedown', () => {
           bizInput.value = main;
           selectedPlaceId = p.placeId;
-          const parts = secondary.split(',');
-          if (parts.length >= 1 && !document.getElementById('cityInput').value.trim()) {
-            document.getElementById('cityInput').value = parts[0].trim();
-          }
+          window._cityPromise = fillCityFromPlace(p, secondary);
           dropdown.classList.remove('open');
         });
         dropdown.appendChild(div);
@@ -1270,6 +1292,7 @@ function toggleFaq(btn){
 }
 
 document.getElementById('runBtn').addEventListener('click',async()=>{
+  if(window._cityPromise){try{await window._cityPromise}catch(e){}}
   const biz=document.getElementById('bizInput').value.trim();
   const city=document.getElementById('cityInput').value.trim();
   const email=document.getElementById('emailInput').value.trim();
